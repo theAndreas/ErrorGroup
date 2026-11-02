@@ -36,7 +36,8 @@ jobs:
       # the checkout, which GitHub names after the repository: ErrorGroup.
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10
+      # setup-uv has no tag for a major version, only full ones.
+      - uses: astral-sh/setup-uv@v10.3.0
 
       - name: Lint
         run: tools/lint.sh
