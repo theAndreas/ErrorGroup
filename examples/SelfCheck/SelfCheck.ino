@@ -54,11 +54,8 @@ void Check(bool passed, const __FlashStringHelper* name) {
 }
 
 void PrintStatus(const Status& status) {
-  if (const Error* error = status.error()) {
-    Serial.print(error->group().Name());
-    Serial.print(F(": "));
-  }
-  Serial.println(status.Message());
+  status.PrintTo(Serial);
+  Serial.println();
 }
 
 // Returns codes[index], or BetaError::kFirst past the end.
@@ -82,6 +79,14 @@ void CheckError() {
   PrintStatus(alpha_second);
   PrintStatus(beta_first);
   PrintStatus(beta_unknown);
+  PrintStatus(Error(self_check::kBetaErrorGroup, 10));
+  PrintStatus(Error(self_check::kBetaErrorGroup, 105));
+
+  // "alpha: alpha first", 18 chars, or "alpha: 0", 8, without texts.
+  const size_t printed = alpha_first.PrintTo(Serial);
+  Serial.println();
+  Check(printed == (UTL_ERROR_TEXTS ? 18 : 8),
+        F("PrintTo returns the number of chars"));
 
   Check(&alpha_first.group() == &self_check::kAlphaErrorGroup &&
             alpha_first.code() == 0,

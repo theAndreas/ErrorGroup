@@ -3,6 +3,8 @@
 
 #include "utl/status.h"
 
+#include <stddef.h>
+
 namespace utl {
 
 const __FlashStringHelper* Status::Message() const {
@@ -10,6 +12,13 @@ const __FlashStringHelper* Status::Message() const {
     return F("ok");
   }
   return error_.Message();
+}
+
+size_t Status::PrintTo(Print& out) const {
+  if (IsOk()) {
+    return out.print(Message());
+  }
+  return error_.PrintTo(out);
 }
 
 }  // namespace utl

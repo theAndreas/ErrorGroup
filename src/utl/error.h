@@ -7,6 +7,7 @@
 #define UTL_SRC_UTL_ERROR_H_
 
 #include <Arduino.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "utl/error_group.h"
@@ -26,7 +27,7 @@ class Status;
 //
 // Two errors are equal if both the group and the code are, so codes of
 // different groups may overlap.
-class Error {
+class [[nodiscard]] Error {
  public:
   // `code` of `group`.
   constexpr Error(const ErrorGroup& group, uint8_t code)
@@ -45,8 +46,15 @@ class Error {
   const ErrorGroup& group() const { return *group_; }
   uint8_t code() const { return code_; }
 
-  // Returns the text of the error, from flash.
+  // Returns the text of the error, from flash; an empty text if
+  // UTL_ERROR_TEXTS is 0.
   const __FlashStringHelper* Message() const;
+
+  // Prints the group and the text, "bus: nack", or the group and the code,
+  // "bus: 0", if UTL_ERROR_TEXTS is 0. Returns the number of chars, as
+  // Print::print() does. Not Printable, whose vptr would make an Error 5
+  // bytes rather than 3.
+  size_t PrintTo(Print& out) const;
 
   // Hidden friends: found only through an Error, and with the implicit
   // conversion above on either side.

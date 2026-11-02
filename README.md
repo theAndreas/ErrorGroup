@@ -54,10 +54,10 @@ const utl::Status status =
     Receive(false).AndThen([](char c) { return SetChar(c); });
 if (status == BusError::kNack) { ... }
 if (const utl::Error* error = status.error()) {
-  Serial.print(error->group().Name());  // "bus"
-  Serial.print(F(": "));
+  Serial.println(error->code());  // 0: kNack, within the group "bus"
 }
-Serial.println(status.Message());  // "nack", or "ok"; from flash
+status.PrintTo(Serial);  // "bus: nack", or "ok"
+Serial.println();
 ```
 
 A sketch includes `<Utl.h>`, and before any header of its own that includes `<utl/...>`:
@@ -151,6 +151,29 @@ and no RAM: the lambdas are inlined.
 const utl::Result<void> printed = Receive(true).Map([](char c) { Serial.println(c); });
 ```
 
+Every `Error`, `Status` and `Result` is `[[nodiscard]]`: a call whose result is dropped warns, as
+`[[nodiscard]]` on a type, from C++17, which avr-gcc 7 takes under gnu++11 as well.
+`static_cast<void>(Set())` drops one on purpose. The Arduino IDE shows the warning once
+"Compiler warnings" is set above "None".
+
+### Texts
+
+The texts of the groups cost flash, and as `Message()` is virtual, they are linked whenever a
+group is, called or not. `UTL_ERROR_TEXTS` at 0 leaves them out, and an error prints its code
+instead, `bus: 0`; the code of a group stays as it is. It saves 46 bytes of flash in `Basics`,
+with two groups and four texts, and 62 in `SelfCheck`, after the code that prints the number in
+their place. The switch holds for the whole build, the library and the groups alike, which the
+Arduino IDE sets only in `platform.local.txt` beside the `platform.txt` of the core:
+
+```text
+compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0
+```
+
+With arduino-cli, `--build-property "compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0"`. The plugin of
+[vtables in flash](#vtables-in-flash) sets the same property, so both go into one line, as a
+second one would replace the first:
+`compiler.cpp.extra_flags=-fplugin=/full/path/to/avr-flash-vtbl.so -DUTL_ERROR_TEXTS=0`.
+
 ## Containers
 
 ```cpp
@@ -193,10 +216,13 @@ flash instead: it marks the vtable types `__flash`, and a virtual call then read
 pointer with `LPM`. A copy of it, at upstream commit `fbc6ed9`, lies in `tools/avr-flash-vtbl/`
 under its own licence, the GPL v2; it is a tool of the build and links nothing into a sketch.
 
-| Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
-|---|---|---|---|---|
-| Basics | 2368 | 2370 | 208 | 174 |
-| SelfCheck | 6664 | 6666 | 221 | 179 |
+| Example | Flash, ram | Flash, flash | Flash, notexts | RAM, ram | RAM, flash | RAM, notexts |
+|---|---|---|---|---|---|---|
+| Basics | 2376 | 2378 | 2330 | 208 | 174 | 208 |
+| SelfCheck | 6798 | 6800 | 6736 | 221 | 179 | 221 |
+
+`ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
+plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0.
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
 vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as

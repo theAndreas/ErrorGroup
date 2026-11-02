@@ -17,4 +17,6 @@ const __FlashStringHelper* ErrorGroup::LookUpMessage(
   return static_cast<const __FlashStringHelper*>(pgm_read_ptr(&messages[code]));
 }
 
+const __FlashStringHelper* ErrorGroup::NoMessage() { return F(""); }
+
 }  // namespace utl

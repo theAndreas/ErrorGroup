@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Shared by the scripts in tools/: where things lie, and how an example is
-# compiled in either variant, "ram" (vtables in RAM, the default of avr-gcc)
-# or "flash" (vtables in flash, with the plugin avr-flash-vtbl).
+# compiled in each variant: "ram" (vtables in RAM, the default of avr-gcc),
+# "flash" (vtables in flash, with the plugin avr-flash-vtbl) and "notexts"
+# (vtables in RAM, the texts of the groups left out with UTL_ERROR_TEXTS=0).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ROOT_DIR
@@ -13,7 +14,7 @@ readonly BUILD_DIR="${ROOT_DIR}/build"
 readonly PLUGIN="${BUILD_DIR}/avr-flash-vtbl.so"
 readonly FQBN="arduino:avr:uno"
 # shellcheck disable=SC2034  # used by the scripts that source this file
-readonly VARIANTS=(ram flash)
+readonly VARIANTS=(ram flash notexts)
 
 err() {
   echo "$*" >&2
@@ -37,7 +38,7 @@ avr_gcc_bin_dir() {
 # Compiles an example in a variant into BUILD_DIR/<variant>/<example> and
 # prints what arduino-cli prints.
 # Arguments:
-#   variant: ram or flash
+#   variant: ram, flash or notexts
 #   example: the name of a folder in examples/
 compile_example() {
   local variant="$1"
@@ -56,6 +57,8 @@ compile_example() {
     # extra_flags reach every C++ file of the build, the core included. A file
     # compiled without the plugin would read a vtable in flash from RAM.
     args+=(--build-property "compiler.cpp.extra_flags=-fplugin=${PLUGIN}")
+  elif [[ "${variant}" == "notexts" ]]; then
+    args+=(--build-property "compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0")
   fi
   arduino-cli compile "${args[@]}" "${ROOT_DIR}/examples/${example}" 2>&1
 }

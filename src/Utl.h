@@ -10,6 +10,7 @@
 #define UTL_SRC_UTL_H_
 
 #include "utl/array.h"        // IWYU pragma: export
+#include "utl/config.h"       // IWYU pragma: export
 #include "utl/error.h"        // IWYU pragma: export
 #include "utl/error_group.h"  // IWYU pragma: export
 #include "utl/index_error.h"  // IWYU pragma: export

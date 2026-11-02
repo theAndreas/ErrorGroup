@@ -3,7 +3,7 @@
 # Copyright 2026 Andreas Burnickl
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Compiles every example in both variants and prints flash and RAM of each,
+# Compiles every example in each variant and prints flash and RAM of each,
 # as a Markdown table. Fails on a warning outside the Arduino core, and if a
 # vtable of the flash variant lies in RAM: then some file was compiled without
 # the plugin, and a virtual call through it would jump anywhere.
@@ -68,13 +68,28 @@ main() {
     done
   done
 
-  echo "| Example | Flash, vtables in RAM | Flash, in flash |" \
-    "RAM, vtables in RAM | RAM, in flash |"
-  echo "|---|---|---|---|---|"
+  local header="| Example |"
+  local rule="|---|"
+  for variant in "${VARIANTS[@]}"; do
+    header+=" Flash, ${variant} |"
+    rule+="---|"
+  done
+  for variant in "${VARIANTS[@]}"; do
+    header+=" RAM, ${variant} |"
+    rule+="---|"
+  done
+  echo "${header}"
+  echo "${rule}"
+  local row
   for example in "${examples[@]}"; do
-    echo "| ${example} | ${flash_size["${example}/ram"]:-} |" \
-      "${flash_size["${example}/flash"]:-} |" \
-      "${ram_size["${example}/ram"]:-} | ${ram_size["${example}/flash"]:-} |"
+    row="| ${example} |"
+    for variant in "${VARIANTS[@]}"; do
+      row+=" ${flash_size["${example}/${variant}"]:-} |"
+    done
+    for variant in "${VARIANTS[@]}"; do
+      row+=" ${ram_size["${example}/${variant}"]:-} |"
+    done
+    echo "${row}"
   done
   exit "${failed}"
 }
