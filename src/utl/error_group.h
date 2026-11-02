@@ -14,6 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "utl/config.h"
+
 namespace utl {
 
 // Declared ahead, against Google's advice, because this header cannot include
@@ -45,7 +47,8 @@ class ErrorGroup {
   // Returns the name of the group, from flash.
   virtual const __FlashStringHelper* Name() const = 0;
 
-  // Returns the text of `code`, from flash, or "unknown code".
+  // Returns the text of `code`, from flash, or "unknown code"; an empty text,
+  // never null, if UTL_ERROR_TEXTS is 0.
   virtual const __FlashStringHelper* Message(uint8_t code) const = 0;
 
  protected:
@@ -69,14 +72,29 @@ class ErrorGroup {
   // The count is a uint8_t, as a code is: a size_t costs 4 bytes of flash
   // more on the Uno. N is known when compiled, so the static_assert makes
   // sure that the count is not cut short.
+  //
+  // With UTL_ERROR_TEXTS at 0 it returns an empty text and does not touch
+  // the table, so that the table and its texts drop out of the build.
   template <size_t N>
   static const __FlashStringHelper* LookUpMessage(
       const array<const char*, N>& messages, uint8_t code) {
     // Not UINT8_MAX: avr-libc defines it in C++ only with __STDC_LIMIT_MACROS.
     static_assert(static_cast<uint8_t>(N) == N,
                   "a code is a uint8_t: a group has at most 255 texts");
+#if UTL_ERROR_TEXTS
     return LookUpMessage(messages.data(), static_cast<uint8_t>(N), code);
+#else
+    static_cast<void>(messages);
+    static_cast<void>(code);
+    return NoMessage();
+#endif
   }
+
+ private:
+  // An empty text, in flash, shared by every group, for UTL_ERROR_TEXTS at
+  // 0. Not F("") in the template above, which would put one into flash for
+  // every size of table.
+  static const __FlashStringHelper* NoMessage();
 };
 
 }  // namespace utl

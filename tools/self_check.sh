@@ -3,8 +3,8 @@
 # Copyright 2026 Andreas Burnickl
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Runs examples/SelfCheck in simavr, in both variants, and compares what it
-# prints with SelfCheck.expected.
+# Runs examples/SelfCheck in simavr, in each variant, and compares what it
+# prints with what it should, see expected_of().
 
 set -euo pipefail
 
@@ -12,10 +12,21 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 readonly EXAMPLE="SelfCheck"
-readonly EXPECTED="${ROOT_DIR}/examples/${EXAMPLE}/${EXAMPLE}.expected"
+readonly EXAMPLE_DIR="${ROOT_DIR}/examples/${EXAMPLE}"
 # SelfCheck ends within a second; one that runs longer has hung, or crashed
 # into a loop of resets, as a call through a null pointer jumps to address 0.
 readonly TIMEOUT_SECONDS=10
+
+# Prints the file of what SelfCheck prints in a variant:
+# SelfCheck.<variant>.expected if there is one, else SelfCheck.expected.
+expected_of() {
+  local variant="$1"
+  if [[ -f "${EXAMPLE_DIR}/${EXAMPLE}.${variant}.expected" ]]; then
+    echo "${EXAMPLE_DIR}/${EXAMPLE}.${variant}.expected"
+  else
+    echo "${EXAMPLE_DIR}/${EXAMPLE}.expected"
+  fi
+}
 
 # Prints what the sketch sent on the UART, and returns the exit status of
 # simavr: 124 if it did not end in time. simavr writes the UART to stderr, a
@@ -56,7 +67,7 @@ main() {
       failed=1
     fi
     if diff -u --label expected --label "${variant}" \
-        "${EXPECTED}" <(echo "${actual}"); then
+        "$(expected_of "${variant}")" <(echo "${actual}"); then
       echo "${EXAMPLE} (${variant}): as expected"
     else
       failed=1

@@ -3,6 +3,10 @@ alpha: alpha first
 alpha: alpha second
 beta: beta first
 beta: unknown code
+beta: unknown code
+beta: unknown code
+alpha: alpha first
+pass PrintTo returns the number of chars
 pass an Error has a group and a code
 pass compares with its enum
 pass with the enum on the left

@@ -45,7 +45,7 @@ struct MapCall;
 // Map() changes it, OrElse() recovers from the error. A function passed to
 // them returns by value; none of them calls it when it has nothing to give.
 template <typename T>
-class Result {
+class [[nodiscard]] Result {
  public:
   // A value. Implicit, like the conversions below, so that a function returns
   // its value or its error as it is: a Result is either, and nothing else.
@@ -118,7 +118,7 @@ class Result {
 // one and back. It exists for code that is generic in T, above all Map() with
 // a function that returns nothing; a function of a sketch returns a Status.
 template <>
-class Result<void> : public Status {
+class [[nodiscard]] Result<void> : public Status {
  public:
   // Ok, from an Error or from a code, as a Status.
   using Status::Status;

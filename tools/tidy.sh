@@ -45,20 +45,27 @@ arduino_flags() {
     "${TIDY_DIR}/arduino/compile_commands.json"
 }
 
-# Writes TIDY_DIR/compile_commands.json for the files given.
+# Writes <dir>/compile_commands.json for the files given, with the flags of
+# arduino_flags() and the defines in `defines`, a JSON array.
+# Arguments:
+#   dir, flags, defines, then the files
 write_database() {
-  local flags
-  flags="$(arduino_flags)"
+  local dir="$1"
+  local flags="$2"
+  local defines="$3"
+  shift 3
+  mkdir -p "${dir}"
   printf '%s\n' "$@" | jq -R . | jq -s \
-    --arg dir "${ROOT_DIR}" --argjson flags "${flags}" '
+    --arg dir "${ROOT_DIR}" --argjson flags "${flags}" \
+    --argjson defines "${defines}" '
     map({
       directory: $dir,
       file: .,
-      arguments: ($flags
+      arguments: ($flags + $defines
         + (if endswith(".ino") then ["-x", "c++", "-include", "Arduino.h"]
            else [] end)
         + [.])
-    })' > "${TIDY_DIR}/compile_commands.json"
+    })' > "${dir}/compile_commands.json"
 }
 
 main() {
@@ -67,10 +74,22 @@ main() {
   local sources
   mapfile -t sources < <(git ls-files --cached --others --exclude-standard \
     'src/*' 'examples/*' | grep -E '\.(cpp|ino)$')
+  local flags
+  flags="$(arduino_flags)"
 
-  write_database "${sources[@]}"
-  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}" --quiet \
-    "${sources[@]}"
+  # Once as built by default, and once with the texts of the groups left
+  # out: each takes other branches of #if UTL_ERROR_TEXTS.
+  local failed=0
+  write_database "${TIDY_DIR}/texts" "${flags}" '[]' "${sources[@]}"
+  echo "clang-tidy, with texts:"
+  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/texts" --quiet \
+    "${sources[@]}" || failed=1
+  write_database "${TIDY_DIR}/notexts" "${flags}" \
+    '["-DUTL_ERROR_TEXTS=0"]' "${sources[@]}"
+  echo "clang-tidy, without texts:"
+  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/notexts" --quiet \
+    "${sources[@]}" || failed=1
+  exit "${failed}"
 }
 
 main "$@"

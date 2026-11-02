@@ -34,14 +34,6 @@ Result<char> Receive(bool acknowledged) {
   return 'A';
 }
 
-void PrintStatus(const Status& status) {
-  if (const Error* error = status.error()) {
-    Serial.print(error->group().Name());
-    Serial.print(F(": "));
-  }
-  Serial.println(status.Message());
-}
-
 }  // namespace
 
 void setup() {
@@ -57,7 +49,8 @@ void loop() {
       Receive(digitalRead(3) == HIGH).AndThen([](char received) {
         return SetChar(digitalRead(2) == LOW ? '\n' : received);
       });
-  PrintStatus(status);
+  status.PrintTo(Serial);  // "bus: nack", or "ok"
+  Serial.println();
 
   // Both codes are 0, in different groups: only the group tells them apart.
   if (status == FontError::kUnknownChar) {

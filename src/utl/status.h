@@ -7,6 +7,7 @@
 #define UTL_SRC_UTL_STATUS_H_
 
 #include <Arduino.h>
+#include <stddef.h>
 
 #include "utl/error.h"
 
@@ -30,7 +31,7 @@ namespace utl {
 //
 // The fluent functions follow Rust: AndThen() goes on while there is no
 // error, OrElse() recovers from one.
-class Status {
+class [[nodiscard]] Status {
  public:
   // Ok. Status::Ok() says the same where it is returned.
   constexpr Status() : error_(nullptr) {}
@@ -56,6 +57,10 @@ class Status {
 
   // Returns the text of the error, or "ok", from flash.
   const __FlashStringHelper* Message() const;
+
+  // Prints "ok", or the error as Error::PrintTo() does. Returns the number of
+  // chars.
+  size_t PrintTo(Print& out) const;
 
   // Returns `f()` if there is no error, or else the error; `f` is not called
   // then. `f` returns a Status or a Result.
