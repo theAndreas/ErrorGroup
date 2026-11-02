@@ -26,6 +26,7 @@ static_assert(sizeof(Error) == 3, "an Error is a pointer and a byte");
 static_assert(sizeof(Status) == 3,
               "a Status is an Error, with a null group if ok");
 static_assert(sizeof(Result<uint8_t>) == 4, "a Result is a value and a Status");
+static_assert(sizeof(Result<void>) == 3, "a Result<void> is a Status");
 static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
 static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
 constexpr utl::array<uint8_t, 3> kConstantRows = {{1, 2, 3}};
@@ -203,6 +204,48 @@ void CheckResult() {
   Check(kept.value() == 7 && calls == 0, F("Result::OrElse keeps a value"));
 }
 
+// Stores the code at `index` in `stored`, or fails past the end: a function
+// that returns no value, as a Result<void>.
+Result<void> StoreCode(uint8_t index, uint8_t& stored) {
+  return GetCode(index).Map([&stored](uint8_t code) { stored = code; });
+}
+
+void CheckResultVoid() {
+  uint8_t stored = 0;
+  uint8_t calls = 0;
+
+  const Result<void> ok = Result<void>::Ok();
+  const Result<void> failed_result = AlphaError::kFirst;
+  Check(ok.IsOk() && ok.error() == nullptr && Result<void>() == ok,
+        F("Result<void>::Ok() is ok"));
+  Check(failed_result == AlphaError::kFirst &&
+            *failed_result.error() == AlphaError::kFirst,
+        F("Result<void> holds its Error"));
+
+  const Status status = failed_result;
+  const Result<void> from_status = Status(BetaError::kFirst);
+  Check(status == AlphaError::kFirst && from_status == BetaError::kFirst &&
+            failed_result.status() == AlphaError::kFirst,
+        F("Result<void> is a Status, and back"));
+
+  Check(StoreCode(2, stored).IsOk() && stored == 7,
+        F("Result::Map with a function that returns nothing"));
+  stored = 0;
+  Check(StoreCode(9, stored) == BetaError::kFirst && stored == 0,
+        F("Result::Map into Result<void> keeps the error"));
+
+  Check(Result<void>::Ok().Map([] { return uint8_t{5}; }).ValueOr(0) == 5,
+        F("Result<void>::Map makes a value"));
+  const Result<uint8_t> not_made = failed_result.Map([&calls] {
+    ++calls;
+    return uint8_t{5};
+  });
+  Check(not_made.status() == AlphaError::kFirst && calls == 0,
+        F("Result<void>::Map keeps the error"));
+  Check(failed_result.OrElse([](const Error&) { return Status::Ok(); }).IsOk(),
+        F("Result<void> recovers as a Status"));
+}
+
 void CheckArray() {
   utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
 
@@ -285,6 +328,7 @@ void setup() {
   CheckStatus();
   CheckStatusFluent();
   CheckResult();
+  CheckResultVoid();
   CheckArray();
   CheckSpan();
 

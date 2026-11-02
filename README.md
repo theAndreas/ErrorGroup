@@ -44,6 +44,9 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   only `Status` can make.
 - `Result<T>` (`result.h`): a value or an `Error`, the value and a `Status` side by side rather
   than in a union; `error()` as in `Status`, and `status()` to compare or print.
+- `Result<void>` (`result.h`): a `Status`, for code that is generic in `T`. It is one, by
+  inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
+  its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
 - `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
 - `array<T, N>` (`array.h`) and `span<T>` (`span.h`): `std::array`, which avr-gcc lacks, and
   `std::span` from C++20, with the STL names Google allows for an STL-like entity. What the
@@ -83,7 +86,7 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
 |---|---|---|---|---|
 | Basics | 2368 | 2370 | 208 | 174 |
-| SelfCheck | 5988 | 5990 | 221 | 179 |
+| SelfCheck | 6664 | 6666 | 221 | 179 |
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
 vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as
