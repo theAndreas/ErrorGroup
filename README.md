@@ -1,15 +1,18 @@
 # ErrorGroup
 
-Errors for Arduino that carry the group they come from. An `Error` is a pointer to its
-`ErrorGroup` and a code within it, 3 bytes on the Uno. A group is one object per program, and its
-address is what makes it unique: no one hands out group ids, and a component adds a group of its
-own without changing the library. It is the variant "by its address" of
-[MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md),
-tried out on its own.
+Errors for Arduino that say what went wrong and where it came from, in 3 bytes each. An error is
+a code within a group, `font: unknown char` or `bus: nack`, and a group is identified by its
+address: no one hands out group ids, and a library or a sketch adds a group of its own without
+changing this one. It tries out the variant "by its address" of
+[MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md)
+on its own.
+
+## Using it
 
 ```cpp
 #include <ErrorGroup.h>
 
+// A function with nothing else to return returns a Status: ok, or an error.
 utl::Status SetChar(char c) {
   if (c < ' ') {
     return FontError::kUnknownChar;  // a code of a group is an error
@@ -17,20 +20,86 @@ utl::Status SetChar(char c) {
   return utl::Status::Ok();
 }
 
-utl::Result<uint8_t> Receive() {
+// A function with a value returns a Result: the value, or an error.
+utl::Result<char> Receive(bool acknowledged) {
   if (!acknowledged) {
     return BusError::kNack;
   }
-  return received;
+  return 'A';
 }
 
-const utl::Status status = Receive().AndThen([](uint8_t c) { return SetChar(c); });
-if (status == FontError::kUnknownChar) { ... }
+// The first error ends the chain.
+const utl::Status status =
+    Receive(false).AndThen([](char c) { return SetChar(c); });
+if (status == BusError::kNack) { ... }
 if (const utl::Error* error = status.error()) {
-  Serial.print(error->group().Name());  // "font"
+  Serial.print(error->group().Name());  // "bus"
+  Serial.print(": ");
 }
-Serial.println(status.Message());  // "unknown char", or "ok"; from flash
+Serial.println(status.Message());  // "nack", or "ok"; from flash
 ```
+
+A sketch includes `<ErrorGroup.h>`, and before any header of its own that includes `<utl/...>`:
+arduino-cli finds a library only by a header directly in its `src/`, going through the includes
+in order, and only once it has found it does `<utl/...>` work.
+
+## Defining a group
+
+A group is an enum class of its codes, a class derived from `utl::ErrorGroup` with the name and
+the texts, one object of that class, and a `GetErrorGroup()` beside the enum. From
+`examples/Basics`:
+
+```cpp
+// font_error.h
+enum class FontError : uint8_t {
+  kUnknownChar,
+  kNullText,
+};
+
+class FontErrorGroup : public utl::ErrorGroup {
+ public:
+  constexpr FontErrorGroup() = default;
+  const __FlashStringHelper* Name() const override;
+  const __FlashStringHelper* Message(uint8_t code) const override;
+};
+
+extern const FontErrorGroup kFontErrorGroup;  // its address is the group
+
+inline const utl::ErrorGroup& GetErrorGroup(FontError) {
+  return kFontErrorGroup;
+}
+```
+
+```cpp
+// font_error.cpp
+const char kUnknownCharText[] PROGMEM = "unknown char";
+const char kNullTextText[] PROGMEM = "null text";
+
+// In the order of FontError.
+constexpr auto kMessages PROGMEM =
+    utl::make_array(kUnknownCharText, kNullTextText);
+
+constexpr FontErrorGroup kFontErrorGroup{};
+
+const __FlashStringHelper* FontErrorGroup::Name() const { return F("font"); }
+
+const __FlashStringHelper* FontErrorGroup::Message(uint8_t code) const {
+  return LookUpMessage(kMessages, code);  // "unknown code" beyond the table
+}
+```
+
+- **One object, defined in one `.cpp`**, and declared `extern` in the header. A `const` object
+  defined in a header gets a copy in every file that includes it, each at an address of its own,
+  and errors made in different files would not compare equal.
+- **`GetErrorGroup()` lies beside the enum**, in its namespace, where argument-dependent lookup
+  finds it. It is what lets a code convert to an `Error`; an enum without one does not.
+- **The texts lie in a `constexpr` table in `PROGMEM`.** `constexpr`, so that the table is
+  complete when compiled: one initialized at start-up would be written to flash, which fails
+  without a word. A group has at most 255 texts, as a code is a `uint8_t`; `LookUpMessage()`
+  checks that when compiled.
+- **Codes of different groups may overlap**: two errors are equal only if group and code are.
+
+## The types
 
 Everything lies in the namespace `utl`, one class per file in `src/utl/`:
 
@@ -64,13 +133,22 @@ there is no error, `Map()` changes the value, `OrElse()` recovers from an error 
 to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
 and no RAM: the lambdas are inlined.
 
-A sketch includes `<ErrorGroup.h>`: arduino-cli finds a library only by a header directly in its
-`src/`, and once found, `<utl/...>` works in every file of the sketch.
+## Examples
 
-A group is a class derived from `ErrorGroup`, an enum class of its codes, one object defined in one
-`.cpp` file, and a `GetErrorGroup()` beside the enum; `examples/Basics` defines two. Its texts lie
-in a `constexpr` `utl::array` in `PROGMEM`, made with `make_array()`, which `LookUpMessage()`
-reads.
+- `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
+- `SelfCheck`: checks the library and prints a line per check, then the number that failed.
+  `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`.
+
+## Installing
+
+Not in the Library Manager yet. Clone it into the `libraries` folder of your sketchbook, under the
+name `ErrorGroup`:
+
+```bash
+git clone https://github.com/theAndreas/ErrorGroup ~/Arduino/libraries/ErrorGroup
+```
+
+It is for the AVR boards (`architectures=avr`); it is built and checked for the Uno.
 
 ## vtables in flash
 
@@ -133,4 +211,9 @@ includes its own headers without a directory (see `examples/CPPLINT.cfg`).
 that nothing has to be installed. `.clang-tidy` turns on broad groups of checks and turns off, each
 with its reason, what contradicts the Google style or cannot be had on the AVR.
 
-Nothing has run on a board yet; `SelfCheck` prints the same there as in simavr.
+Nothing has run on a board yet; `SelfCheck` should print the same there as in simavr.
+
+## License
+
+GPL-3.0-or-later, see `LICENSE`. The plugin in `tools/avr-flash-vtbl/` is under its own licence,
+the GPL v2, in its `COPYING`.
