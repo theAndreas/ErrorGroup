@@ -7,16 +7,9 @@
 #define ERRORGROUP_SRC_UTL_RESULT_H_
 
 #include "utl/error.h"
+#include "utl/internal/type_traits.h"
 
 namespace utl {
-namespace internal {
-
-// std::declval, as avr-gcc comes without a C++ standard library. Declared
-// only: it names a value of type T in decltype, where nothing is evaluated.
-template <typename T>
-T&& DeclVal();
-
-}  // namespace internal
 
 // A value of T, or an error. The two lie side by side, not in a union: T needs
 // a default constructor, for the value of a Result with an error, and in

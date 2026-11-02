@@ -5,6 +5,7 @@
 
 #include <avr/pgmspace.h>
 #include <stdint.h>
+#include <utl/array.h>
 
 namespace font {
 namespace {
@@ -13,7 +14,7 @@ const char kUnknownCharText[] PROGMEM = "unknown char";
 const char kNullTextText[] PROGMEM = "null text";
 
 // In the order of FontError.
-const char* const kMessages[] PROGMEM = {
+const utl::array<const char*, 2> kMessages PROGMEM = {
     kUnknownCharText,
     kNullTextText,
 };
@@ -25,8 +26,7 @@ constexpr FontErrorGroup kFontErrorGroup{};
 const __FlashStringHelper* FontErrorGroup::Name() const { return F("font"); }
 
 const __FlashStringHelper* FontErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, sizeof(kMessages) / sizeof(kMessages[0]),
-                       code);
+  return LookUpMessage(kMessages, code);
 }
 
 }  // namespace font

@@ -13,7 +13,6 @@ Checks: >
   -bugprone-dynamic-static-initializers,
   -google-explicit-constructor,
   -misc-explicit-constructor,
-  -modernize-avoid-c-arrays,
   -modernize-deprecated-headers,
   -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
@@ -26,8 +25,6 @@ Checks: >
 # google-explicit-constructor, misc-explicit-constructor: cpplint checks the
 #   same rule as runtime/explicit, and the implicit constructors that are
 #   meant carry their NOLINT there; two tools would want two per line.
-# modernize-avoid-c-arrays: a table in PROGMEM is a C array, and there is no
-#   std::array on the AVR.
 # modernize-deprecated-headers: avr-gcc comes without a C++ standard library,
 #   so there is no <cstdint>, only <stdint.h>.
 # modernize-return-braced-init-list: `return Error();` says that no error is
@@ -43,6 +40,12 @@ WarningsAsErrors: '*'
 # header beside an example is found as examples/.../font_error.h.
 HeaderFilterRegex: '(^|/)(src|examples)/'
 CheckOptions:
+  # A text in PROGMEM is a char array: F() and the tables of the groups need
+  # one. Any other array is a utl::array.
+  modernize-avoid-c-arrays.AllowStringArrays: true
+  # A struct with only public members is what Google calls a struct, and
+  # utl::array has to be one to stay an aggregate.
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
   # Google's "include what you use", with Arduino.h as what provides the
   # core: F(), __FlashStringHelper and the rest come through it.
   misc-include-cleaner.IgnoreHeaders: '.*/cores/arduino/.*'

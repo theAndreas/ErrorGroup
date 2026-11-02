@@ -11,6 +11,7 @@
 #define ERRORGROUP_SRC_UTL_ERROR_GROUP_H_
 
 #include <Arduino.h>
+#include <stddef.h>
 #include <stdint.h>
 
 namespace utl {
@@ -52,7 +53,21 @@ class ErrorGroup {
   // Returns `messages[code]`, read from a table in PROGMEM, or "unknown code"
   // if `code` lies beyond the table.
   static const __FlashStringHelper* LookUpMessage(const char* const* messages,
-                                                  uint8_t count, uint8_t code);
+                                                  size_t count, uint8_t code);
+
+  // The same for a table with data() and size(), a utl::array in PROGMEM:
+  //
+  //   const utl::array<const char*, 2> kMessages PROGMEM = {{...}};
+  //   return LookUpMessage(kMessages, code);
+  //
+  // A template rather than a parameter of utl::array, which this header
+  // cannot include: array.h needs Result, Result needs Error, and Error needs
+  // this header.
+  template <typename Table>
+  static const __FlashStringHelper* LookUpMessage(const Table& messages,
+                                                  uint8_t code) {
+    return LookUpMessage(messages.data(), messages.size(), code);
+  }
 };
 
 }  // namespace utl
