@@ -32,6 +32,14 @@ pass Result::AndThen stops at an error
 pass Result::AndThen into a Status
 pass Result::OrElse
 pass Result::OrElse keeps a value
+pass Result<void>::Ok() is ok
+pass Result<void> holds its Error
+pass Result<void> is a Status, and back
+pass Result::Map with a function that returns nothing
+pass Result::Map into Result<void> keeps the error
+pass Result<void>::Map makes a value
+pass Result<void>::Map keeps the error
+pass Result<void> recovers as a Status
 pass array::size
 pass array::operator[], front, back
 pass array in a range-based for

@@ -12,6 +12,19 @@
 
 namespace utl {
 
+template <typename T>
+class Result;
+
+namespace internal {
+
+// Calls `f(args...)` and makes a Result<U> of what it returns, for Map(). The
+// specialization for void calls `f` and returns ok, as `return f(args...);`
+// cannot make a Result of nothing. Defined below Result<void>.
+template <typename U>
+struct MapCall;
+
+}  // namespace internal
+
 // A value of T, or an Error. The value and a Status lie side by side, not in a
 // union: T needs a default constructor, for the value of a Result with an
 // error, and in return the class needs no tag, no placement new and no
@@ -73,12 +86,14 @@ class Result {
   }
 
   // Returns a Result of `f(value())` if there is no error, or else the error.
-  template <typename F>
-  auto Map(F f) const -> Result<decltype(f(internal::DeclVal<const T&>()))> {
+  // A Result<void> if `f` returns nothing: it is called for what it does.
+  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
+                            internal::DeclVal<const T&>()))>
+  Result<U> Map(F f) const {
     if (!IsOk()) {
       return *error();
     }
-    return f(value_);
+    return internal::MapCall<U>::Call(f, value_);
   }
 
   // Returns this if there is no error, or else `f(*error())`: `f` gets an Error
@@ -96,6 +111,57 @@ class Result {
   T value_;
   Status status_;
 };
+
+// The Result of a function that returns no value: ok or an Error, that is, a
+// Status, as Rust's Result<(), E>. It is a Status, so that it has all of it,
+// IsOk(), error(), AndThen(), OrElse() and the comparisons, and converts to
+// one and back. It exists for code that is generic in T, above all Map() with
+// a function that returns nothing; a function of a sketch returns a Status.
+template <>
+class Result<void> : public Status {
+ public:
+  // Ok, from an Error or from a code, as a Status.
+  using Status::Status;
+  constexpr Result() = default;
+  static constexpr Result Ok() { return Result(); }
+
+  // A Status, which is the same thing. Implicit, as the conversions of Status.
+  constexpr Result(const Status& status)  // NOLINT(runtime/explicit)
+      : Status(status) {}
+
+  const Status& status() const { return *this; }
+
+  // Returns a Result of `f()` if there is no error, or else the error: makes
+  // a value from "ok", as Rust's map() on a Result<(), E>.
+  template <typename F, typename U = decltype(internal::DeclVal<F&>()())>
+  Result<U> Map(F f) const {
+    if (!IsOk()) {
+      return *error();
+    }
+    return internal::MapCall<U>::Call(f);
+  }
+};
+
+namespace internal {
+
+template <typename U>
+struct MapCall {
+  template <typename F, typename... Args>
+  static Result<U> Call(F& f, const Args&... args) {
+    return f(args...);
+  }
+};
+
+template <>
+struct MapCall<void> {
+  template <typename F, typename... Args>
+  static Result<void> Call(F& f, const Args&... args) {
+    f(args...);
+    return Result<void>::Ok();
+  }
+};
+
+}  // namespace internal
 
 }  // namespace utl
 
