@@ -1,17 +1,34 @@
 # Utl
 
-A small toolkit for Arduino on the AVR, in the namespace `utl`:
+A small standard library for Arduino on the AVR. avr-gcc comes without the C++ standard library;
+Utl brings what a sketch or a library misses most, in the namespace `utl`: in the manner of the
+standard where it has an answer, and checked where the standard leaves a call undefined.
 
-- **Errors that say what went wrong and where it came from**, in 3 bytes each. An error is a code
-  within a group, `font: unknown char` or `bus: nack`, and a group is identified by its address:
-  no one hands out group ids, and a library or a sketch adds a group of its own without changing
-  this one. `Status` and `Result` carry them, with a fluent API after Rust. It tries out the
-  variant "by its address" of
-  [MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md).
-- **`array`, `span` and `make_array`**, which avr-gcc lacks, as it comes without a C++ standard
-  library; what can go out of range returns a `Result`.
+- **Errors** that say what went wrong and where it came from, in 3 bytes each: `Error`, `Status`
+  and `Result`, with a fluent API after Rust, and groups of errors that any library or sketch adds
+  without changing this one.
+- **Containers**: `array`, `span` and `make_array`, as in the standard, except that what can go
+  out of range returns a `Result` rather than being undefined.
 
-## Using it
+## Installing
+
+Not in the Library Manager yet. Clone it into the `libraries` folder of your sketchbook, under the
+name `Utl`:
+
+```bash
+git clone https://github.com/theAndreas/Utl ~/Arduino/libraries/Utl
+```
+
+It is for the AVR boards (`architectures=avr`); it is built and checked for the Uno.
+
+## Errors
+
+An error is a code within a group, `font: unknown char` or `bus: nack`, and a group is identified
+by its address: no one hands out group ids, and a library or a sketch adds a group of its own
+without changing this one. It tries out the variant "by its address" of
+[MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md).
+
+### Using them
 
 ```cpp
 #include <Utl.h>
@@ -47,7 +64,7 @@ A sketch includes `<Utl.h>`, and before any header of its own that includes `<ut
 arduino-cli finds a library only by a header directly in its `src/`, going through the includes
 in order, and only once it has found it does `<utl/...>` work.
 
-## Defining a group
+### Defining a group
 
 A group is an enum class of its codes, a class derived from `utl::ErrorGroup` with the name and
 the texts, one object of that class, and a `GetErrorGroup()` beside the enum. From
@@ -103,9 +120,9 @@ const __FlashStringHelper* FontErrorGroup::Message(uint8_t code) const {
   checks that when compiled.
 - **Codes of different groups may overlap**: two errors are equal only if group and code are.
 
-## The types
+### The types
 
-Everything lies in the namespace `utl`, one class per file in `src/utl/`:
+One class per file in `src/utl/`:
 
 - `Error` (`error.h`): always an error, a group and a code; there is no `Error()`. A code of a
   group converts to it implicitly, so `Error e{FontError::kUnknownChar}` and
@@ -121,6 +138,28 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
   its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
 - `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
+
+The fluent functions follow Rust's `Result`, on `Status` and `Result`: `AndThen()` goes on while
+there is no error, `Map()` changes the value, `OrElse()` recovers from an error and gets an
+`Error` that is one, `ValueOr()` gives a fallback. None calls its function when it has nothing
+to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
+and no RAM: the lambdas are inlined.
+
+## Containers
+
+```cpp
+utl::array<uint8_t, 3> rows = {{0x18, 0x3c, 0x18}};
+for (const uint8_t row : rows) { ... }
+rows.at(5).ValueOr(0);  // 0, as 5 lies beyond the end: at() returns a Result
+
+// A span takes a C array, a utl::array and another span alike.
+uint16_t Sum(utl::span<const uint8_t> values);
+Sum(rows);
+utl::span<uint8_t>(rows).subspan(1).Map(Sum);  // a Result: subspan() can fail
+
+constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<uint8_t, 2>
+```
+
 - `array<T, N>` (`array.h`) and `span<T>` (`span.h`): `std::array`, which avr-gcc lacks, and
   `std::span` from C++20, with the STL names Google allows for an STL-like entity. What the
   standard leaves undefined or throws on beyond the end returns a `Result` with
@@ -131,28 +170,11 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
   Arduino compiles with `-fpermissive -Wno-error=narrowing`.
 
-The fluent functions follow Rust's `Result`, on `Status` and `Result`: `AndThen()` goes on while
-there is no error, `Map()` changes the value, `OrElse()` recovers from an error and gets an
-`Error` that is one, `ValueOr()` gives a fallback. None calls its function when it has nothing
-to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
-and no RAM: the lambdas are inlined.
-
 ## Examples
 
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
 - `SelfCheck`: checks the library and prints a line per check, then the number that failed.
   `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`.
-
-## Installing
-
-Not in the Library Manager yet. Clone it into the `libraries` folder of your sketchbook, under the
-name `Utl`:
-
-```bash
-git clone https://github.com/theAndreas/Utl ~/Arduino/libraries/Utl
-```
-
-It is for the AVR boards (`architectures=avr`); it is built and checked for the Uno.
 
 ## vtables in flash
 
