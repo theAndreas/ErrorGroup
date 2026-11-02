@@ -36,6 +36,12 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   `error == FontError::kUnknownChar` need no function around the code; no other type converts.
 - `Result<T>` (`result.h`): a value or an error, side by side rather than in a union.
 - `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
+- `array<T, N>` (`array.h`) and `span<T>` (`span.h`): `std::array`, which avr-gcc lacks, and
+  `std::span` from C++20, with the STL names Google allows for an STL-like entity. What the
+  standard leaves undefined or throws on beyond the end returns a `Result` with
+  `IndexError::kOutOfRange` instead: `at()`, and `first()`, `last()`, `subspan()` of a span.
+  `operator[]` stays unchecked. The group `IndexError` costs its vtable and 2 bytes only in a
+  sketch that calls one of these.
 
 The fluent functions follow Rust's `Result`: `AndThen()` goes on while there is no error, `Map()`
 changes the value, `OrElse()` recovers from an error, `ValueOr()` gives a fallback. None calls its
@@ -46,7 +52,8 @@ A sketch includes `<ErrorGroup.h>`: arduino-cli finds a library only by a header
 `src/`, and once found, `<utl/...>` works in every file of the sketch.
 
 A group is a class derived from `ErrorGroup`, an enum class of its codes, one object defined in one
-`.cpp` file, and a `GetErrorGroup()` beside the enum; `examples/Basics` defines two.
+`.cpp` file, and a `GetErrorGroup()` beside the enum; `examples/Basics` defines two. Its texts lie
+in a `utl::array` in `PROGMEM`, which `LookUpMessage()` reads.
 
 ## vtables in flash
 
@@ -61,12 +68,13 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 
 | Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
 |---|---|---|---|---|
-| Basics | 2452 | 2454 | 208 | 174 |
-| SelfCheck | 3680 | 3682 | 211 | 177 |
+| Basics | 2456 | 2458 | 208 | 174 |
+| SelfCheck | 5600 | 5602 | 221 | 179 |
 
-`arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). The 34 bytes are the vtables of the
-two groups, 8 bytes each, and of `HardwareSerial`, 18. The group objects keep their 2 bytes of
-vptr in RAM, as their address is the group.
+`arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
+vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as
+`at()` brings in a third group, `IndexError`. The group objects keep their 2 bytes of vptr in RAM,
+as their address is the group.
 
 **Every C++ file of a sketch has to be compiled with the plugin**, the Arduino core included. A
 file compiled without it reads a vtable in flash from RAM and jumps anywhere; the linker does not

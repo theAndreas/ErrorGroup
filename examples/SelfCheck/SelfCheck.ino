@@ -8,6 +8,7 @@
 #include <ErrorGroup.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "alpha_error.h"
@@ -16,16 +17,23 @@
 using self_check::AlphaError;
 using self_check::BetaError;
 using utl::Error;
+using utl::IndexError;
 using utl::Result;
+using utl::span;
 
 static_assert(sizeof(Error) == 3, "an Error is a pointer and a byte");
 static_assert(sizeof(Result<uint8_t>) == 4, "a Result is a value and an Error");
+static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
+static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
+constexpr utl::array<uint8_t, 3> kConstantRows = {{1, 2, 3}};
+static_assert(kConstantRows[1] == 2 && kConstantRows.size() == 3,
+              "an array is constexpr");
 
 namespace {
 
 // Volatile, so that the compiler cannot fold the checks away and the virtual
 // calls really go through the vtable.
-volatile uint8_t codes[] = {0, 1, 7};
+utl::array<volatile uint8_t, 3> codes = {{0, 1, 7}};
 
 uint8_t failed = 0;
 
@@ -47,7 +55,7 @@ void PrintError(const Error& error) {
 
 // Returns codes[index], or BetaError::kFirst past the end.
 Result<uint8_t> GetCode(uint8_t index) {
-  if (index >= sizeof(codes)) {
+  if (index >= codes.size()) {
     return BetaError::kFirst;
   }
   // Read first: a const reference does not bind to a volatile.
@@ -171,6 +179,79 @@ void CheckResult() {
   Check(kept.value() == 7 && calls == 0, F("Result::OrElse keeps a value"));
 }
 
+void CheckArray() {
+  utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
+
+  Check(rows.size() == 3 && !rows.empty(), F("array::size"));
+  Check(rows[2] == 7 && rows.front() == 0 && rows.back() == 7,
+        F("array::operator[], front, back"));
+  uint16_t sum = 0;
+  for (const uint8_t row : rows) {
+    sum += row;
+  }
+  Check(sum == 8, F("array in a range-based for"));
+  Check(rows.at(2).ValueOr(0) == 7, F("array::at"));
+  const Result<uint8_t> beyond = rows.at(3);
+  PrintError(beyond.error());
+  Check(beyond.error() == IndexError::kOutOfRange,
+        F("array::at beyond the end"));
+  Check(rows.data() == &rows.front(), F("array::data"));
+
+  utl::array<uint8_t, 3> copy = rows;
+  Check(copy == rows, F("array copies and compares"));
+  copy.fill(5);
+  Check(copy != rows && copy[0] == 5 && copy[2] == 5, F("array::fill"));
+}
+
+// Takes a C array, a utl::array and a span alike, through a span of const.
+uint16_t Sum(span<const uint8_t> values) {
+  uint16_t sum = 0;
+  for (const uint8_t value : values) {
+    sum += value;
+  }
+  return sum;
+}
+
+void CheckSpan() {
+  utl::array<uint8_t, 4> rows = {{codes[0], codes[1], codes[2], 3}};
+  const utl::array<uint8_t, 4>& const_rows = rows;
+  // The C array is what this checks a span of.
+  uint8_t c_array[] = {codes[2], codes[2]};  // NOLINT(modernize-avoid-c-arrays)
+  const span<uint8_t> all = rows;
+
+  Check(span<uint8_t>().empty() && span<uint8_t>().data() == nullptr,
+        F("span() is empty"));
+  Check(all.size() == 4 && all.data() == rows.data() && all.size_bytes() == 4,
+        F("span of an array"));
+  Check(Sum(rows) == 11 && Sum(const_rows) == 11 && Sum(c_array) == 14 &&
+            Sum(all) == 11,
+        F("span of const from array, const array, C array, span"));
+  all[0] = 9;
+  Check(rows[0] == 9 && all.front() == 9 && all.back() == 3,
+        F("span writes through"));
+  all[0] = 0;
+
+  Check(
+      all.at(3).ValueOr(0) == 3 && all.at(4).error() == IndexError::kOutOfRange,
+      F("span::at"));
+  Check(Sum(all.first(2).value()) == 1 && Sum(all.last(1).value()) == 3,
+        F("span::first, last"));
+  Check(Sum(all.subspan(1, 2).value()) == 8 && all.subspan(4).value().empty(),
+        F("span::subspan"));
+  Check(all.first(5).error() == IndexError::kOutOfRange &&
+            all.last(5).error() == IndexError::kOutOfRange &&
+            all.subspan(5).error() == IndexError::kOutOfRange &&
+            all.subspan(2, 3).error() == IndexError::kOutOfRange,
+        F("span beyond the end"));
+  Check(all.subspan(1, static_cast<size_t>(-1)).error() ==
+            IndexError::kOutOfRange,
+        F("span::subspan does not overflow"));
+  Check(all.subspan(1)
+                .AndThen([](span<uint8_t> rest) { return rest.at(1); })
+                .ValueOr(0) == 7,
+        F("span with the fluent API"));
+}
+
 }  // namespace
 
 void setup() {
@@ -179,6 +260,8 @@ void setup() {
   CheckError();
   CheckErrorFluent();
   CheckResult();
+  CheckArray();
+  CheckSpan();
 
   Serial.print(F("failed: "));
   Serial.println(failed);

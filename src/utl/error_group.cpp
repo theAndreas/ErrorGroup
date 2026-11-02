@@ -4,12 +4,13 @@
 #include "utl/error_group.h"
 
 #include <avr/pgmspace.h>
+#include <stddef.h>
 #include <stdint.h>
 
 namespace utl {
 
 const __FlashStringHelper* ErrorGroup::LookUpMessage(
-    const char* const* messages, uint8_t count, uint8_t code) {
+    const char* const* messages, size_t count, uint8_t code) {
   if (code >= count) {
     return F("unknown code");
   }

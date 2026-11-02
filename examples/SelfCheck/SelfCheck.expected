@@ -29,4 +29,23 @@ pass Result::AndThen stops at an error
 pass Result::AndThen into an Error
 pass Result::OrElse
 pass Result::OrElse keeps a value
+pass array::size
+pass array::operator[], front, back
+pass array in a range-based for
+pass array::at
+index: out of range
+pass array::at beyond the end
+pass array::data
+pass array copies and compares
+pass array::fill
+pass span() is empty
+pass span of an array
+pass span of const from array, const array, C array, span
+pass span writes through
+pass span::at
+pass span::first, last
+pass span::subspan
+pass span beyond the end
+pass span::subspan does not overflow
+pass span with the fluent API
 failed: 0

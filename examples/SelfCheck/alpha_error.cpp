@@ -5,6 +5,7 @@
 
 #include <avr/pgmspace.h>
 #include <stdint.h>
+#include <utl/array.h>
 #include <utl/error.h>
 
 namespace self_check {
@@ -14,7 +15,7 @@ const char kFirstText[] PROGMEM = "alpha first";
 const char kSecondText[] PROGMEM = "alpha second";
 
 // In the order of AlphaError.
-const char* const kMessages[] PROGMEM = {
+const utl::array<const char*, 2> kMessages PROGMEM = {
     kFirstText,
     kSecondText,
 };
@@ -26,8 +27,7 @@ constexpr AlphaErrorGroup kAlphaErrorGroup{};
 const __FlashStringHelper* AlphaErrorGroup::Name() const { return F("alpha"); }
 
 const __FlashStringHelper* AlphaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, sizeof(kMessages) / sizeof(kMessages[0]),
-                       code);
+  return LookUpMessage(kMessages, code);
 }
 
 utl::Error MakeAlphaSecondElsewhere() { return AlphaError::kSecond; }
