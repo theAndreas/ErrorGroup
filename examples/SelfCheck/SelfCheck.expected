@@ -6,10 +6,27 @@ beta: unknown code
 pass Error() is ok
 pass an error is not ok
 pass compares with its enum
+pass with the enum on the left
 pass differs in the code
 pass differs in the group
 pass same code, other group
-pass MakeError
+pass made from its enum
 pass equal across translation units
 pass assignable
+pass Error::AndThen goes on without an error
+pass Error::AndThen stops at an error
+pass Error::AndThen into a Result
+pass Error::OrElse recovers
+pass Error::OrElse gets the error
+pass Error::OrElse leaves no error
+pass Result holds a value
+pass Result holds an error
+pass Result::ValueOr
+pass Result::Map
+pass Result::Map keeps the error
+pass Result::AndThen chains
+pass Result::AndThen stops at an error
+pass Result::AndThen into an Error
+pass Result::OrElse
+pass Result::OrElse keeps a value
 failed: 0
