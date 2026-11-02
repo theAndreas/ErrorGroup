@@ -24,7 +24,9 @@ struct nullopt_t {
 constexpr nullopt_t nullopt{0};
 
 // A value of T, or none, as std::optional, with its names, as Google allows
-// for an STL-like entity:
+// for an STL-like entity, except where Result does the same: HasValue(),
+// ValueOr(), OkOr(), AndThen(), Map() and OrElse() are named as in Result, so
+// that "a value or none" and "a value or an error" read alike:
 //
 //   utl::optional<uint8_t> Find(char c) {
 //     ...
@@ -32,8 +34,8 @@ constexpr nullopt_t nullopt{0};
 //   }
 //
 //   if (const utl::optional<uint8_t> index = Find(c)) { Use(*index); }
-//   Find(c).value_or(0);
-//   Find(c).ok_or(FontError::kUnknownChar);  // a Result, with your error
+//   Find(c).ValueOr(0);
+//   Find(c).OkOr(FontError::kUnknownChar);  // a Result, with your error
 //
 // For "none" that is no error. A function that can fail returns a Result.
 //
@@ -60,7 +62,7 @@ class optional {
   constexpr optional(const T& value)  // NOLINT(runtime/explicit)
       : value_(value), has_value_(true) {}
 
-  constexpr bool has_value() const { return has_value_; }
+  constexpr bool HasValue() const { return has_value_; }
   constexpr explicit operator bool() const { return has_value_; }
 
   // Unchecked, as in std::optional: T() if empty. With UTL_CHECK_ACCESS at 1
@@ -82,44 +84,45 @@ class optional {
     return value_;
   }
 
-  constexpr T value_or(const T& fallback) const {
+  constexpr T ValueOr(const T& fallback) const {
     return has_value_ ? value_ : fallback;
   }
 
   // The value, or `error`, as Rust's ok_or(): an error of the caller's own
   // group where value() would give OptionalError::kEmpty.
-  Result<T> ok_or(const Error& error) const {
+  Result<T> OkOr(const Error& error) const {
     if (!has_value_) {
       return error;
     }
     return value_;
   }
 
-  // The fluent functions of C++23's std::optional, which none of them calls
-  // when there is no value to give it. and_then(): `f(value)` if there is a
+  // The fluent functions, named as in Result; C++23's std::optional calls them
+  // and_then(), transform() and or_else(). None of them calls `f` when there
+  // is no value to give it. AndThen(): `f(value)` if there is a
   // value, `f` returning an optional, or else an empty optional of that type.
   template <typename F>
-  auto and_then(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
+  auto AndThen(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
     if (!has_value_) {
       return nullopt;
     }
     return f(value_);
   }
 
-  // transform(): an optional of `f(value)` if there is a value, or else an
-  // empty one. cpplint takes the name for std::transform, which it is not.
+  // Map(): an optional of `f(value)` if there is a value, or else an empty
+  // one.
   template <typename F, typename U = decltype(internal::DeclVal<F&>()(
                             internal::DeclVal<const T&>()))>
-  optional<U> transform(F f) const {  // NOLINT(build/include_what_you_use)
+  optional<U> Map(F f) const {
     if (!has_value_) {
       return nullopt;
     }
     return f(value_);
   }
 
-  // or_else(): this if there is a value, or else `f()`, an optional<T>.
+  // OrElse(): this if there is a value, or else `f()`, an optional<T>.
   template <typename F>
-  optional or_else(F f) const {
+  optional OrElse(F f) const {
     if (has_value_) {
       return *this;
     }

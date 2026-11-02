@@ -210,17 +210,20 @@ constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<u
 utl::optional<uint8_t> FindRow(uint8_t value);  // returns utl::nullopt if there is none
 
 if (const utl::optional<uint8_t> row = FindRow(0x3c)) { Use(*row); }
-FindRow(0x3c).value_or(0);
+FindRow(0x3c).ValueOr(0);
 FindRow(0x3c).value();                         // a Result: OptionalError::kEmpty if none
-FindRow(0x3c).ok_or(PanelError::kNoSuchRow);  // a Result, with an error of your own
+FindRow(0x3c).OkOr(PanelError::kNoSuchRow);  // a Result, with an error of your own
 ```
 
-`optional<T>` (`optional.h`) is `std::optional`, with its names, for "none" that is no error; a
-function that can fail returns a `Result`. The value and the flag lie side by side, as in a
-`Result`, so `T` needs a default constructor; an `optional<uint8_t>` is 2 bytes. `value()` cannot
-throw `bad_optional_access`, so it returns a `Result` with `OptionalError::kEmpty`, the group
-`optional`; `ok_or()`, as in Rust, gives your own error instead. `and_then()`, `transform()` and
-`or_else()` are the fluent functions of C++23's `std::optional`.
+`optional<T>` (`optional.h`) is `std::optional`, for "none" that is no error; a function that can
+fail returns a `Result`. It keeps the standard's names, except where `Result` does the same:
+`HasValue()`, `ValueOr()`, `OkOr()`, `AndThen()`, `Map()` and `OrElse()` are named as there, so
+that a value or none and a value or an error read alike. The value and the flag lie side by
+side, as in a `Result`, so `T` needs a default constructor; an `optional<uint8_t>` is 2 bytes.
+`value()` cannot throw `bad_optional_access`, so it returns a `Result` with
+`OptionalError::kEmpty`, the group `optional`; `OkOr()`, as `ok_or()` in Rust, gives your own
+error instead. `AndThen()`, `Map()` and `OrElse()` are what C++23's `std::optional` calls
+`and_then()`, `transform()` and `or_else()`.
 
 ## Text: string_view and flash_string_view
 
@@ -297,7 +300,7 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, ram | Flash, flash | Flash, notexts | Flash, checked | RAM, ram | RAM, flash | RAM, notexts | RAM, checked |
 |---|---|---|---|---|---|---|---|---|
 | Basics | 2376 | 2378 | 2330 | 2376 | 208 | 174 | 208 | 208 |
-| SelfCheck | 12354 | 12356 | 12266 | 13848 | 303 | 253 | 303 | 305 |
+| SelfCheck | 12344 | 12346 | 12256 | 13838 | 303 | 253 | 303 | 305 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0, `checked` with `UTL_CHECK_ACCESS` at 1.
