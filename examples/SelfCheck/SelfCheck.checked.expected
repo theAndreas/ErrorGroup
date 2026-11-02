@@ -67,15 +67,15 @@ pass optional is empty
 pass optional holds a value
 optional: empty
 pass optional::value returns a Result
-pass optional::value_or
-pass optional::ok_or
+pass optional::ValueOr
+pass optional::OkOr
 pass optional::reset
 pass optional::emplace
 pass optional takes nullopt
 pass optional = {} is empty
-pass optional::and_then
-pass optional::transform
-pass optional::or_else
+pass optional::AndThen
+pass optional::Map
+pass optional::OrElse
 pass string_view of a string
 pass string_view::starts_with, ends_with
 pass string_view::find

@@ -273,10 +273,10 @@ void CheckOptional() {
   const utl::optional<uint8_t> none = FindCode(42);
   const utl::optional<uint8_t> found = FindCode(7);
 
-  Check(!none.has_value() && !none && none == utl::nullopt &&
+  Check(!none.HasValue() && !none && none == utl::nullopt &&
             utl::optional<uint8_t>() == none,
         F("optional is empty"));
-  Check(found.has_value() && static_cast<bool>(found) && *found == 2 &&
+  Check(found.HasValue() && static_cast<bool>(found) && *found == 2 &&
             found == uint8_t{2} && found != none,
         F("optional holds a value"));
 
@@ -284,43 +284,42 @@ void CheckOptional() {
   Check(found.value().ValueOr(0) == 2 &&
             none.value().status() == utl::OptionalError::kEmpty,
         F("optional::value returns a Result"));
-  Check(found.value_or(9) == 2 && none.value_or(9) == 9,
-        F("optional::value_or"));
-  Check(none.ok_or(AlphaError::kSecond).status() == AlphaError::kSecond &&
-            found.ok_or(AlphaError::kSecond).ValueOr(0) == 2,
-        F("optional::ok_or"));
+  Check(found.ValueOr(9) == 2 && none.ValueOr(9) == 9, F("optional::ValueOr"));
+  Check(none.OkOr(AlphaError::kSecond).status() == AlphaError::kSecond &&
+            found.OkOr(AlphaError::kSecond).ValueOr(0) == 2,
+        F("optional::OkOr"));
 
   utl::optional<uint8_t> changed = found;
   changed.reset();
-  Check(!changed.has_value(), F("optional::reset"));
+  Check(!changed.HasValue(), F("optional::reset"));
   changed.emplace(5);
-  Check(changed.has_value() && *changed == 5 && changed != found,
+  Check(changed.HasValue() && *changed == 5 && changed != found,
         F("optional::emplace"));
   changed = utl::nullopt;
   Check(changed == none, F("optional takes nullopt"));
   changed.emplace(6);
   changed = {};
-  Check(!changed.has_value(), F("optional = {} is empty"));
+  Check(!changed.HasValue(), F("optional = {} is empty"));
 
   uint8_t calls = 0;
   const auto find_again = [](uint8_t index) { return FindCode(index); };
-  Check(FindCode(1).and_then(find_again) == uint8_t{1} &&
-            found.and_then(find_again) == utl::nullopt,
-        F("optional::and_then"));
-  Check(found.transform([](uint8_t index) { return index * 10; }) == 20 &&
-            none.transform([&calls](uint8_t) {
+  Check(FindCode(1).AndThen(find_again) == uint8_t{1} &&
+            found.AndThen(find_again) == utl::nullopt,
+        F("optional::AndThen"));
+  Check(found.Map([](uint8_t index) { return index * 10; }) == 20 &&
+            none.Map([&calls](uint8_t) {
               ++calls;
               return 1;
             }) == utl::nullopt &&
             calls == 0,
-        F("optional::transform"));
+        F("optional::Map"));
   const auto three = [&calls] {
     ++calls;
     return utl::optional<uint8_t>(3);
   };
-  Check(none.or_else(three) == uint8_t{3} && calls == 1 &&
-            found.or_else(three) == uint8_t{2} && calls == 1,
-        F("optional::or_else"));
+  Check(none.OrElse(three) == uint8_t{3} && calls == 1 &&
+            found.OrElse(three) == uint8_t{2} && calls == 1,
+        F("optional::OrElse"));
 }
 
 void CheckStringView() {
