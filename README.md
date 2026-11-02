@@ -8,19 +8,44 @@ own without changing the library. It is the variant "by its address" of
 tried out on its own.
 
 ```cpp
-Error SetChar(char c) {
+#include <ErrorGroup.h>
+
+utl::Error SetChar(char c) {
   if (c < ' ') {
-    return MakeError(FontError::kUnknownChar);
+    return FontError::kUnknownChar;  // a code of a group is an error
   }
-  return Error();  // no error
+  return utl::Error();  // no error
 }
 
-const Error error = SetChar(c);
+utl::Result<uint8_t> Receive() {
+  if (!acknowledged) {
+    return BusError::kNack;
+  }
+  return received;
+}
+
+const utl::Error error = Receive().AndThen([](uint8_t c) { return SetChar(c); });
 if (error == FontError::kUnknownChar) { ... }
 Serial.println(error.Message());  // "unknown char", from flash
 ```
 
-A group is a class derived from `ErrorGroup`, an enum of its codes, one object defined in one
+Everything lies in the namespace `utl`, one class per file in `src/utl/`:
+
+- `Error` (`error.h`): a group and a code, or no error. A code of a group converts to it
+  implicitly, so `return FontError::kUnknownChar;`, `Error e{FontError::kUnknownChar}` and
+  `error == FontError::kUnknownChar` need no function around the code; no other type converts.
+- `Result<T>` (`result.h`): a value or an error, side by side rather than in a union.
+- `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
+
+The fluent functions follow Rust's `Result`: `AndThen()` goes on while there is no error, `Map()`
+changes the value, `OrElse()` recovers from an error, `ValueOr()` gives a fallback. None calls its
+function when it has nothing to give it. A chain of three steps costs 14 bytes of flash more than
+the same `if`s written out, and no RAM: the lambdas are inlined.
+
+A sketch includes `<ErrorGroup.h>`: arduino-cli finds a library only by a header directly in its
+`src/`, and once found, `<utl/...>` works in every file of the sketch.
+
+A group is a class derived from `ErrorGroup`, an enum class of its codes, one object defined in one
 `.cpp` file, and a `GetErrorGroup()` beside the enum; `examples/Basics` defines two.
 
 ## vtables in flash
@@ -36,8 +61,8 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 
 | Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
 |---|---|---|---|---|
-| Basics | 2454 | 2456 | 208 | 174 |
-| SelfCheck | 2538 | 2540 | 211 | 177 |
+| Basics | 2452 | 2454 | 208 | 174 |
+| SelfCheck | 3680 | 3682 | 211 | 177 |
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). The 34 bytes are the vtables of the
 two groups, 8 bytes each, and of `HardwareSerial`, 18. The group objects keep their 2 bytes of
@@ -75,7 +100,8 @@ on top; the table of flash and RAM lands in the summary of the job "Examples on 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
 `tools/lint.sh` fetches its tools from PyPI through `uvx`, at fixed versions, so that nothing has to
-be installed. Two exceptions, both forced by Arduino: sources end in `.cpp`, as `arduino-cli`
-compiles no `.cc`, and an include names a header without its directory (see `CPPLINT.cfg`).
+be installed. Three exceptions, all forced by Arduino: sources end in `.cpp`, as `arduino-cli`
+compiles no `.cc`; the header `ErrorGroup.h` is named after the library, as Arduino expects;
+and a sketch includes its own headers without a directory (see `examples/CPPLINT.cfg`).
 
 Nothing has run on a board yet; `SelfCheck` prints the same there as in simavr.

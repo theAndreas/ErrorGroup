@@ -29,11 +29,14 @@ main() {
   fi
 
   cd "${ROOT_DIR}"
+  # Tracked files and new ones not yet added, but not what .gitignore names:
+  # a file is checked before its first commit, not after.
+  local files=(git ls-files --cached --others --exclude-standard)
   local sources
-  mapfile -t sources < <(git ls-files 'src/*' 'examples/*' \
+  mapfile -t sources < <("${files[@]}" 'src/*' 'examples/*' \
     | grep -E '\.(h|cpp|ino)$')
   local scripts
-  mapfile -t scripts < <(git ls-files 'tools/*.sh')
+  mapfile -t scripts < <("${files[@]}" 'tools/*.sh')
 
   local failed=0
   if ((fix)); then

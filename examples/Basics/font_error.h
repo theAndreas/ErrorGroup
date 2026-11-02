@@ -7,7 +7,7 @@
 #ifndef ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
 #define ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
 
-#include <error_group.h>
+#include <utl/error_group.h>
 
 namespace font {
 
@@ -16,7 +16,7 @@ enum class FontError : uint8_t {
   kNullText,
 };
 
-class FontErrorGroup : public error_group::ErrorGroup {
+class FontErrorGroup : public utl::ErrorGroup {
  public:
   constexpr FontErrorGroup() = default;
 
@@ -27,7 +27,7 @@ class FontErrorGroup : public error_group::ErrorGroup {
 // Defined in font_error.cpp, and nowhere else: its address is the group.
 extern const FontErrorGroup kFontErrorGroup;
 
-inline const error_group::ErrorGroup& GetErrorGroup(FontError) {
+inline const utl::ErrorGroup& GetErrorGroup(FontError) {
   return kFontErrorGroup;
 }
 
