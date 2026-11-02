@@ -49,10 +49,9 @@ using ArrayPointer = T (*)[];
 // Names a type only if an array of From may be seen as an array of To, the
 // test std::span makes: it adds const or volatile, as int to const int, but
 // it never turns Derived into Base, whose elements would lie at other
-// distances, nor long into int. cpplint takes the line clang-format wraps for
-// indentation within the namespace.
+// distances, nor long into int.
 template <typename From, typename To>
-using ArrayConvertible =  // NOLINTNEXTLINE(whitespace/indent_namespace)
+using ArrayConvertible =
     decltype(ConvertTo<ArrayPointer<To>>(DeclVal<ArrayPointer<From>>()));
 
 }  // namespace internal
