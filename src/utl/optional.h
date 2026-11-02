@@ -7,6 +7,7 @@
 #define UTL_SRC_UTL_OPTIONAL_H_
 
 #include "utl/error.h"
+#include "utl/misuse.h"
 #include "utl/optional_error.h"
 #include "utl/result.h"
 
@@ -61,11 +62,16 @@ class optional {
   constexpr bool has_value() const { return has_value_; }
   constexpr explicit operator bool() const { return has_value_; }
 
-  // Unchecked, as in std::optional: T() if empty.
-  T& operator*() { return value_; }
-  constexpr const T& operator*() const { return value_; }
-  T* operator->() { return &value_; }
-  constexpr const T* operator->() const { return &value_; }
+  // Unchecked, as in std::optional: T() if empty. With UTL_CHECK_ACCESS at 1
+  // an empty one is reported first.
+  T& operator*() { return static_cast<void>(Checked()), value_; }
+  constexpr const T& operator*() const {
+    return static_cast<void>(Checked()), value_;
+  }
+  T* operator->() { return static_cast<void>(Checked()), &value_; }
+  constexpr const T* operator->() const {
+    return static_cast<void>(Checked()), &value_;
+  }
 
   // The value, or OptionalError::kEmpty. A copy, as a Result holds a value.
   Result<T> value() const {
@@ -113,6 +119,10 @@ class optional {
   }
 
  private:
+  constexpr bool Checked() const {
+    return internal::Check(has_value_, Misuse::kOptionalValue);
+  }
+
   T value_;
   bool has_value_;
 };

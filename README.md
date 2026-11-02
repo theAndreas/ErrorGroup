@@ -198,8 +198,8 @@ constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<u
   `std::span` from C++20, with the STL names Google allows for an STL-like entity. What the
   standard leaves undefined or throws on beyond the end returns a `Result` with
   `IndexError::kOutOfRange` instead: `at()`, and `first()`, `last()`, `subspan()` of a span.
-  `operator[]` stays unchecked. The group `IndexError` costs its vtable and 2 bytes only in a
-  sketch that calls one of these.
+  `operator[]` stays unchecked, unless [checked](#checked-access). The group `IndexError` costs
+  its vtable and 2 bytes only in a sketch that calls one of these.
 - `make_array(...)` (`array.h`): an array whose type and size come from its arguments, what
   `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
   Arduino compiles with `-fpermissive -Wno-error=narrowing`.
@@ -249,6 +249,30 @@ RAM gives whatever lies at that address in RAM; so it reads every char with `pgm
 takes the type `F()` gives rather than a `const char*`, and its `operator[]` returns a char, not a
 reference. Both are 4 bytes, a pointer and a size, and own nothing.
 
+## Checked access
+
+What the standard leaves undefined, or what gives a placeholder here, can be reported before it
+happens, for finding a mistake while a sketch is written, as the DET of AUTOSAR Classic does:
+`value()` of a `Result` with an error, `*` and `->` of an empty `optional`, `[]` beyond the end,
+and `front()` or `back()` of an empty `span` or `string_view`. With `UTL_CHECK_ACCESS` at 1, set
+as `UTL_ERROR_TEXTS` is, each goes to `utl::ReportMisuse()` first, which prints
+`utl: [] beyond the end` on `Serial`:
+
+```cpp
+// A report of your own, in a .cpp of the sketch, replaces the default.
+namespace utl {
+void ReportMisuse(Misuse) {
+  digitalWrite(LED_BUILTIN, HIGH);  // stays lit: something was misused
+}
+}  // namespace utl
+```
+
+At 0, the default, nothing of it is compiled: every example is the same to the byte as without
+it. The default report lies in a file of its own and the library is linked as an archive
+(`dot_a_linkage`), as in MaxMatrix: a sketch with a report of its own pulls in no `Serial`, 13
+bytes of RAM against 190 with the default. A report of your own belongs in a `.cpp` of the
+sketch, not the `.ino`, for which arduino-cli writes prototypes outside the namespace.
+
 ## Examples
 
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
@@ -266,13 +290,14 @@ flash instead: it marks the vtable types `__flash`, and a virtual call then read
 pointer with `LPM`. A copy of it, at upstream commit `fbc6ed9`, lies in `tools/avr-flash-vtbl/`
 under its own licence, the GPL v2; it is a tool of the build and links nothing into a sketch.
 
-| Example | Flash, ram | Flash, flash | Flash, notexts | RAM, ram | RAM, flash | RAM, notexts |
-|---|---|---|---|---|---|---|
-| Basics | 2376 | 2378 | 2330 | 208 | 174 | 208 |
-| SelfCheck | 10416 | 10418 | 10328 | 277 | 227 | 277 |
+| Example | Flash, ram | Flash, flash | Flash, notexts | Flash, checked | RAM, ram | RAM, flash | RAM, notexts | RAM, checked |
+|---|---|---|---|---|---|---|---|---|
+| Basics | 2376 | 2378 | 2330 | 2376 | 208 | 174 | 208 | 208 |
+| SelfCheck | 10416 | 10418 | 10328 | 11576 | 277 | 227 | 277 | 279 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
-plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0.
+plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0, `checked` with `UTL_CHECK_ACCESS` at 1.
+`SelfCheck` checks more in `checked`, which is most of what it adds there.
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
 vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 50, as

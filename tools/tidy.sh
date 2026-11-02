@@ -77,8 +77,8 @@ main() {
   local flags
   flags="$(arduino_flags)"
 
-  # Once as built by default, and once with the texts of the groups left
-  # out: each takes other branches of #if UTL_ERROR_TEXTS.
+  # As built by default, with the texts of the groups left out, and with
+  # misuse checked: each takes other branches of #if.
   local failed=0
   write_database "${TIDY_DIR}/texts" "${flags}" '[]' "${sources[@]}"
   echo "clang-tidy, with texts:"
@@ -88,6 +88,11 @@ main() {
     '["-DUTL_ERROR_TEXTS=0"]' "${sources[@]}"
   echo "clang-tidy, without texts:"
   uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/notexts" --quiet \
+    "${sources[@]}" || failed=1
+  write_database "${TIDY_DIR}/checked" "${flags}" \
+    '["-DUTL_CHECK_ACCESS=1"]' "${sources[@]}"
+  echo "clang-tidy, with misuse checked:"
+  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/checked" --quiet \
     "${sources[@]}" || failed=1
   exit "${failed}"
 }

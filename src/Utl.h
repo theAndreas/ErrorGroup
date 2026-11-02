@@ -15,6 +15,7 @@
 #include "utl/error_group.h"        // IWYU pragma: export
 #include "utl/flash_string_view.h"  // IWYU pragma: export
 #include "utl/index_error.h"        // IWYU pragma: export
+#include "utl/misuse.h"             // IWYU pragma: export
 #include "utl/optional.h"           // IWYU pragma: export
 #include "utl/optional_error.h"     // IWYU pragma: export
 #include "utl/result.h"             // IWYU pragma: export

@@ -26,4 +26,14 @@
 #define UTL_ERROR_TEXTS 1
 #endif
 
+// 0, the default: nothing is checked, and nothing is compiled for it. 1: an
+// access that the standard leaves undefined, or that gives a placeholder
+// here, is reported to utl::ReportMisuse() before it happens: value() of a
+// Result with an error, * and -> of an empty optional, [] beyond the end, and
+// front() or back() of an empty span or string_view. For finding a mistake
+// while a sketch is written, as the DET of AUTOSAR Classic; see misuse.h.
+#ifndef UTL_CHECK_ACCESS
+#define UTL_CHECK_ACCESS 0
+#endif
+
 #endif  // UTL_SRC_UTL_CONFIG_H_

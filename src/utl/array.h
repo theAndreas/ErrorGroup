@@ -10,6 +10,7 @@
 
 #include "utl/index_error.h"
 #include "utl/internal/type_traits.h"
+#include "utl/misuse.h"
 #include "utl/result.h"
 
 namespace utl {
@@ -49,10 +50,15 @@ struct array {
   constexpr size_type max_size() const { return N; }
   constexpr bool empty() const { return false; }
 
-  // Unchecked, as in std::array: an index beyond the end is undefined.
-  reference operator[](size_type index) { return elements[index]; }
+  // Unchecked, as in std::array: an index beyond the end is undefined. With
+  // UTL_CHECK_ACCESS at 1 it is reported first.
+  reference operator[](size_type index) {
+    return static_cast<void>(internal::Check(index < N, Misuse::kIndex)),
+           elements[index];
+  }
   constexpr const_reference operator[](size_type index) const {
-    return elements[index];
+    return static_cast<void>(internal::Check(index < N, Misuse::kIndex)),
+           elements[index];
   }
 
   // The element at `index`, or IndexError::kOutOfRange. A copy, not a
