@@ -131,6 +131,26 @@ class basic_flash_string_view {
            memcmp_P(prefix.data(), data_, prefix.size()) == 0;
   }
 
+  bool ends_with(basic_string_view<CharT> suffix) const {
+    return suffix.size() <= size_ &&
+           memcmp_P(suffix.data(), data_ + (size_ - suffix.size()),
+                    suffix.size()) == 0;
+  }
+
+  // The position of the first `text`, a text in RAM, from `position` on, or
+  // npos.
+  size_type find(basic_string_view<CharT> text, size_type position = 0) const {
+    if (text.size() > size_) {
+      return npos;
+    }
+    for (size_type index = position; index <= size_ - text.size(); ++index) {
+      if (memcmp_P(text.data(), data_ + index, text.size()) == 0) {
+        return index;
+      }
+    }
+    return npos;
+  }
+
   // The position of the first `c` from `position` on, or npos.
   size_type find(CharT c, size_type position = 0) const {
     for (size_type index = position; index < size_; ++index) {
@@ -175,6 +195,11 @@ class basic_flash_string_view {
 
   bool IsPrefixOf(basic_string_view<CharT> text) const {
     return size_ <= text.size() && memcmp_P(text.data(), data_, size_) == 0;
+  }
+
+  bool IsSuffixOf(basic_string_view<CharT> text) const {
+    return size_ <= text.size() &&
+           memcmp_P(text.data() + (text.size() - size_), data_, size_) == 0;
   }
 
   // In flash.

@@ -219,7 +219,8 @@ FindRow(0x3c).ok_or(PanelError::kNoSuchRow);  // a Result, with an error of your
 function that can fail returns a `Result`. The value and the flag lie side by side, as in a
 `Result`, so `T` needs a default constructor; an `optional<uint8_t>` is 2 bytes. `value()` cannot
 throw `bad_optional_access`, so it returns a `Result` with `OptionalError::kEmpty`, the group
-`optional`; `ok_or()`, as in Rust, gives your own error instead.
+`optional`; `ok_or()`, as in Rust, gives your own error instead. `and_then()`, `transform()` and
+`or_else()` are the fluent functions of C++23's `std::optional`.
 
 ## Text: string_view and flash_string_view
 
@@ -247,16 +248,19 @@ found" is no error. `flash_string_view` (`flash_string_view.h`) has the same nam
 flash. On the AVR flash is an address space of its own, and a pointer into it read as one into
 RAM gives whatever lies at that address in RAM; so it reads every char with `pgm_read_byte()`,
 takes the type `F()` gives rather than a `const char*`, and its `operator[]` returns a char, not a
-reference. Both are 4 bytes, a pointer and a size, and own nothing.
+reference. Both are 4 bytes, a pointer and a size, and own nothing. `string_view` also has
+`remove_prefix()`, `remove_suffix()`, `compare()` and `<`, which orders as `unsigned char`, as the
+standard does; `starts_with()`, `ends_with()`, `find()` and `==` work between RAM and flash.
 
 ## Checked access
 
 What the standard leaves undefined, or what gives a placeholder here, can be reported before it
 happens, for finding a mistake while a sketch is written, as the DET of AUTOSAR Classic does:
 `value()` of a `Result` with an error, `*` and `->` of an empty `optional`, `[]` beyond the end,
-and `front()` or `back()` of an empty `span` or `string_view`. With `UTL_CHECK_ACCESS` at 1, set
-as `UTL_ERROR_TEXTS` is, each goes to `utl::ReportMisuse()` first, which prints
-`utl: [] beyond the end` on `Serial`:
+`front()` or `back()` of an empty `span` or `string_view`, and `remove_prefix()` or
+`remove_suffix()` of more than there is, which then leaves an empty view. With
+`UTL_CHECK_ACCESS` at 1, set as `UTL_ERROR_TEXTS` is, each goes to `utl::ReportMisuse()` first,
+which prints `utl: [] beyond the end` on `Serial`:
 
 ```cpp
 // A report of your own, in a .cpp of the sketch, replaces the default.
@@ -293,7 +297,7 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, ram | Flash, flash | Flash, notexts | Flash, checked | RAM, ram | RAM, flash | RAM, notexts | RAM, checked |
 |---|---|---|---|---|---|---|---|---|
 | Basics | 2376 | 2378 | 2330 | 2376 | 208 | 174 | 208 | 208 |
-| SelfCheck | 10416 | 10418 | 10328 | 11576 | 277 | 227 | 277 | 279 |
+| SelfCheck | 12354 | 12356 | 12266 | 13848 | 303 | 253 | 303 | 305 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0, `checked` with `UTL_CHECK_ACCESS` at 1.

@@ -120,6 +120,41 @@ class basic_string_view {
            Equal(data_ + (size_ - suffix.size_), suffix.data_, suffix.size_);
   }
 
+  bool ends_with(basic_flash_string_view<CharT> suffix) const {
+    return suffix.IsSuffixOf(*this);
+  }
+
+  // Drops the first or the last `count` chars. More than size(), which
+  // std::string_view leaves undefined, is reported with UTL_CHECK_ACCESS at 1,
+  // and leaves an empty view either way.
+  void remove_prefix(size_type count) {
+    static_cast<void>(internal::Check(count <= size_, Misuse::kRemove));
+    const size_type removed = count < size_ ? count : size_;
+    data_ += removed;
+    size_ -= removed;
+  }
+  void remove_suffix(size_type count) {
+    static_cast<void>(internal::Check(count <= size_, Misuse::kRemove));
+    size_ -= count < size_ ? count : size_;
+  }
+
+  // Less than 0, 0 or more than 0 as this lies before, at or after `other`:
+  // char by char, as unsigned char as in std::string_view, a prefix first.
+  int compare(basic_string_view other) const {
+    const size_type common = size_ < other.size_ ? size_ : other.size_;
+    for (size_type index = 0; index < common; ++index) {
+      const auto a = static_cast<unsigned char>(data_[index]);
+      const auto b = static_cast<unsigned char>(other.data_[index]);
+      if (a != b) {
+        return a < b ? -1 : 1;
+      }
+    }
+    if (size_ == other.size_) {
+      return 0;
+    }
+    return size_ < other.size_ ? -1 : 1;
+  }
+
   // The position of the first `c` from `position` on, or npos.
   size_type find(CharT c, size_type position = 0) const {
     for (size_type index = position; index < size_; ++index) {
@@ -150,6 +185,18 @@ class basic_string_view {
   }
   friend bool operator!=(basic_string_view a, basic_string_view b) {
     return !(a == b);
+  }
+  friend bool operator<(basic_string_view a, basic_string_view b) {
+    return a.compare(b) < 0;
+  }
+  friend bool operator<=(basic_string_view a, basic_string_view b) {
+    return a.compare(b) <= 0;
+  }
+  friend bool operator>(basic_string_view a, basic_string_view b) {
+    return a.compare(b) > 0;
+  }
+  friend bool operator>=(basic_string_view a, basic_string_view b) {
+    return a.compare(b) >= 0;
   }
   friend bool operator==(basic_string_view a,
                          basic_flash_string_view<CharT> b) {

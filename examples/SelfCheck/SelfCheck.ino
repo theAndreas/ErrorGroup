@@ -301,6 +301,26 @@ void CheckOptional() {
   changed.emplace(6);
   changed = {};
   Check(!changed.has_value(), F("optional = {} is empty"));
+
+  uint8_t calls = 0;
+  const auto find_again = [](uint8_t index) { return FindCode(index); };
+  Check(FindCode(1).and_then(find_again) == uint8_t{1} &&
+            found.and_then(find_again) == utl::nullopt,
+        F("optional::and_then"));
+  Check(found.transform([](uint8_t index) { return index * 10; }) == 20 &&
+            none.transform([&calls](uint8_t) {
+              ++calls;
+              return 1;
+            }) == utl::nullopt &&
+            calls == 0,
+        F("optional::transform"));
+  const auto three = [&calls] {
+    ++calls;
+    return utl::optional<uint8_t>(3);
+  };
+  Check(none.or_else(three) == uint8_t{3} && calls == 1 &&
+            found.or_else(three) == uint8_t{2} && calls == 1,
+        F("optional::or_else"));
 }
 
 void CheckStringView() {
@@ -349,6 +369,25 @@ void CheckStringView() {
     }
   }
   Check(ts == 2, F("flash_string_view in a range-based for"));
+
+  utl::string_view trimmed = line;
+  trimmed.remove_prefix(5);
+  Check(trimmed == "Hi", F("string_view::remove_prefix"));
+  trimmed = line;
+  trimmed.remove_suffix(3);
+  Check(trimmed == "text", F("string_view::remove_suffix"));
+  Check(utl::string_view("abc") < "abd" && utl::string_view("ab") < "abc" &&
+            utl::string_view("b") > "abc" && line.compare("text=Hi") == 0 &&
+            utl::string_view("ab") <= "ab" && utl::string_view("b") >= "a",
+        F("string_view::compare and <"));
+  Check(utl::string_view("\xe4") > "z", F("string_view compares unsigned"));
+  Check(keyword.ends_with("t=") && !keyword.ends_with("text=!") &&
+            line.ends_with(F("Hi")) && !line.ends_with(F("Ho")),
+        F("ends_with between RAM and flash"));
+  Check(keyword.find("xt") == 2 &&
+            keyword.find("zz") == utl::flash_string_view::npos &&
+            keyword.find("text=!") == utl::flash_string_view::npos,
+        F("flash_string_view::find of a text"));
 }
 
 // With UTL_CHECK_ACCESS at 1, checks that each misuse is reported once, and a
@@ -381,6 +420,13 @@ void CheckMisuse() {
   Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kEmpty,
         F("front() of an empty span is reported"));
 
+  utl::string_view shortened = "ab";
+  before = MisuseCount();
+  shortened.remove_prefix(3);
+  Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kRemove &&
+            shortened.empty(),
+        F("remove_prefix() beyond the end is reported, and empties"));
+
   before = MisuseCount();
   static_cast<void>(pair[1]);
   static_cast<void>(GetCode(1).value());
@@ -388,6 +434,8 @@ void CheckMisuse() {
   Check(MisuseCount() == before, F("a right access is not reported"));
 
   utl::PrintMisuse(Serial, utl::Misuse::kIndex);
+  Serial.println();
+  utl::PrintMisuse(Serial, utl::Misuse::kRemove);
   Serial.println();
 #endif
 }
