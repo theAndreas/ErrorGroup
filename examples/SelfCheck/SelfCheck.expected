@@ -73,4 +73,15 @@ pass optional::reset
 pass optional::emplace
 pass optional takes nullopt
 pass optional = {} is empty
+pass string_view of a string
+pass string_view::starts_with, ends_with
+pass string_view::find
+pass string_view::substr
+pass string_view::at
+pass flash_string_view reads flash
+pass starts_with between RAM and flash
+pass == between RAM and flash
+pass flash_string_view::substr
+pass flash_string_view::find, at
+pass flash_string_view in a range-based for
 failed: 0

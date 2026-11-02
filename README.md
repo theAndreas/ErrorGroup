@@ -11,6 +11,9 @@ standard where it has an answer, and checked where the standard leaves a call un
   out of range returns a `Result` rather than being undefined.
 - **`optional`**, a value or none, as in the standard, except that `value()` of an empty one
   returns a `Result` rather than throwing.
+- **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
+  flash, `PROGMEM` or `F("...")`, which the standard does not know; the two compare with each
+  other.
 
 ## Installing
 
@@ -218,6 +221,34 @@ function that can fail returns a `Result`. The value and the flag lie side by si
 throw `bad_optional_access`, so it returns a `Result` with `OptionalError::kEmpty`, the group
 `optional`; `ok_or()`, as in Rust, gives your own error instead.
 
+## Text: string_view and flash_string_view
+
+```cpp
+// A line typed on Serial, in RAM, against keywords in flash.
+utl::Status Execute(utl::string_view line) {
+  if (line == F("clear")) {
+    return Clear();
+  }
+  if (line.starts_with(F("text="))) {
+    return line.substr(5).AndThen(SetText);  // the text after "text="
+  }
+  return CommandError::kUnknown;
+}
+
+line.find('=');  // 4 in "text=Hi", or utl::string_view::npos
+
+const utl::flash_string_view keyword = F("text=");
+for (const char c : keyword) { ... }  // each char read from flash
+```
+
+`string_view` (`string_view.h`) is `std::string_view` for text in RAM, with its names; `at()`
+and `substr()` return a `Result` where the standard throws, and `find()` returns `npos`, as "not
+found" is no error. `flash_string_view` (`flash_string_view.h`) has the same names for text in
+flash. On the AVR flash is an address space of its own, and a pointer into it read as one into
+RAM gives whatever lies at that address in RAM; so it reads every char with `pgm_read_byte()`,
+takes the type `F()` gives rather than a `const char*`, and its `operator[]` returns a char, not a
+reference. Both are 4 bytes, a pointer and a size, and own nothing.
+
 ## Examples
 
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
@@ -238,7 +269,7 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, ram | Flash, flash | Flash, notexts | RAM, ram | RAM, flash | RAM, notexts |
 |---|---|---|---|---|---|---|
 | Basics | 2376 | 2378 | 2330 | 208 | 174 | 208 |
-| SelfCheck | 7550 | 7552 | 7460 | 231 | 181 | 231 |
+| SelfCheck | 10416 | 10418 | 10328 | 277 | 227 | 277 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0.
