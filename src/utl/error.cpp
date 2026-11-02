@@ -6,9 +6,6 @@
 namespace utl {
 
 const __FlashStringHelper* Error::Message() const {
-  if (IsOk()) {
-    return F("ok");
-  }
   return group_->Message(code_);
 }
 

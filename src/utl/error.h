@@ -13,27 +13,21 @@
 
 namespace utl {
 
-// An error, 3 bytes on the Uno, or none: a default-constructed Error means "no
-// error", and it is the only one whose group is null, so no group has to keep
-// a code free for it.
+class Status;
+
+// An error, always: 3 bytes on the Uno, a group and a code within it. What a
+// function returns that may succeed is a Status or a Result, which hold an
+// Error only when something went wrong; "no error" is neither an Error nor
+// a code a group would have to keep free.
 //
-//   Error SetChar(char c) {
-//     if (c < ' ') {
-//       return FontError::kUnknownChar;
-//     }
-//     return Error();
-//   }
-//
-//   if (SetChar(c) == FontError::kUnknownChar) { ... }
+//   const Error error = FontError::kUnknownChar;
+//   error.group().Name();  // "font", never null
+//   error.Message();       // "unknown char"
 //
 // Two errors are equal if both the group and the code are, so codes of
-// different groups may overlap. The fluent functions follow Rust's Result<(),
-// E>: AndThen() goes on while there is no error, OrElse() recovers from one.
+// different groups may overlap.
 class Error {
  public:
-  // No error.
-  constexpr Error() : group_(nullptr), code_(0) {}
-
   // `code` of `group`.
   constexpr Error(const ErrorGroup& group, uint8_t code)
       : group_(&group), code_(code) {}
@@ -48,34 +42,11 @@ class Error {
   constexpr Error(Code code)  // NOLINT(runtime/explicit)
       : group_(&GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
 
-  bool IsOk() const { return group_ == nullptr; }
-
-  // Null if IsOk().
-  const ErrorGroup* group() const { return group_; }
+  const ErrorGroup& group() const { return *group_; }
   uint8_t code() const { return code_; }
 
-  // Returns the text of the error, or "ok", from flash.
+  // Returns the text of the error, from flash.
   const __FlashStringHelper* Message() const;
-
-  // Returns `f()` if there is no error, or else this error; `f` is not
-  // called then. `f` returns an Error or a Result.
-  template <typename F>
-  auto AndThen(F f) const -> decltype(f()) {
-    if (!IsOk()) {
-      return *this;
-    }
-    return f();
-  }
-
-  // Returns this error if there is none, or else `f(*this)`: `f` gets the
-  // error and returns another, or Error() if it recovered.
-  template <typename F>
-  Error OrElse(F f) const {
-    if (IsOk()) {
-      return *this;
-    }
-    return f(*this);
-  }
 
   // Hidden friends: found only through an Error, and with the implicit
   // conversion above on either side.
@@ -85,6 +56,15 @@ class Error {
   friend bool operator!=(const Error& a, const Error& b) { return !(a == b); }
 
  private:
+  friend class Status;
+
+  // Status keeps an Error with a null group for "ok", so that it needs no
+  // flag beside it and stays 3 bytes. Private: only Status makes one, and it
+  // never hands it out.
+  constexpr explicit Error(decltype(nullptr)) : group_(nullptr), code_(0) {}
+
+  // A pointer, not a reference, so that an Error can be assigned. Never null
+  // outside a Status.
   const ErrorGroup* group_;
   uint8_t code_;
 };
