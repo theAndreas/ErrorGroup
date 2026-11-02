@@ -1,17 +1,30 @@
 #!/bin/bash
 #
+# Copyright 2026 Andreas Burnickl
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Shared by the scripts in tools/: where things lie, and how an example is
 # compiled in either variant, "ram" (vtables in RAM, the default of avr-gcc)
 # or "flash" (vtables in flash, with the plugin avr-flash-vtbl).
 
-readonly ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly ROOT_DIR
 readonly BUILD_DIR="${ROOT_DIR}/build"
 readonly PLUGIN="${BUILD_DIR}/avr-flash-vtbl.so"
 readonly FQBN="arduino:avr:uno"
+# shellcheck disable=SC2034  # used by the scripts that source this file
 readonly VARIANTS=(ram flash)
 
 err() {
   echo "$*" >&2
+}
+
+# Prints the name of every example, one per line.
+list_examples() {
+  local dir
+  for dir in "${ROOT_DIR}"/examples/*/; do
+    basename "${dir}"
+  done
 }
 
 # Prints the bin directory of the avr-gcc that arduino-cli uses for FQBN.

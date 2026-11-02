@@ -60,12 +60,19 @@ core.
 
 ## Build and check
 
-Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, and `simavr`.
+Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, and `uv`.
 
 ```bash
 tools/build_plugin.sh       # build/avr-flash-vtbl.so
 tools/self_check.sh         # examples/SelfCheck in simavr, with and without the plugin
 tools/compile_examples.sh   # every example both ways, fails on a warning; prints the table above
+tools/lint.sh [--fix]       # clang-format, cpplint, shellcheck; --fix formats the C++ sources
 ```
+
+The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
+the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
+`tools/lint.sh` fetches its tools from PyPI through `uvx`, at fixed versions, so that nothing has to
+be installed. Two exceptions, both forced by Arduino: sources end in `.cpp`, as `arduino-cli`
+compiles no `.cc`, and an include names a header without its directory (see `CPPLINT.cfg`).
 
 Nothing has run on a board yet; `SelfCheck` prints the same there as in simavr.

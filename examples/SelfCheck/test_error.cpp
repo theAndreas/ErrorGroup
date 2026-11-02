@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "test_error.h"
 
 #include <avr/pgmspace.h>
@@ -25,22 +28,18 @@ const char* const kBetaMessages[] PROGMEM = {
 constexpr AlphaErrorGroup kAlphaErrorGroup{};
 constexpr BetaErrorGroup kBetaErrorGroup{};
 
-const __FlashStringHelper* AlphaErrorGroup::Name() const {
-  return F("alpha");
-}
+const __FlashStringHelper* AlphaErrorGroup::Name() const { return F("alpha"); }
 
 const __FlashStringHelper* AlphaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kAlphaMessages,
-                       sizeof(kAlphaMessages) / sizeof(kAlphaMessages[0]),
-                       code);
+  return LookUpMessage(
+      kAlphaMessages, sizeof(kAlphaMessages) / sizeof(kAlphaMessages[0]), code);
 }
 
 const __FlashStringHelper* BetaErrorGroup::Name() const { return F("beta"); }
 
 const __FlashStringHelper* BetaErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kBetaMessages,
-                       sizeof(kBetaMessages) / sizeof(kBetaMessages[0]),
-                       code);
+                       sizeof(kBetaMessages) / sizeof(kBetaMessages[0]), code);
 }
 
 error_group::Error MakeAlphaSecondElsewhere() {
