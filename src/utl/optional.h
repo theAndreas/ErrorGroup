@@ -7,6 +7,7 @@
 #define UTL_SRC_UTL_OPTIONAL_H_
 
 #include "utl/error.h"
+#include "utl/internal/type_traits.h"
 #include "utl/misuse.h"
 #include "utl/optional_error.h"
 #include "utl/result.h"
@@ -92,6 +93,37 @@ class optional {
       return error;
     }
     return value_;
+  }
+
+  // The fluent functions of C++23's std::optional, which none of them calls
+  // when there is no value to give it. and_then(): `f(value)` if there is a
+  // value, `f` returning an optional, or else an empty optional of that type.
+  template <typename F>
+  auto and_then(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
+    if (!has_value_) {
+      return nullopt;
+    }
+    return f(value_);
+  }
+
+  // transform(): an optional of `f(value)` if there is a value, or else an
+  // empty one. cpplint takes the name for std::transform, which it is not.
+  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
+                            internal::DeclVal<const T&>()))>
+  optional<U> transform(F f) const {  // NOLINT(build/include_what_you_use)
+    if (!has_value_) {
+      return nullopt;
+    }
+    return f(value_);
+  }
+
+  // or_else(): this if there is a value, or else `f()`, an optional<T>.
+  template <typename F>
+  optional or_else(F f) const {
+    if (has_value_) {
+      return *this;
+    }
+    return f();
   }
 
   void reset() {

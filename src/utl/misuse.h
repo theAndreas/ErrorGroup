@@ -23,6 +23,7 @@ enum class Misuse : uint8_t {
   kOptionalValue,  // * or -> of an empty optional
   kIndex,          // [] beyond the end
   kEmpty,          // front() or back() of an empty span or string_view
+  kRemove,         // remove_prefix() or remove_suffix() of more than there is
 };
 
 // Takes the report of a misuse, with UTL_CHECK_ACCESS at 1, before the access

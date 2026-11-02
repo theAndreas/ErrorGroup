@@ -73,6 +73,9 @@ pass optional::reset
 pass optional::emplace
 pass optional takes nullopt
 pass optional = {} is empty
+pass optional::and_then
+pass optional::transform
+pass optional::or_else
 pass string_view of a string
 pass string_view::starts_with, ends_with
 pass string_view::find
@@ -84,10 +87,18 @@ pass == between RAM and flash
 pass flash_string_view::substr
 pass flash_string_view::find, at
 pass flash_string_view in a range-based for
+pass string_view::remove_prefix
+pass string_view::remove_suffix
+pass string_view::compare and <
+pass string_view compares unsigned
+pass ends_with between RAM and flash
+pass flash_string_view::find of a text
 pass value() of a Result with an error is reported
 pass * of an empty optional is reported
 pass [] beyond the end is reported
 pass front() of an empty span is reported
+pass remove_prefix() beyond the end is reported, and empties
 pass a right access is not reported
 utl: [] beyond the end
+utl: remove_prefix() or remove_suffix() beyond the end
 failed: 0
