@@ -33,8 +33,8 @@ main() {
   # a file is checked before its first commit, not after.
   local files=(git ls-files --cached --others --exclude-standard)
   local sources
-  mapfile -t sources < <("${files[@]}" 'src/*' 'examples/*' \
-    | grep -E '\.(h|cpp|ino)$')
+  mapfile -t sources < <("${files[@]}" 'src/*' 'examples/*' 'test/*' \
+    | grep -E '\.(h|cpp|cc|ino)$')
   local scripts
   mapfile -t scripts < <("${files[@]}" 'tools/*.sh')
 

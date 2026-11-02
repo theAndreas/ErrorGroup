@@ -111,7 +111,7 @@ class basic_flash_string_view {
     if (index >= size_) {
       return IndexError::kOutOfRange;
     }
-    return (*this)[index];
+    return Read(index);
   }
 
   // At most `count` chars from `position` on, or IndexError::kOutOfRange if
@@ -154,7 +154,7 @@ class basic_flash_string_view {
   // The position of the first `c` from `position` on, or npos.
   size_type find(CharT c, size_type position = 0) const {
     for (size_type index = position; index < size_; ++index) {
-      if ((*this)[index] == c) {
+      if (Read(index) == c) {
         return index;
       }
     }
@@ -166,7 +166,7 @@ class basic_flash_string_view {
       return false;
     }
     for (size_type index = 0; index < a.size_; ++index) {
-      if (a[index] != b[index]) {
+      if (a.Read(index) != b.Read(index)) {
         return false;
       }
     }

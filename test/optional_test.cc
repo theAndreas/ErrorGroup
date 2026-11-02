@@ -1,0 +1,107 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// optional: a value or none.
+
+#include <gtest/gtest.h>
+#include <utl/optional.h>
+#include <utl/optional_error.h>
+
+#include "test/alpha_error.h"
+
+namespace utl_test {
+namespace {
+
+using utl::nullopt;
+using utl::optional;
+
+// Returns the index of `value` in {0, 1, 7}, or none.
+optional<int> Find(int value) {
+  const int values[] = {0, 1, 7};
+  for (int index = 0; index < 3; ++index) {
+    if (values[index] == value) {
+      return index;
+    }
+  }
+  return nullopt;
+}
+
+TEST(OptionalTest, EmptyOrAValue) {
+  const optional<int> none = Find(42);
+  const optional<int> found = Find(7);
+  EXPECT_FALSE(none.HasValue());
+  EXPECT_FALSE(static_cast<bool>(none));
+  EXPECT_EQ(none, nullopt);
+  EXPECT_EQ(optional<int>(), none);
+  EXPECT_TRUE(found.HasValue());
+  EXPECT_EQ(*found, 2);
+  EXPECT_EQ(found, 2);
+  EXPECT_NE(found, none);
+  EXPECT_NE(found, 3);
+}
+
+TEST(OptionalTest, ArrowReachesTheValue) {
+  struct Pair {
+    int first;
+    int second;
+    bool operator==(const Pair& other) const {
+      return first == other.first && second == other.second;
+    }
+  };
+  optional<Pair> pair = Pair{1, 2};
+  EXPECT_EQ(pair->second, 2);
+  pair->second = 3;
+  const optional<Pair>& same = pair;
+  EXPECT_EQ(same->second, 3);
+  *pair = Pair{4, 5};
+  EXPECT_EQ((*same).first, 4);
+}
+
+TEST(OptionalTest, ValueReturnsAResult) {
+  EXPECT_EQ(Find(7).value().ValueOr(0), 2);
+  EXPECT_EQ(Find(42).value().status(), utl::OptionalError::kEmpty);
+  EXPECT_EQ(Find(7).ValueOr(9), 2);
+  EXPECT_EQ(Find(42).ValueOr(9), 9);
+}
+
+TEST(OptionalTest, OkOrGivesYourError) {
+  EXPECT_EQ(Find(42).OkOr(AlphaError::kSecond).status(), AlphaError::kSecond);
+  EXPECT_EQ(Find(7).OkOr(AlphaError::kSecond).ValueOr(0), 2);
+}
+
+TEST(OptionalTest, ResetEmplaceAndAssign) {
+  optional<int> changed = 2;
+  changed.reset();
+  EXPECT_FALSE(changed.HasValue());
+  EXPECT_EQ(changed.emplace(5), 5);
+  EXPECT_EQ(changed, 5);
+  changed = nullopt;
+  EXPECT_EQ(changed, nullopt);
+  changed = 6;
+  changed = {};
+  EXPECT_FALSE(changed.HasValue());
+}
+
+TEST(OptionalTest, FluentFunctions) {
+  const auto find_again = [](int index) { return Find(index); };
+  EXPECT_EQ(Find(1).AndThen(find_again), 1);
+  EXPECT_EQ(Find(7).AndThen(find_again), nullopt);
+  EXPECT_EQ(Find(42).AndThen(find_again), nullopt);
+  EXPECT_EQ(Find(7).Map([](int index) { return index * 10; }), 20);
+  int calls = 0;
+  EXPECT_EQ(Find(42).Map([&calls](int) {
+    ++calls;
+    return 1;
+  }),
+            nullopt);
+  const auto three = [&calls] {
+    ++calls;
+    return optional<int>(3);
+  };
+  EXPECT_EQ(Find(42).OrElse(three), 3);
+  EXPECT_EQ(Find(7).OrElse(three), 2);
+  EXPECT_EQ(calls, 1);
+}
+
+}  // namespace
+}  // namespace utl_test
