@@ -7,7 +7,7 @@
 #ifndef ERRORGROUP_EXAMPLES_BASICS_BUS_ERROR_H_
 #define ERRORGROUP_EXAMPLES_BASICS_BUS_ERROR_H_
 
-#include <error_group.h>
+#include <utl/error_group.h>
 
 namespace bus {
 
@@ -16,7 +16,7 @@ enum class BusError : uint8_t {
   kTimeout,
 };
 
-class BusErrorGroup : public error_group::ErrorGroup {
+class BusErrorGroup : public utl::ErrorGroup {
  public:
   constexpr BusErrorGroup() = default;
 
@@ -27,9 +27,7 @@ class BusErrorGroup : public error_group::ErrorGroup {
 // Defined in bus_error.cpp, and nowhere else: its address is the group.
 extern const BusErrorGroup kBusErrorGroup;
 
-inline const error_group::ErrorGroup& GetErrorGroup(BusError) {
-  return kBusErrorGroup;
-}
+inline const utl::ErrorGroup& GetErrorGroup(BusError) { return kBusErrorGroup; }
 
 }  // namespace bus
 

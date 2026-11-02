@@ -1,49 +1,33 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "test_error.h"
+#include "alpha_error.h"
 
 #include <avr/pgmspace.h>
 
 namespace self_check {
 namespace {
 
-const char kAlphaFirstText[] PROGMEM = "alpha first";
-const char kAlphaSecondText[] PROGMEM = "alpha second";
-const char kBetaFirstText[] PROGMEM = "beta first";
+const char kFirstText[] PROGMEM = "alpha first";
+const char kSecondText[] PROGMEM = "alpha second";
 
 // In the order of AlphaError.
-const char* const kAlphaMessages[] PROGMEM = {
-    kAlphaFirstText,
-    kAlphaSecondText,
-};
-
-// In the order of BetaError.
-const char* const kBetaMessages[] PROGMEM = {
-    kBetaFirstText,
+const char* const kMessages[] PROGMEM = {
+    kFirstText,
+    kSecondText,
 };
 
 }  // namespace
 
 constexpr AlphaErrorGroup kAlphaErrorGroup{};
-constexpr BetaErrorGroup kBetaErrorGroup{};
 
 const __FlashStringHelper* AlphaErrorGroup::Name() const { return F("alpha"); }
 
 const __FlashStringHelper* AlphaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(
-      kAlphaMessages, sizeof(kAlphaMessages) / sizeof(kAlphaMessages[0]), code);
+  return LookUpMessage(kMessages, sizeof(kMessages) / sizeof(kMessages[0]),
+                       code);
 }
 
-const __FlashStringHelper* BetaErrorGroup::Name() const { return F("beta"); }
-
-const __FlashStringHelper* BetaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kBetaMessages,
-                       sizeof(kBetaMessages) / sizeof(kBetaMessages[0]), code);
-}
-
-error_group::Error MakeAlphaSecondElsewhere() {
-  return error_group::MakeError(AlphaError::kSecond);
-}
+utl::Error MakeAlphaSecondElsewhere() { return AlphaError::kSecond; }
 
 }  // namespace self_check

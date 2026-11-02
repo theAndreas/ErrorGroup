@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Two groups that the library does not know, errors from both, and how a
-// sketch checks and prints them.
+// sketch checks, chains and prints them.
 
-#include <error_group.h>
+#include <ErrorGroup.h>
 
 #include "bus_error.h"
 #include "font_error.h"
 
 using bus::BusError;
-using error_group::Error;
-using error_group::MakeError;
 using font::FontError;
+using utl::Error;
+using utl::Result;
 
 namespace {
 
@@ -20,16 +20,17 @@ namespace {
 // that the compiler cannot fold the error away.
 Error SetChar(char c) {
   if (c < ' ') {
-    return MakeError(FontError::kUnknownChar);
+    return FontError::kUnknownChar;
   }
   return Error();
 }
 
-Error Send(bool acknowledged) {
+// Returns the byte the other side sent back, or the error of the bus.
+Result<uint8_t> Receive(bool acknowledged) {
   if (!acknowledged) {
-    return MakeError(BusError::kNack);
+    return BusError::kNack;
   }
-  return Error();
+  return 'A';
 }
 
 void PrintError(const Error& error) {
@@ -51,18 +52,25 @@ void setup() {
 }
 
 void loop() {
-  const Error char_error = SetChar(digitalRead(2) == LOW ? '\n' : 'A');
-  const Error bus_error = Send(digitalRead(3) == HIGH);
-
-  PrintError(char_error);
-  PrintError(bus_error);
+  // Receive a char and show it; either step may fail, and the first error
+  // ends the chain.
+  const Error error =
+      Receive(digitalRead(3) == HIGH).AndThen([](uint8_t received) {
+        return SetChar(digitalRead(2) == LOW ? '\n' : received);
+      });
+  PrintError(error);
 
   // Both codes are 0, in different groups: only the group tells them apart.
-  if (bus_error == FontError::kUnknownChar) {
-    Serial.println(F("never: a bus error is no font error"));
+  if (error == FontError::kUnknownChar) {
+    Serial.println(F("pick another char"));
   }
-  if (bus_error == BusError::kNack) {
+  if (error == BusError::kNack) {
     Serial.println(F("retry"));
+  }
+
+  const Error unknown_char{FontError::kUnknownChar};
+  if (SetChar('\n') == unknown_char) {
+    Serial.println(F("a control char is not in the font"));
   }
   delay(1000);
 }

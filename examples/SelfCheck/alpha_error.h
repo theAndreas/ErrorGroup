@@ -1,12 +1,13 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Two groups for SelfCheck, with codes that overlap on purpose.
+// The first of two groups for SelfCheck, whose codes overlap on purpose.
 
-#ifndef ERRORGROUP_EXAMPLES_SELFCHECK_TEST_ERROR_H_
-#define ERRORGROUP_EXAMPLES_SELFCHECK_TEST_ERROR_H_
+#ifndef ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
+#define ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
 
-#include <error_group.h>
+#include <utl/error.h>
+#include <utl/error_group.h>
 
 namespace self_check {
 
@@ -15,11 +16,7 @@ enum class AlphaError : uint8_t {
   kSecond,
 };
 
-enum class BetaError : uint8_t {
-  kFirst,
-};
-
-class AlphaErrorGroup : public error_group::ErrorGroup {
+class AlphaErrorGroup : public utl::ErrorGroup {
  public:
   constexpr AlphaErrorGroup() = default;
 
@@ -27,29 +24,16 @@ class AlphaErrorGroup : public error_group::ErrorGroup {
   const __FlashStringHelper* Message(uint8_t code) const override;
 };
 
-class BetaErrorGroup : public error_group::ErrorGroup {
- public:
-  constexpr BetaErrorGroup() = default;
-
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
-};
-
 extern const AlphaErrorGroup kAlphaErrorGroup;
-extern const BetaErrorGroup kBetaErrorGroup;
 
-inline const error_group::ErrorGroup& GetErrorGroup(AlphaError) {
+inline const utl::ErrorGroup& GetErrorGroup(AlphaError) {
   return kAlphaErrorGroup;
 }
 
-inline const error_group::ErrorGroup& GetErrorGroup(BetaError) {
-  return kBetaErrorGroup;
-}
-
-// Made in test_error.cpp, so that SelfCheck compares an error from another
+// Made in alpha_error.cpp, so that SelfCheck compares an error from another
 // translation unit: equal only if both see the group at the same address.
-error_group::Error MakeAlphaSecondElsewhere();
+utl::Error MakeAlphaSecondElsewhere();
 
 }  // namespace self_check
 
-#endif  // ERRORGROUP_EXAMPLES_SELFCHECK_TEST_ERROR_H_
+#endif  // ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
