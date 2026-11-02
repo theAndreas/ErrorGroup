@@ -22,8 +22,8 @@ class AlphaErrorGroup : public utl::ErrorGroup {
  public:
   constexpr AlphaErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  [[nodiscard]] const __FlashStringHelper* Name() const override;
+  [[nodiscard]] const __FlashStringHelper* Message(uint8_t code) const override;
 };
 
 extern const AlphaErrorGroup kAlphaErrorGroup;

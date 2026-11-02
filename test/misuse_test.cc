@@ -5,20 +5,28 @@
 // which prints on Serial, and PrintMisuse(). Without the switch only
 // PrintMisuse() is tested, as nothing is reported.
 
-#include <Arduino.h>
 #include <gtest/gtest.h>
-#include <utl/array.h>
-#include <utl/config.h>
+// For UTL_CHECK_ACCESS, which only #if reads: include-cleaner takes that for
+// no use.
+#include <utl/config.h>  // IWYU pragma: keep
 #include <utl/misuse.h>
+
+#include <cstddef>
+#include <string>
+
+#include "test/string_print.h"
+
+// What only the checks with the switch on use.
+#if UTL_CHECK_ACCESS
+#include <Arduino.h>
+#include <utl/array.h>
 #include <utl/optional.h>
 #include <utl/result.h>
 #include <utl/span.h>
 #include <utl/string_view.h>
 
-#include <string>
-
 #include "test/beta_error.h"
-#include "test/string_print.h"
+#endif
 
 namespace utl_test {
 namespace {
@@ -41,7 +49,10 @@ TEST(MisuseTest, PrintsEachKind) {
   EXPECT_EQ(Printed(Misuse::kEmpty), "utl: front() or back() of an empty view");
   EXPECT_EQ(Printed(Misuse::kRemove),
             "utl: remove_prefix() or remove_suffix() beyond the end");
-  EXPECT_EQ(Printed(static_cast<Misuse>(200)), "utl: ");
+  // A value beyond the enum, which PrintMisuse() has to leave without a text.
+  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+  const auto beyond = static_cast<Misuse>(200);
+  EXPECT_EQ(Printed(beyond), "utl: ");
 }
 
 #if UTL_CHECK_ACCESS
@@ -57,9 +68,9 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
   // The tests form each wrong access but never read it: static_cast<void> of a
   // reference reads nothing, so the sanitizers have nothing to stop. The views
   // point at memory that is there all the same, the array of three below.
-  int storage[] = {1, 2, 3};
-  const utl::span<int> two(storage, 2);
-  const utl::span<int> none(storage + 1, 0);
+  utl::array<int, 3> storage = {{1, 2, 3}};
+  const utl::span<int> two(storage.data(), 2);
+  const utl::span<int> none(storage.data() + 1, 0);
   const char text[] = "ab";
   const utl::string_view one(text, 1);
 
@@ -102,7 +113,7 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
 
 TEST(MisuseTest, ReportsAnArrayIndexBeyondTheEnd) {
   EXPECT_EQ(Reported([] {
-              volatile size_t beyond = 2;
+              const volatile size_t beyond = 2;
               utl::array<int, 2> pair = {{1, 2}};
               static_cast<void>(pair[beyond]);
             }),

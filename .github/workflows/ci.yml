@@ -3,7 +3,8 @@
 #
 #   lint           the Google style: clang-format, cpplint, shellcheck,
 #                  actionlint
-#   clang-tidy     the library and the examples, with the flags of the Uno
+#   clang-tidy     the library and the examples with the flags of the Uno, and
+#                  the tests on the host
 #   host-tests     the tests on GoogleTest against a mock of the core, also
 #                  under ASan and UBSan; what they reach of src/ goes into the
 #                  job summary
@@ -66,6 +67,13 @@ jobs:
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr@1.8.8
+
+      # For the pass over the tests, whose database CMake writes.
+      - name: Install CMake, Ninja and GoogleTest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build \
+            libgtest-dev
 
       - name: clang-tidy
         run: tools/tidy.sh

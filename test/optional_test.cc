@@ -4,6 +4,7 @@
 // optional: a value or none.
 
 #include <gtest/gtest.h>
+#include <utl/array.h>
 #include <utl/optional.h>
 #include <utl/optional_error.h>
 
@@ -17,7 +18,7 @@ using utl::optional;
 
 // Returns the index of `value` in {0, 1, 7}, or none.
 optional<int> Find(int value) {
-  const int values[] = {0, 1, 7};
+  const utl::array<int, 3> values = {{0, 1, 7}};
   for (int index = 0; index < 3; ++index) {
     if (values[index] == value) {
       return index;
@@ -82,11 +83,14 @@ TEST(OptionalTest, ResetEmplaceAndAssign) {
   EXPECT_FALSE(changed.HasValue());
 }
 
-TEST(OptionalTest, FluentFunctions) {
+TEST(OptionalTest, AndThen) {
   const auto find_again = [](int index) { return Find(index); };
   EXPECT_EQ(Find(1).AndThen(find_again), 1);
   EXPECT_EQ(Find(7).AndThen(find_again), nullopt);
   EXPECT_EQ(Find(42).AndThen(find_again), nullopt);
+}
+
+TEST(OptionalTest, Map) {
   EXPECT_EQ(Find(7).Map([](int index) { return index * 10; }), 20);
   int calls = 0;
   EXPECT_EQ(Find(42).Map([&calls](int) {
@@ -94,6 +98,11 @@ TEST(OptionalTest, FluentFunctions) {
     return 1;
   }),
             nullopt);
+  EXPECT_EQ(calls, 0);
+}
+
+TEST(OptionalTest, OrElse) {
+  int calls = 0;
   const auto three = [&calls] {
     ++calls;
     return optional<int>(3);

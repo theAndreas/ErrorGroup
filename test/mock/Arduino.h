@@ -15,7 +15,8 @@
 
 #include <string>
 
-class __FlashStringHelper;
+// The core's name, reserved as it is: the library takes this very type.
+class __FlashStringHelper;  // NOLINT(bugprone-reserved-identifier)
 
 #define PSTR(text) (text)
 #define F(text) (reinterpret_cast<const __FlashStringHelper*>(PSTR(text)))

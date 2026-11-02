@@ -1,0 +1,5 @@
+---
+# readability-magic-numbers: a test's numbers are its data, 7 or 20, which
+# read better as the numbers they are than behind names used once.
+InheritParentConfig: true
+Checks: -readability-magic-numbers
