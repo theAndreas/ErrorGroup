@@ -55,7 +55,7 @@ const utl::Status status =
 if (status == BusError::kNack) { ... }
 if (const utl::Error* error = status.error()) {
   Serial.print(error->group().Name());  // "bus"
-  Serial.print(": ");
+  Serial.print(F(": "));
 }
 Serial.println(status.Message());  // "nack", or "ok"; from flash
 ```
