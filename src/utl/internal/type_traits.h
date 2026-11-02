@@ -20,6 +20,15 @@ T&& DeclVal();
 template <typename To>
 void ConvertTo(To);
 
+// std::void_t: void, if every type in Ts is valid. Through a struct, as an
+// alias template alone may ignore arguments it does not use (CWG 1558).
+template <typename... Ts>
+struct VoidImpl {
+  using Type = void;
+};
+template <typename... Ts>
+using Void = typename VoidImpl<Ts...>::Type;
+
 // std::remove_cv_t.
 template <typename T>
 struct RemoveCvImpl {

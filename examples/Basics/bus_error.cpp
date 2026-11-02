@@ -14,10 +14,7 @@ const char kNackText[] PROGMEM = "nack";
 const char kTimeoutText[] PROGMEM = "timeout";
 
 // In the order of BusError.
-const utl::array<const char*, 2> kMessages PROGMEM = {
-    kNackText,
-    kTimeoutText,
-};
+constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeoutText);
 
 }  // namespace
 

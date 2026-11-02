@@ -28,6 +28,10 @@ static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
 constexpr utl::array<uint8_t, 3> kConstantRows = {{1, 2, 3}};
 static_assert(kConstantRows[1] == 2 && kConstantRows.size() == 3,
               "an array is constexpr");
+constexpr auto kMadeRows = utl::make_array(uint8_t{1}, uint8_t{2}, uint8_t{3});
+static_assert(kMadeRows.size() == 3 && kMadeRows[2] == 3 &&
+                  sizeof(kMadeRows) == 3,
+              "make_array takes type and size from its arguments");
 
 namespace {
 

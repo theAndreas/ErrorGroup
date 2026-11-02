@@ -15,10 +15,7 @@ const char kFirstText[] PROGMEM = "alpha first";
 const char kSecondText[] PROGMEM = "alpha second";
 
 // In the order of AlphaError.
-const utl::array<const char*, 2> kMessages PROGMEM = {
-    kFirstText,
-    kSecondText,
-};
+constexpr auto kMessages PROGMEM = utl::make_array(kFirstText, kSecondText);
 
 }  // namespace
 

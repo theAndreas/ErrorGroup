@@ -42,6 +42,9 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   `IndexError::kOutOfRange` instead: `at()`, and `first()`, `last()`, `subspan()` of a span.
   `operator[]` stays unchecked. The group `IndexError` costs its vtable and 2 bytes only in a
   sketch that calls one of these.
+- `make_array(...)` (`array.h`): an array whose type and size come from its arguments, what
+  `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
+  Arduino compiles with `-fpermissive -Wno-error=narrowing`.
 
 The fluent functions follow Rust's `Result`: `AndThen()` goes on while there is no error, `Map()`
 changes the value, `OrElse()` recovers from an error, `ValueOr()` gives a fallback. None calls its
@@ -53,7 +56,8 @@ A sketch includes `<ErrorGroup.h>`: arduino-cli finds a library only by a header
 
 A group is a class derived from `ErrorGroup`, an enum class of its codes, one object defined in one
 `.cpp` file, and a `GetErrorGroup()` beside the enum; `examples/Basics` defines two. Its texts lie
-in a `utl::array` in `PROGMEM`, which `LookUpMessage()` reads.
+in a `constexpr` `utl::array` in `PROGMEM`, made with `make_array()`, which `LookUpMessage()`
+reads.
 
 ## vtables in flash
 
