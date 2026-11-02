@@ -9,6 +9,8 @@ standard where it has an answer, and checked where the standard leaves a call un
   library or sketch adds without changing this one.
 - **Containers**: `array`, `span` and `make_array`, as in the standard, except that what can go
   out of range returns a `Result` rather than being undefined.
+- **`optional`**, a value or none, as in the standard, except that `value()` of an empty one
+  returns a `Result` rather than throwing.
 
 ## Installing
 
@@ -199,6 +201,23 @@ constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<u
   `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
   Arduino compiles with `-fpermissive -Wno-error=narrowing`.
 
+## optional
+
+```cpp
+utl::optional<uint8_t> FindRow(uint8_t value);  // returns utl::nullopt if there is none
+
+if (const utl::optional<uint8_t> row = FindRow(0x3c)) { Use(*row); }
+FindRow(0x3c).value_or(0);
+FindRow(0x3c).value();                         // a Result: OptionalError::kEmpty if none
+FindRow(0x3c).ok_or(PanelError::kNoSuchRow);  // a Result, with an error of your own
+```
+
+`optional<T>` (`optional.h`) is `std::optional`, with its names, for "none" that is no error; a
+function that can fail returns a `Result`. The value and the flag lie side by side, as in a
+`Result`, so `T` needs a default constructor; an `optional<uint8_t>` is 2 bytes. `value()` cannot
+throw `bad_optional_access`, so it returns a `Result` with `OptionalError::kEmpty`, the group
+`optional`; `ok_or()`, as in Rust, gives your own error instead.
+
 ## Examples
 
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
@@ -219,15 +238,15 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, ram | Flash, flash | Flash, notexts | RAM, ram | RAM, flash | RAM, notexts |
 |---|---|---|---|---|---|---|
 | Basics | 2376 | 2378 | 2330 | 208 | 174 | 208 |
-| SelfCheck | 6798 | 6800 | 6736 | 221 | 179 | 221 |
+| SelfCheck | 7550 | 7552 | 7460 | 231 | 181 | 231 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0.
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
-vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as
-`at()` brings in a third group, `IndexError`. The group objects keep their 2 bytes of vptr in RAM,
-as their address is the group.
+vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 50, as
+`at()` and `value()` bring in two more groups, `IndexError` and `OptionalError`. The group
+objects keep their 2 bytes of vptr in RAM, as their address is the group.
 
 **Every C++ file of a sketch has to be compiled with the plugin**, the Arduino core included. A
 file compiled without it reads a vtable in flash from RAM and jumps anywhere; the linker does not

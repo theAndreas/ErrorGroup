@@ -63,4 +63,14 @@ pass span::subspan
 pass span beyond the end
 pass span::subspan does not overflow
 pass span with the fluent API
+pass optional is empty
+pass optional holds a value
+optional: empty
+pass optional::value returns a Result
+pass optional::value_or
+pass optional::ok_or
+pass optional::reset
+pass optional::emplace
+pass optional takes nullopt
+pass optional = {} is empty
 failed: 0
