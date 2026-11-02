@@ -13,16 +13,17 @@ using bus::BusError;
 using font::FontError;
 using utl::Error;
 using utl::Result;
+using utl::Status;
 
 namespace {
 
 // Fails on a char the font lacks. Takes its input from a pin in loop(), so
 // that the compiler cannot fold the error away.
-Error SetChar(char c) {
+Status SetChar(char c) {
   if (c < ' ') {
     return FontError::kUnknownChar;
   }
-  return Error();
+  return Status::Ok();
 }
 
 // Returns the char the other side sent back, or the error of the bus.
@@ -33,14 +34,12 @@ Result<char> Receive(bool acknowledged) {
   return 'A';
 }
 
-void PrintError(const Error& error) {
-  if (error.IsOk()) {
-    Serial.println(error.Message());
-    return;
+void PrintStatus(const Status& status) {
+  if (const Error* error = status.error()) {
+    Serial.print(error->group().Name());
+    Serial.print(F(": "));
   }
-  Serial.print(error.group()->Name());
-  Serial.print(F(": "));
-  Serial.println(error.Message());
+  Serial.println(status.Message());
 }
 
 }  // namespace
@@ -54,17 +53,17 @@ void setup() {
 void loop() {
   // Receive a char and show it; either step may fail, and the first error
   // ends the chain.
-  const Error error =
+  const Status status =
       Receive(digitalRead(3) == HIGH).AndThen([](char received) {
         return SetChar(digitalRead(2) == LOW ? '\n' : received);
       });
-  PrintError(error);
+  PrintStatus(status);
 
   // Both codes are 0, in different groups: only the group tells them apart.
-  if (error == FontError::kUnknownChar) {
+  if (status == FontError::kUnknownChar) {
     Serial.println(F("pick another char"));
   }
-  if (error == BusError::kNack) {
+  if (status == BusError::kNack) {
     Serial.println(F("retry"));
   }
 

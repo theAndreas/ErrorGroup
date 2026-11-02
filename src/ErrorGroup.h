@@ -15,5 +15,6 @@
 #include "utl/index_error.h"  // IWYU pragma: export
 #include "utl/result.h"       // IWYU pragma: export
 #include "utl/span.h"         // IWYU pragma: export
+#include "utl/status.h"       // IWYU pragma: export
 
 #endif  // ERRORGROUP_SRC_ERRORGROUP_H_

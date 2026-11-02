@@ -10,11 +10,11 @@ tried out on its own.
 ```cpp
 #include <ErrorGroup.h>
 
-utl::Error SetChar(char c) {
+utl::Status SetChar(char c) {
   if (c < ' ') {
     return FontError::kUnknownChar;  // a code of a group is an error
   }
-  return utl::Error();  // no error
+  return utl::Status::Ok();
 }
 
 utl::Result<uint8_t> Receive() {
@@ -24,17 +24,26 @@ utl::Result<uint8_t> Receive() {
   return received;
 }
 
-const utl::Error error = Receive().AndThen([](uint8_t c) { return SetChar(c); });
-if (error == FontError::kUnknownChar) { ... }
-Serial.println(error.Message());  // "unknown char", from flash
+const utl::Status status = Receive().AndThen([](uint8_t c) { return SetChar(c); });
+if (status == FontError::kUnknownChar) { ... }
+if (const utl::Error* error = status.error()) {
+  Serial.print(error->group().Name());  // "font"
+}
+Serial.println(status.Message());  // "unknown char", or "ok"; from flash
 ```
 
 Everything lies in the namespace `utl`, one class per file in `src/utl/`:
 
-- `Error` (`error.h`): a group and a code, or no error. A code of a group converts to it
-  implicitly, so `return FontError::kUnknownChar;`, `Error e{FontError::kUnknownChar}` and
+- `Error` (`error.h`): always an error, a group and a code; there is no `Error()`. A code of a
+  group converts to it implicitly, so `Error e{FontError::kUnknownChar}` and
   `error == FontError::kUnknownChar` need no function around the code; no other type converts.
-- `Result<T>` (`result.h`): a value or an error, side by side rather than in a union.
+- `Status` (`status.h`): what a function returns that has nothing else to return, ok or an
+  `Error`, as Rust's `Result<(), E>` or `absl::Status`. `Status::Ok()` is ok, a code or an `Error`
+  converts to a `Status`, and `error()` gives the `Error` or null, so that no one gets hold
+  of an `Error` that is none. Still 3 bytes: inside, ok is an `Error` with a null group, which
+  only `Status` can make.
+- `Result<T>` (`result.h`): a value or an `Error`, the value and a `Status` side by side rather
+  than in a union; `error()` as in `Status`, and `status()` to compare or print.
 - `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
 - `array<T, N>` (`array.h`) and `span<T>` (`span.h`): `std::array`, which avr-gcc lacks, and
   `std::span` from C++20, with the STL names Google allows for an STL-like entity. What the
@@ -46,10 +55,11 @@ Everything lies in the namespace `utl`, one class per file in `src/utl/`:
   `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
   Arduino compiles with `-fpermissive -Wno-error=narrowing`.
 
-The fluent functions follow Rust's `Result`: `AndThen()` goes on while there is no error, `Map()`
-changes the value, `OrElse()` recovers from an error, `ValueOr()` gives a fallback. None calls its
-function when it has nothing to give it. A chain of three steps costs 14 bytes of flash more than
-the same `if`s written out, and no RAM: the lambdas are inlined.
+The fluent functions follow Rust's `Result`, on `Status` and `Result`: `AndThen()` goes on while
+there is no error, `Map()` changes the value, `OrElse()` recovers from an error and gets an
+`Error` that is one, `ValueOr()` gives a fallback. None calls its function when it has nothing
+to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
+and no RAM: the lambdas are inlined.
 
 A sketch includes `<ErrorGroup.h>`: arduino-cli finds a library only by a header directly in its
 `src/`, and once found, `<utl/...>` works in every file of the sketch.
@@ -72,8 +82,8 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 
 | Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
 |---|---|---|---|---|
-| Basics | 2452 | 2454 | 208 | 174 |
-| SelfCheck | 5598 | 5600 | 221 | 179 |
+| Basics | 2368 | 2370 | 208 | 174 |
+| SelfCheck | 5988 | 5990 | 221 | 179 |
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
 vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as

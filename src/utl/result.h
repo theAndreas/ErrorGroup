@@ -8,13 +8,14 @@
 
 #include "utl/error.h"
 #include "utl/internal/type_traits.h"
+#include "utl/status.h"
 
 namespace utl {
 
-// A value of T, or an error. The two lie side by side, not in a union: T needs
-// a default constructor, for the value of a Result with an error, and in
-// return the class needs no tag, no placement new and no deviation under a
-// safety standard's rules on unions.
+// A value of T, or an Error. The value and a Status lie side by side, not in a
+// union: T needs a default constructor, for the value of a Result with an
+// error, and in return the class needs no tag, no placement new and no
+// deviation under a safety standard's rules on unions.
 //
 //   Result<uint8_t> GetRow(uint8_t index) {
 //     if (index >= kRows) {
@@ -38,20 +39,22 @@ class Result {
   constexpr Result(const T& value)  // NOLINT(runtime/explicit)
       : value_(value) {}
 
-  // An error, and T() as the value. An Error() makes a Result without error,
-  // whose value is T().
+  // An error, and T() as the value.
   constexpr Result(const Error& error)  // NOLINT(runtime/explicit)
-      : value_(), error_(error) {}
+      : value_(), status_(error) {}
 
   // A code of a group, as in the implicit constructor of Error.
   template <typename Code, typename = decltype(GetErrorGroup(Code()))>
   constexpr Result(Code code)  // NOLINT(runtime/explicit)
-      : value_(), error_(code) {}
+      : value_(), status_(code) {}
 
-  bool IsOk() const { return error_.IsOk(); }
+  bool IsOk() const { return status_.IsOk(); }
 
-  // Error() if IsOk().
-  const Error& error() const { return error_; }
+  // The error, or null if IsOk(), as Status::error().
+  const Error* error() const { return status_.error(); }
+
+  // Ok, or the error: to compare with a code or to print.
+  const Status& status() const { return status_; }
 
   // The value, or T() if !IsOk(): ask first, or use ValueOr().
   const T& value() const { return value_; }
@@ -60,11 +63,11 @@ class Result {
   T ValueOr(const T& fallback) const { return IsOk() ? value_ : fallback; }
 
   // Returns `f(value())` if there is no error, or else the error. `f` returns
-  // a Result of any type, or an Error.
+  // a Result of any type, or a Status.
   template <typename F>
   auto AndThen(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
     if (!IsOk()) {
-      return error_;
+      return *error();
     }
     return f(value_);
   }
@@ -73,24 +76,25 @@ class Result {
   template <typename F>
   auto Map(F f) const -> Result<decltype(f(internal::DeclVal<const T&>()))> {
     if (!IsOk()) {
-      return error_;
+      return *error();
     }
     return f(value_);
   }
 
-  // Returns this if there is no error, or else `f(error())`: `f` returns a
-  // value in place of the missing one, another error, or a Result.
+  // Returns this if there is no error, or else `f(*error())`: `f` gets an Error
+  // that is one and returns a value in place of the missing one, another
+  // error, or a Result.
   template <typename F>
   Result OrElse(F f) const {
     if (IsOk()) {
       return *this;
     }
-    return f(error_);
+    return f(*error());
   }
 
  private:
   T value_;
-  Error error_;
+  Status status_;
 };
 
 }  // namespace utl
