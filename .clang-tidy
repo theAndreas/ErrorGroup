@@ -10,13 +10,19 @@ Checks: >
   performance-*,
   portability-*,
   readability-*,
+  -bugprone-dynamic-static-initializers,
   -google-explicit-constructor,
   -misc-explicit-constructor,
   -modernize-avoid-c-arrays,
   -modernize-deprecated-headers,
   -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
-  -readability-identifier-length
+  -readability-identifier-length,
+  -readability-named-parameter
+# bugprone-dynamic-static-initializers: it reports the extern declaration of
+#   every group, as it cannot see the constexpr definition in the .cpp. A
+#   group has to be extern, its address being what identifies it, so only a
+#   NOLINT in every group, a sketch's own as well, would silence it.
 # google-explicit-constructor, misc-explicit-constructor: cpplint checks the
 #   same rule as runtime/explicit, and the implicit constructors that are
 #   meant carry their NOLINT there; two tools would want two per line.
@@ -29,8 +35,13 @@ Checks: >
 # modernize-use-trailing-return-type: Google puts the return type in front.
 # readability-identifier-length: Google allows `f` or `a` and `b` where the
 #   scope is a few lines.
+# readability-named-parameter: Google leaves out the name of a parameter that
+#   is unused where the context explains it, as the enum that only picks the
+#   overload of GetErrorGroup().
 WarningsAsErrors: '*'
-HeaderFilterRegex: '/(src|examples)/'
+# (^|/), as tools/tidy.sh names the files relative to the repository, and a
+# header beside an example is found as examples/.../font_error.h.
+HeaderFilterRegex: '(^|/)(src|examples)/'
 CheckOptions:
   # Google's "include what you use", with Arduino.h as what provides the
   # core: F(), __FlashStringHelper and the rest come through it.
