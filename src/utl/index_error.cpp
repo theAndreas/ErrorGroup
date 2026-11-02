@@ -14,9 +14,7 @@ namespace {
 const char kOutOfRangeText[] PROGMEM = "out of range";
 
 // In the order of IndexError.
-const array<const char*, 1> kMessages PROGMEM = {
-    kOutOfRangeText,
-};
+constexpr auto kMessages PROGMEM = make_array(kOutOfRangeText);
 
 }  // namespace
 

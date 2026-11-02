@@ -20,6 +20,15 @@ T&& DeclVal();
 template <typename To>
 void ConvertTo(To);
 
+// std::void_t: void, if every type in Ts is valid. Through a struct, as an
+// alias template alone may ignore arguments it does not use (CWG 1558).
+template <typename... Ts>
+struct VoidImpl {
+  using Type = void;
+};
+template <typename... Ts>
+using Void = typename VoidImpl<Ts...>::Type;
+
 // std::remove_cv_t.
 template <typename T>
 struct RemoveCvImpl {
@@ -49,10 +58,9 @@ using ArrayPointer = T (*)[];
 // Names a type only if an array of From may be seen as an array of To, the
 // test std::span makes: it adds const or volatile, as int to const int, but
 // it never turns Derived into Base, whose elements would lie at other
-// distances, nor long into int. cpplint takes the line clang-format wraps for
-// indentation within the namespace.
+// distances, nor long into int.
 template <typename From, typename To>
-using ArrayConvertible =  // NOLINTNEXTLINE(whitespace/indent_namespace)
+using ArrayConvertible =
     decltype(ConvertTo<ArrayPointer<To>>(DeclVal<ArrayPointer<From>>()));
 
 }  // namespace internal

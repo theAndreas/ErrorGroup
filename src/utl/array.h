@@ -87,6 +87,26 @@ struct array {
   }
 };
 
+// An array of its arguments, with the type and the size taken from them:
+// what `std::array a = {...}` deduces from C++17 on, and gnu++11 cannot. As
+// std::experimental::make_array, the type is that of the first argument,
+// after an array decays to a pointer; the others have to convert to it
+// without narrowing. Arduino compiles with -fpermissive -Wno-error=narrowing,
+// so `{first, rest...}` alone would only warn on make_array(1, 2.5); the test
+// in the template arguments makes it an error, as GCC keeps narrowing
+// ill-formed where it decides whether a template applies.
+//
+// A table in PROGMEM has to be constexpr, so that it is complete when
+// compiled: initialized at start-up, it would be written to flash, which
+// fails without a word.
+//
+//   constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeout);
+template <typename T, typename... Ts,
+          typename = internal::Void<decltype(T{internal::DeclVal<Ts>()})...>>
+constexpr array<T, 1 + sizeof...(Ts)> make_array(T first, Ts... rest) {
+  return {{first, rest...}};
+}
+
 template <typename T, size_t N>
 bool operator==(const array<T, N>& a, const array<T, N>& b) {
   for (size_t index = 0; index < N; ++index) {
