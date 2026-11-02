@@ -1,0 +1,15 @@
+ok
+alpha: alpha first
+alpha: alpha second
+beta: beta first
+beta: unknown code
+pass Error() is ok
+pass an error is not ok
+pass compares with its enum
+pass differs in the code
+pass differs in the group
+pass same code, other group
+pass MakeError
+pass equal across translation units
+pass assignable
+failed: 0
