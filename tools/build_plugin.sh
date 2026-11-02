@@ -1,11 +1,15 @@
 #!/bin/bash
 #
+# Copyright 2026 Andreas Burnickl
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Builds the GCC plugin avr-flash-vtbl into build/, against the plugin headers
 # of the avr-gcc that arduino-cli uses. A plugin only loads into the cc1plus
 # it was built for, so build it again after the AVR core is updated.
 
 set -euo pipefail
 
+# shellcheck source=tools/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 main() {

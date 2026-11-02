@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Checks the library on the board, or in simavr through tools/self_check.sh,
 // and prints one line per check and the number of checks that failed.
 // SelfCheck.expected is what a correct run prints.

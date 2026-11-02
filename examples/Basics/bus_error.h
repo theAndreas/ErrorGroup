@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The errors of a bus, the second group of this example. Its codes overlap
 // with those of the font, which is fine: an error compares group and code.
 

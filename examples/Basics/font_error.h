@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The errors of a font, one of two groups this example defines outside the
 // library.
 

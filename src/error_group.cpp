@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "error_group.h"
 
 #include <avr/pgmspace.h>
@@ -9,8 +12,7 @@ const __FlashStringHelper* ErrorGroup::LookUpMessage(
   if (code >= count) {
     return F("unknown code");
   }
-  return static_cast<const __FlashStringHelper*>(
-      pgm_read_ptr(&messages[code]));
+  return static_cast<const __FlashStringHelper*>(pgm_read_ptr(&messages[code]));
 }
 
 const __FlashStringHelper* Error::Message() const {

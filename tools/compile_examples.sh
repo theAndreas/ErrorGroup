@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+# Copyright 2026 Andreas Burnickl
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Compiles every example in both variants and prints flash and RAM of each,
 # as a Markdown table. Fails on a warning outside the Arduino core, and if a
 # vtable of the flash variant lies in RAM: then some file was compiled without
@@ -7,6 +10,7 @@
 
 set -euo pipefail
 
+# shellcheck source=tools/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # Prints the number after "<label> use(s)" in the output of arduino-cli.
@@ -37,8 +41,10 @@ main() {
   local warnings
   local -A flash_size
   local -A ram_size
+  local examples
+  mapfile -t examples < <(list_examples)
 
-  for example in $(ls "${ROOT_DIR}/examples"); do
+  for example in "${examples[@]}"; do
     for variant in "${VARIANTS[@]}"; do
       if ! output="$(compile_example "${variant}" "${example}")"; then
         err "${example} (${variant}) does not compile:"
@@ -65,7 +71,7 @@ main() {
   echo "| Example | Flash, vtables in RAM | Flash, in flash |" \
     "RAM, vtables in RAM | RAM, in flash |"
   echo "|---|---|---|---|---|"
-  for example in $(ls "${ROOT_DIR}/examples"); do
+  for example in "${examples[@]}"; do
     echo "| ${example} | ${flash_size["${example}/ram"]:-} |" \
       "${flash_size["${example}/flash"]:-} |" \
       "${ram_size["${example}/ram"]:-} | ${ram_size["${example}/flash"]:-} |"

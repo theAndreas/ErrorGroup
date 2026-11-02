@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Two groups that the library does not know, errors from both, and how a
 // sketch checks and prints them.
 

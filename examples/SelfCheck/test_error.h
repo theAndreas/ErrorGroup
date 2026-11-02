@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Two groups for SelfCheck, with codes that overlap on purpose.
 
 #ifndef ERRORGROUP_EXAMPLES_SELFCHECK_TEST_ERROR_H_

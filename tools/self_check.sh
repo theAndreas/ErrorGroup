@@ -1,10 +1,14 @@
 #!/bin/bash
 #
+# Copyright 2026 Andreas Burnickl
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Runs examples/SelfCheck in simavr, in both variants, and compares what it
 # prints with SelfCheck.expected.
 
 set -euo pipefail
 
+# shellcheck source=tools/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 readonly EXAMPLE="SelfCheck"

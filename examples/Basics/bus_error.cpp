@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "bus_error.h"
 
 #include <avr/pgmspace.h>

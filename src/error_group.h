@@ -1,3 +1,6 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Errors that carry the group they come from, identified by its address.
 //
 // An Error is a pointer to its ErrorGroup and a code within that group. A
@@ -44,8 +47,8 @@ class ErrorGroup {
 
   // Returns `messages[code]`, read from a table in PROGMEM, or "unknown code"
   // if `code` lies beyond the table.
-  static const __FlashStringHelper* LookUpMessage(
-      const char* const* messages, uint8_t count, uint8_t code);
+  static const __FlashStringHelper* LookUpMessage(const char* const* messages,
+                                                  uint8_t count, uint8_t code);
 };
 
 // An error: the group it comes from and a code within that group, 3 bytes on
@@ -83,23 +86,22 @@ class Error {
 // `GetErrorGroup(code)`, which each group declares beside its enum, in the
 // same namespace, so that argument-dependent lookup finds it.
 template <typename Code>
-constexpr auto MakeError(Code code)
-    -> decltype(GetErrorGroup(code), Error()) {
+constexpr Error MakeError(Code code) {
   return Error(GetErrorGroup(code), static_cast<uint8_t>(code));
 }
 
 // Compares an error with a code of a group: the group and the code must both
 // match, so codes of different groups may overlap. Takes part in overload
-// resolution only for an enum that has a GetErrorGroup().
-template <typename Code>
-auto operator==(const Error& error, Code code)
-    -> decltype(GetErrorGroup(code), bool()) {
+// resolution only for an enum that has a GetErrorGroup(): a template that
+// takes any type would win against an operator== of another type that the
+// error converts to, and then fail inside.
+template <typename Code, typename = decltype(GetErrorGroup(Code()))>
+bool operator==(const Error& error, Code code) {
   return error == MakeError(code);
 }
 
-template <typename Code>
-auto operator!=(const Error& error, Code code)
-    -> decltype(GetErrorGroup(code), bool()) {
+template <typename Code, typename = decltype(GetErrorGroup(Code()))>
+bool operator!=(const Error& error, Code code) {
   return !(error == code);
 }
 
