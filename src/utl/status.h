@@ -3,8 +3,8 @@
 //
 // What a function returns that has nothing else to return: ok, or an error.
 
-#ifndef ERRORGROUP_SRC_UTL_STATUS_H_
-#define ERRORGROUP_SRC_UTL_STATUS_H_
+#ifndef UTL_SRC_UTL_STATUS_H_
+#define UTL_SRC_UTL_STATUS_H_
 
 #include <Arduino.h>
 
@@ -92,4 +92,4 @@ class Status {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_STATUS_H_
+#endif  // UTL_SRC_UTL_STATUS_H_

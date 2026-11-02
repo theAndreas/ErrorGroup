@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 10
     steps:
       # cpplint derives the header guards from the path below the parent of
-      # the checkout, which GitHub names after the repository: ErrorGroup.
+      # the checkout, which GitHub names after the repository: Utl.
       - uses: actions/checkout@v7
 
       # setup-uv has no tag for a major version, only full ones.

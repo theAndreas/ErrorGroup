@@ -5,7 +5,7 @@
 // and prints one line per check and the number of checks that failed.
 // SelfCheck.expected is what a correct run prints.
 
-#include <ErrorGroup.h>
+#include <Utl.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <stddef.h>

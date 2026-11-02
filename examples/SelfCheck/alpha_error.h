@@ -3,8 +3,8 @@
 //
 // The first of two groups for SelfCheck, whose codes overlap on purpose.
 
-#ifndef ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
-#define ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
+#ifndef UTL_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
+#define UTL_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
 
 #include <stdint.h>
 #include <utl/error.h>
@@ -37,4 +37,4 @@ utl::Error MakeAlphaSecondElsewhere();
 
 }  // namespace self_check
 
-#endif  // ERRORGROUP_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
+#endif  // UTL_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_

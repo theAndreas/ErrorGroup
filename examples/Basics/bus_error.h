@@ -4,8 +4,8 @@
 // The errors of a bus, the second group of this example. Its codes overlap
 // with those of the font, which is fine: an error compares group and code.
 
-#ifndef ERRORGROUP_EXAMPLES_BASICS_BUS_ERROR_H_
-#define ERRORGROUP_EXAMPLES_BASICS_BUS_ERROR_H_
+#ifndef UTL_EXAMPLES_BASICS_BUS_ERROR_H_
+#define UTL_EXAMPLES_BASICS_BUS_ERROR_H_
 
 #include <stdint.h>
 #include <utl/error_group.h>
@@ -32,4 +32,4 @@ inline const utl::ErrorGroup& GetErrorGroup(BusError) { return kBusErrorGroup; }
 
 }  // namespace bus
 
-#endif  // ERRORGROUP_EXAMPLES_BASICS_BUS_ERROR_H_
+#endif  // UTL_EXAMPLES_BASICS_BUS_ERROR_H_
