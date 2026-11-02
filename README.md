@@ -4,9 +4,9 @@ A small standard library for Arduino on the AVR. avr-gcc comes without the C++ s
 Utl brings what a sketch or a library misses most, in the namespace `utl`: in the manner of the
 standard where it has an answer, and checked where the standard leaves a call undefined.
 
-- **Errors** that say what went wrong and where it came from, in 3 bytes each: `Error`, `Status`
-  and `Result`, with a fluent API after Rust, and groups of errors that any library or sketch adds
-  without changing this one.
+- **Errors** that say what went wrong and where it came from, in 3 bytes each: `Error`, `Status`,
+  `Result<T>` and `Result<void>`, with a fluent API after Rust, and groups of errors that any
+  library or sketch adds without changing this one.
 - **Containers**: `array`, `span` and `make_array`, as in the standard, except that what can go
   out of range returns a `Result` rather than being undefined.
 
@@ -144,6 +144,12 @@ there is no error, `Map()` changes the value, `OrElse()` recovers from an error 
 `Error` that is one, `ValueOr()` gives a fallback. None calls its function when it has nothing
 to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
 and no RAM: the lambdas are inlined.
+
+`Map()` with a function that returns nothing gives a `Result<void>`, which is a `Status`:
+
+```cpp
+const utl::Result<void> printed = Receive(true).Map([](char c) { Serial.println(c); });
+```
 
 ## Containers
 
