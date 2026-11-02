@@ -66,8 +66,11 @@ Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, a
 tools/build_plugin.sh       # build/avr-flash-vtbl.so
 tools/self_check.sh         # examples/SelfCheck in simavr, with and without the plugin
 tools/compile_examples.sh   # every example both ways, fails on a warning; prints the table above
-tools/lint.sh [--fix]       # clang-format, cpplint, shellcheck; --fix formats the C++ sources
+tools/lint.sh [--fix]       # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
 ```
+
+CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
+on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".
 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).

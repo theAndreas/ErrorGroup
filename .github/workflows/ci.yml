@@ -1,0 +1,86 @@
+# What a pull request is checked with. The jobs only call the scripts in
+# tools/, so that a run in the dev container answers the same:
+#
+#   lint           the Google style: clang-format, cpplint, shellcheck
+#   examples       every example with vtables in RAM and in flash, without a
+#                  warning; SelfCheck in simavr both ways; flash and RAM go
+#                  into the job summary
+#   arduino-lint   the rules of the Arduino Library Manager
+#
+# Every job carries a timeout-minutes well above what it takes, for a job that
+# has stopped making progress.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push to the same branch makes the first answer worthless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    # -o pipefail, so that a script piped into tee still fails the step.
+    shell: bash
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      # cpplint derives the header guards from the path below the parent of
+      # the checkout, which GitHub names after the repository: ErrorGroup.
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Lint
+        run: tools/lint.sh
+
+  examples:
+    name: Examples on arduino:avr:uno
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # arduino-cli as in the dev container. The core is pinned: the plugin
+      # loads only into the cc1plus it was built for, and the sizes in the
+      # README were measured with it.
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: 1.5.1
+
+      - name: Install the AVR core and simavr
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.8
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends simavr
+
+      - name: Build the plugin
+        run: tools/build_plugin.sh
+
+      - name: SelfCheck in simavr
+        run: tools/self_check.sh
+
+      - name: Compile
+        run: tools/compile_examples.sh | tee -a "$GITHUB_STEP_SUMMARY"
+
+  arduino-lint:
+    name: arduino-lint
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # "submit" because the library is not in the Library Manager; once it
+      # is, "update" adds the checks for a new release.
+      - uses: arduino/arduino-lint-action@v3
+        with:
+          project-type: library
+          library-manager: submit
