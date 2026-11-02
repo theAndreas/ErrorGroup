@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "utl/index_error.h"
+#include "utl/misuse.h"
 #include "utl/result.h"
 
 namespace utl {
@@ -69,12 +70,19 @@ class basic_string_view {
   constexpr const_iterator end() const { return data_ + size_; }
 
   // Unchecked, as in std::string_view: undefined beyond the end, or if
-  // empty().
+  // empty(). With UTL_CHECK_ACCESS at 1 that is reported first.
   constexpr const_reference operator[](size_type index) const {
-    return data_[index];
+    return static_cast<void>(internal::Check(index < size_, Misuse::kIndex)),
+           data_[index];
   }
-  constexpr const_reference front() const { return data_[0]; }
-  constexpr const_reference back() const { return data_[size_ - 1]; }
+  constexpr const_reference front() const {
+    return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
+           data_[0];
+  }
+  constexpr const_reference back() const {
+    return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
+           data_[size_ - 1];
+  }
 
   // The char at `index`, or IndexError::kOutOfRange.
   Result<CharT> at(size_type index) const {

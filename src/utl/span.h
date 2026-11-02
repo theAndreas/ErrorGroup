@@ -12,6 +12,7 @@
 #include "utl/array.h"
 #include "utl/index_error.h"
 #include "utl/internal/type_traits.h"
+#include "utl/misuse.h"
 #include "utl/result.h"
 
 namespace utl {
@@ -28,7 +29,8 @@ namespace utl {
 // It follows std::span and its names, as Google allows for an STL-like
 // entity, with a dynamic extent only. What std::span leaves undefined beyond
 // the end returns a Result with IndexError::kOutOfRange instead: at(),
-// first(), last() and subspan(). operator[] stays unchecked, as in std::span.
+// first(), last() and subspan(). operator[] stays unchecked, as in std::span,
+// unless UTL_CHECK_ACCESS is 1.
 template <typename T>
 class span {
  public:
@@ -78,8 +80,12 @@ class span {
   constexpr size_type size_bytes() const { return size_ * sizeof(T); }
   constexpr bool empty() const { return size_ == 0; }
 
-  // Unchecked, as in std::span: an index beyond the end is undefined.
-  constexpr reference operator[](size_type index) const { return data_[index]; }
+  // Unchecked, as in std::span: an index beyond the end is undefined. With
+  // UTL_CHECK_ACCESS at 1 it is reported first.
+  constexpr reference operator[](size_type index) const {
+    return static_cast<void>(internal::Check(index < size_, Misuse::kIndex)),
+           data_[index];
+  }
 
   // The element at `index`, or IndexError::kOutOfRange. A copy, as a Result
   // holds a value: to write, check the index and use operator[].
@@ -90,9 +96,16 @@ class span {
     return data_[index];
   }
 
-  // Unchecked, as in std::span: undefined if empty().
-  constexpr reference front() const { return data_[0]; }
-  constexpr reference back() const { return data_[size_ - 1]; }
+  // Unchecked, as in std::span: undefined if empty(). With UTL_CHECK_ACCESS
+  // at 1 that is reported first.
+  constexpr reference front() const {
+    return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
+           data_[0];
+  }
+  constexpr reference back() const {
+    return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
+           data_[size_ - 1];
+  }
 
   constexpr iterator begin() const { return data_; }
   constexpr iterator end() const { return data_ + size_; }

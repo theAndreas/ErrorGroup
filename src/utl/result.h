@@ -8,6 +8,7 @@
 
 #include "utl/error.h"
 #include "utl/internal/type_traits.h"
+#include "utl/misuse.h"
 #include "utl/status.h"
 
 namespace utl {
@@ -70,7 +71,10 @@ class [[nodiscard]] Result {
   const Status& status() const { return status_; }
 
   // The value, or T() if !IsOk(): ask first, or use ValueOr().
-  const T& value() const { return value_; }
+  const T& value() const {
+    return static_cast<void>(internal::Check(IsOk(), Misuse::kResultValue)),
+           value_;
+  }
 
   // Returns the value, or `fallback` if there is an error.
   T ValueOr(const T& fallback) const { return IsOk() ? value_ : fallback; }

@@ -13,6 +13,9 @@
 
 #include "alpha_error.h"
 #include "beta_error.h"
+#if UTL_CHECK_ACCESS
+#include "misuse_record.h"
+#endif
 
 using self_check::AlphaError;
 using self_check::BetaError;
@@ -348,6 +351,47 @@ void CheckStringView() {
   Check(ts == 2, F("flash_string_view in a range-based for"));
 }
 
+// With UTL_CHECK_ACCESS at 1, checks that each misuse is reported once, and a
+// right access not at all. The reads beyond the end and of an empty span are
+// undefined, but harmless on the AVR, where they read a byte of RAM.
+void CheckMisuse() {
+#if UTL_CHECK_ACCESS
+  using self_check::LastMisuse;
+  using self_check::MisuseCount;
+  uint8_t before = MisuseCount();
+  const Result<uint8_t> failed_result = GetCode(9);
+  static_cast<void>(failed_result.value());
+  Check(
+      MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kResultValue,
+      F("value() of a Result with an error is reported"));
+  before = MisuseCount();
+  const utl::optional<uint8_t> none;
+  static_cast<void>(*none);
+  Check(MisuseCount() == before + 1 &&
+            LastMisuse() == utl::Misuse::kOptionalValue,
+        F("* of an empty optional is reported"));
+  utl::array<uint8_t, 2> pair = {{1, 2}};
+  before = MisuseCount();
+  static_cast<void>(pair[2]);
+  Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kIndex,
+        F("[] beyond the end is reported"));
+  const span<uint8_t> empty;
+  before = MisuseCount();
+  static_cast<void>(empty.front());
+  Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kEmpty,
+        F("front() of an empty span is reported"));
+
+  before = MisuseCount();
+  static_cast<void>(pair[1]);
+  static_cast<void>(GetCode(1).value());
+  static_cast<void>(*FindCode(7));
+  Check(MisuseCount() == before, F("a right access is not reported"));
+
+  utl::PrintMisuse(Serial, utl::Misuse::kIndex);
+  Serial.println();
+#endif
+}
+
 void CheckArray() {
   utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
 
@@ -435,6 +479,7 @@ void setup() {
   CheckSpan();
   CheckOptional();
   CheckStringView();
+  CheckMisuse();
 
   Serial.print(F("failed: "));
   Serial.println(failed);

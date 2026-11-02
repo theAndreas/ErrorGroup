@@ -1,0 +1,93 @@
+ok
+alpha: alpha first
+alpha: alpha second
+beta: beta first
+beta: unknown code
+beta: unknown code
+beta: unknown code
+alpha: alpha first
+pass PrintTo returns the number of chars
+pass an Error has a group and a code
+pass compares with its enum
+pass with the enum on the left
+pass differs in the code
+pass differs in the group
+pass same code, other group
+pass made from its enum
+pass equal across translation units
+pass assignable
+pass Status::Ok() is ok and has no Error
+pass a Status holds its Error
+pass Status compares with a code
+pass Status compares with an Error
+pass Status::AndThen goes on when ok
+pass Status::AndThen stops at an error
+pass Status::AndThen into a Result
+pass Status::OrElse recovers
+pass Status::OrElse gets the Error
+pass Status::OrElse leaves ok alone
+pass Result holds a value
+pass Result holds an error
+pass Result::ValueOr
+pass Result::Map
+pass Result::Map keeps the error
+pass Result::AndThen chains
+pass Result::AndThen stops at an error
+pass Result::AndThen into a Status
+pass Result::OrElse
+pass Result::OrElse keeps a value
+pass Result<void>::Ok() is ok
+pass Result<void> holds its Error
+pass Result<void> is a Status, and back
+pass Result::Map with a function that returns nothing
+pass Result::Map into Result<void> keeps the error
+pass Result<void>::Map makes a value
+pass Result<void>::Map keeps the error
+pass Result<void> recovers as a Status
+pass array::size
+pass array::operator[], front, back
+pass array in a range-based for
+pass array::at
+index: out of range
+pass array::at beyond the end
+pass array::data
+pass array copies and compares
+pass array::fill
+pass span() is empty
+pass span of an array
+pass span of const from array, const array, C array, span
+pass span writes through
+pass span::at
+pass span::first, last
+pass span::subspan
+pass span beyond the end
+pass span::subspan does not overflow
+pass span with the fluent API
+pass optional is empty
+pass optional holds a value
+optional: empty
+pass optional::value returns a Result
+pass optional::value_or
+pass optional::ok_or
+pass optional::reset
+pass optional::emplace
+pass optional takes nullopt
+pass optional = {} is empty
+pass string_view of a string
+pass string_view::starts_with, ends_with
+pass string_view::find
+pass string_view::substr
+pass string_view::at
+pass flash_string_view reads flash
+pass starts_with between RAM and flash
+pass == between RAM and flash
+pass flash_string_view::substr
+pass flash_string_view::find, at
+pass flash_string_view in a range-based for
+pass value() of a Result with an error is reported
+pass * of an empty optional is reported
+pass [] beyond the end is reported
+pass front() of an empty span is reported
+pass a right access is not reported
+utl: [] beyond the end
+failed: 0

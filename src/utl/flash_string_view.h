@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 #include "utl/index_error.h"
+#include "utl/misuse.h"
 #include "utl/result.h"
 #include "utl/string_view.h"
 
@@ -91,11 +92,19 @@ class basic_flash_string_view {
   const_iterator end() const { return const_iterator(data_ + size_); }
 
   // Unchecked, as in string_view: undefined beyond the end, or if empty().
+  // With UTL_CHECK_ACCESS at 1 that is reported first.
   CharT operator[](size_type index) const {
-    return static_cast<CharT>(pgm_read_byte(data_ + index));
+    static_cast<void>(internal::Check(index < size_, Misuse::kIndex));
+    return Read(index);
   }
-  CharT front() const { return (*this)[0]; }
-  CharT back() const { return (*this)[size_ - 1]; }
+  CharT front() const {
+    static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty));
+    return Read(0);
+  }
+  CharT back() const {
+    static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty));
+    return Read(size_ - 1);
+  }
 
   // The char at `index`, or IndexError::kOutOfRange.
   Result<CharT> at(size_type index) const {
@@ -148,6 +157,11 @@ class basic_flash_string_view {
   }
 
  private:
+  // Unchecked, for the members, which check what they read themselves.
+  CharT Read(size_type index) const {
+    return static_cast<CharT>(pgm_read_byte(data_ + index));
+  }
+
   // For basic_string_view, which compares with a text in flash but cannot
   // include this header, as this one includes it.
   friend class basic_string_view<CharT>;
