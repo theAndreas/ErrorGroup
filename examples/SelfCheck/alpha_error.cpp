@@ -4,6 +4,8 @@
 #include "alpha_error.h"
 
 #include <avr/pgmspace.h>
+#include <stdint.h>
+#include <utl/error.h>
 
 namespace self_check {
 namespace {

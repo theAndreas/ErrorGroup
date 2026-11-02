@@ -4,6 +4,7 @@
 #include "bus_error.h"
 
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 namespace bus {
 namespace {

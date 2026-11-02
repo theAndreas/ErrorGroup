@@ -6,6 +6,7 @@
 #ifndef ERRORGROUP_EXAMPLES_SELFCHECK_BETA_ERROR_H_
 #define ERRORGROUP_EXAMPLES_SELFCHECK_BETA_ERROR_H_
 
+#include <stdint.h>
 #include <utl/error_group.h>
 
 namespace self_check {

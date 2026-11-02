@@ -1,7 +1,9 @@
 # What a pull request is checked with. The jobs only call the scripts in
 # tools/, so that a run in the dev container answers the same:
 #
-#   lint           the Google style: clang-format, cpplint, shellcheck
+#   lint           the Google style: clang-format, cpplint, shellcheck,
+#                  actionlint
+#   clang-tidy     the library and the examples, with the flags of the Uno
 #   examples       every example with vtables in RAM and in flash, without a
 #                  warning; SelfCheck in simavr both ways; flash and RAM go
 #                  into the job summary
@@ -41,6 +43,29 @@ jobs:
 
       - name: Lint
         run: tools/lint.sh
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.0
+
+      # tools/tidy.sh takes its flags from arduino-cli's compilation database,
+      # so it needs the core the examples are compiled with.
+      - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: 1.5.1
+
+      - name: Install the AVR core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.8
+
+      - name: clang-tidy
+        run: tools/tidy.sh
 
   examples:
     name: Examples on arduino:avr:uno

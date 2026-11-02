@@ -9,8 +9,8 @@
 #ifndef ERRORGROUP_SRC_ERRORGROUP_H_
 #define ERRORGROUP_SRC_ERRORGROUP_H_
 
-#include "utl/error.h"
-#include "utl/error_group.h"
-#include "utl/result.h"
+#include "utl/error.h"        // IWYU pragma: export
+#include "utl/error_group.h"  // IWYU pragma: export
+#include "utl/result.h"       // IWYU pragma: export
 
 #endif  // ERRORGROUP_SRC_ERRORGROUP_H_

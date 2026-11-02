@@ -4,6 +4,7 @@
 #include "utl/error_group.h"
 
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 namespace utl {
 

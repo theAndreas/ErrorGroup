@@ -43,7 +43,7 @@ class Result {
   // A value. Implicit, like the conversions below, so that a function returns
   // its value or its error as it is: a Result is either, and nothing else.
   constexpr Result(const T& value)  // NOLINT(runtime/explicit)
-      : value_(value), error_() {}
+      : value_(value) {}
 
   // An error, and T() as the value. An Error() makes a Result without error,
   // whose value is T().

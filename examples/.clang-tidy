@@ -1,0 +1,5 @@
+---
+# readability-magic-numbers: a sketch's pins, baud rate and test values read
+# better as the numbers they are than behind names used once.
+InheritParentConfig: true
+Checks: -readability-magic-numbers

@@ -1,0 +1,37 @@
+---
+# Broad groups, and out of them what contradicts the Google style or cannot
+# be had on the AVR. Each exception says why.
+Checks: >
+  bugprone-*,
+  clang-analyzer-*,
+  google-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -google-explicit-constructor,
+  -misc-explicit-constructor,
+  -modernize-avoid-c-arrays,
+  -modernize-deprecated-headers,
+  -modernize-return-braced-init-list,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length
+# google-explicit-constructor, misc-explicit-constructor: cpplint checks the
+#   same rule as runtime/explicit, and the implicit constructors that are
+#   meant carry their NOLINT there; two tools would want two per line.
+# modernize-avoid-c-arrays: a table in PROGMEM is a C array, and there is no
+#   std::array on the AVR.
+# modernize-deprecated-headers: avr-gcc comes without a C++ standard library,
+#   so there is no <cstdint>, only <stdint.h>.
+# modernize-return-braced-init-list: `return Error();` says that no error is
+#   returned, `return {};` hides it.
+# modernize-use-trailing-return-type: Google puts the return type in front.
+# readability-identifier-length: Google allows `f` or `a` and `b` where the
+#   scope is a few lines.
+WarningsAsErrors: '*'
+HeaderFilterRegex: '/(src|examples)/'
+CheckOptions:
+  # Google's "include what you use", with Arduino.h as what provides the
+  # core: F(), __FlashStringHelper and the rest come through it.
+  misc-include-cleaner.IgnoreHeaders: '.*/cores/arduino/.*'

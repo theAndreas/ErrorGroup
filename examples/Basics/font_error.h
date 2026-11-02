@@ -7,6 +7,7 @@
 #ifndef ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
 #define ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
 
+#include <stdint.h>
 #include <utl/error_group.h>
 
 namespace font {
