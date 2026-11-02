@@ -3,8 +3,8 @@
 //
 // The errors of an index, the group of array and span.
 
-#ifndef ERRORGROUP_SRC_UTL_INDEX_ERROR_H_
-#define ERRORGROUP_SRC_UTL_INDEX_ERROR_H_
+#ifndef UTL_SRC_UTL_INDEX_ERROR_H_
+#define UTL_SRC_UTL_INDEX_ERROR_H_
 
 #include <Arduino.h>
 #include <stdint.h>
@@ -34,4 +34,4 @@ inline const ErrorGroup& GetErrorGroup(IndexError) { return kIndexErrorGroup; }
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_INDEX_ERROR_H_
+#endif  // UTL_SRC_UTL_INDEX_ERROR_H_

@@ -4,8 +4,8 @@
 // The errors of a font, one of two groups this example defines outside the
 // library.
 
-#ifndef ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
-#define ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
+#ifndef UTL_EXAMPLES_BASICS_FONT_ERROR_H_
+#define UTL_EXAMPLES_BASICS_FONT_ERROR_H_
 
 #include <stdint.h>
 #include <utl/error_group.h>
@@ -34,4 +34,4 @@ inline const utl::ErrorGroup& GetErrorGroup(FontError) {
 
 }  // namespace font
 
-#endif  // ERRORGROUP_EXAMPLES_BASICS_FONT_ERROR_H_
+#endif  // UTL_EXAMPLES_BASICS_FONT_ERROR_H_

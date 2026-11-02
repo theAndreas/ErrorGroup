@@ -3,8 +3,8 @@
 //
 // A value or the error that kept a function from returning one.
 
-#ifndef ERRORGROUP_SRC_UTL_RESULT_H_
-#define ERRORGROUP_SRC_UTL_RESULT_H_
+#ifndef UTL_SRC_UTL_RESULT_H_
+#define UTL_SRC_UTL_RESULT_H_
 
 #include "utl/error.h"
 #include "utl/internal/type_traits.h"
@@ -165,4 +165,4 @@ struct MapCall<void> {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_RESULT_H_
+#endif  // UTL_SRC_UTL_RESULT_H_

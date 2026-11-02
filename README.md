@@ -1,16 +1,20 @@
-# ErrorGroup
+# Utl
 
-Errors for Arduino that say what went wrong and where it came from, in 3 bytes each. An error is
-a code within a group, `font: unknown char` or `bus: nack`, and a group is identified by its
-address: no one hands out group ids, and a library or a sketch adds a group of its own without
-changing this one. It tries out the variant "by its address" of
-[MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md)
-on its own.
+A small toolkit for Arduino on the AVR, in the namespace `utl`:
+
+- **Errors that say what went wrong and where it came from**, in 3 bytes each. An error is a code
+  within a group, `font: unknown char` or `bus: nack`, and a group is identified by its address:
+  no one hands out group ids, and a library or a sketch adds a group of its own without changing
+  this one. `Status` and `Result` carry them, with a fluent API after Rust. It tries out the
+  variant "by its address" of
+  [MaxMatrix' ErrorHandling.md](https://github.com/theAndreas/MaxMatrix/blob/main/docu/ErrorHandling.md).
+- **`array`, `span` and `make_array`**, which avr-gcc lacks, as it comes without a C++ standard
+  library; what can go out of range returns a `Result`.
 
 ## Using it
 
 ```cpp
-#include <ErrorGroup.h>
+#include <Utl.h>
 
 // A function with nothing else to return returns a Status: ok, or an error.
 utl::Status SetChar(char c) {
@@ -39,7 +43,7 @@ if (const utl::Error* error = status.error()) {
 Serial.println(status.Message());  // "nack", or "ok"; from flash
 ```
 
-A sketch includes `<ErrorGroup.h>`, and before any header of its own that includes `<utl/...>`:
+A sketch includes `<Utl.h>`, and before any header of its own that includes `<utl/...>`:
 arduino-cli finds a library only by a header directly in its `src/`, going through the includes
 in order, and only once it has found it does `<utl/...>` work.
 
@@ -142,10 +146,10 @@ and no RAM: the lambdas are inlined.
 ## Installing
 
 Not in the Library Manager yet. Clone it into the `libraries` folder of your sketchbook, under the
-name `ErrorGroup`:
+name `Utl`:
 
 ```bash
-git clone https://github.com/theAndreas/ErrorGroup ~/Arduino/libraries/ErrorGroup
+git clone https://github.com/theAndreas/Utl ~/Arduino/libraries/Utl
 ```
 
 It is for the AVR boards (`architectures=avr`); it is built and checked for the Uno.
@@ -204,7 +208,7 @@ on top; the table of flash and RAM lands in the summary of the job "Examples on 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
 Three exceptions, all forced by Arduino: sources end in `.cpp`, as `arduino-cli` compiles no
-`.cc`; the header `ErrorGroup.h` is named after the library, as Arduino expects; and a sketch
+`.cc`; the header `Utl.h` is named after the library, as Arduino expects; and a sketch
 includes its own headers without a directory (see `examples/CPPLINT.cfg`).
 
 `tools/lint.sh` and `tools/tidy.sh` fetch their tools from PyPI through `uvx`, at fixed versions, so

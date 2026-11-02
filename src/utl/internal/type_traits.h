@@ -4,8 +4,8 @@
 // The few pieces of <utility> and <type_traits> that utl needs: avr-gcc comes
 // without a C++ standard library.
 
-#ifndef ERRORGROUP_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
-#define ERRORGROUP_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
+#ifndef UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
+#define UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
 
 namespace utl {
 namespace internal {
@@ -66,4 +66,4 @@ using ArrayConvertible =
 }  // namespace internal
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
+#endif  // UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_

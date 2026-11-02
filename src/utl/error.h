@@ -3,8 +3,8 @@
 //
 // An error: the group it comes from and a code within that group.
 
-#ifndef ERRORGROUP_SRC_UTL_ERROR_H_
-#define ERRORGROUP_SRC_UTL_ERROR_H_
+#ifndef UTL_SRC_UTL_ERROR_H_
+#define UTL_SRC_UTL_ERROR_H_
 
 #include <Arduino.h>
 #include <stdint.h>
@@ -71,4 +71,4 @@ class Error {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_ERROR_H_
+#endif  // UTL_SRC_UTL_ERROR_H_

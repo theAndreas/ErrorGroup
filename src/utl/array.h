@@ -3,8 +3,8 @@
 //
 // std::array, which avr-gcc lacks, with at() returning a Result.
 
-#ifndef ERRORGROUP_SRC_UTL_ARRAY_H_
-#define ERRORGROUP_SRC_UTL_ARRAY_H_
+#ifndef UTL_SRC_UTL_ARRAY_H_
+#define UTL_SRC_UTL_ARRAY_H_
 
 #include <stddef.h>
 
@@ -124,4 +124,4 @@ bool operator!=(const array<T, N>& a, const array<T, N>& b) {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_ARRAY_H_
+#endif  // UTL_SRC_UTL_ARRAY_H_

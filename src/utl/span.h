@@ -4,8 +4,8 @@
 // std::span, from C++20, for gnu++11, with what can go out of range returning
 // a Result.
 
-#ifndef ERRORGROUP_SRC_UTL_SPAN_H_
-#define ERRORGROUP_SRC_UTL_SPAN_H_
+#ifndef UTL_SRC_UTL_SPAN_H_
+#define UTL_SRC_UTL_SPAN_H_
 
 #include <stddef.h>
 
@@ -141,4 +141,4 @@ class span {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_SPAN_H_
+#endif  // UTL_SRC_UTL_SPAN_H_

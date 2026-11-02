@@ -7,8 +7,8 @@
 // docu/ErrorHandling.md of MaxMatrix, "Domains: what makes one unique", for
 // the alternatives that were weighed.
 
-#ifndef ERRORGROUP_SRC_UTL_ERROR_GROUP_H_
-#define ERRORGROUP_SRC_UTL_ERROR_GROUP_H_
+#ifndef UTL_SRC_UTL_ERROR_GROUP_H_
+#define UTL_SRC_UTL_ERROR_GROUP_H_
 
 #include <Arduino.h>
 #include <stddef.h>
@@ -81,4 +81,4 @@ class ErrorGroup {
 
 }  // namespace utl
 
-#endif  // ERRORGROUP_SRC_UTL_ERROR_GROUP_H_
+#endif  // UTL_SRC_UTL_ERROR_GROUP_H_
