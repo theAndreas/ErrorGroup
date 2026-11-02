@@ -1,0 +1,12 @@
+{
+    "name": "Utl (WSL2)",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": ".."
+    },
+    // Extensions, the Arduino core, the plugin and the volumes live in ../shared.
+    // Nothing is mounted: this variant relies on VS Code's own SSH-agent forwarding.
+    "features": {
+        "./../shared": {}
+    }
+}

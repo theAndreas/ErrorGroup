@@ -329,7 +329,8 @@ core.
 ## Build and check
 
 Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, `uv` and `jq`; for
-the tests on the host CMake, Ninja and GoogleTest (`libgtest-dev`).
+the tests on the host CMake, Ninja and GoogleTest (`libgtest-dev`). The dev container below has
+them all.
 
 ```bash
 tools/build_plugin.sh             # build/avr-flash-vtbl.so
@@ -339,8 +340,12 @@ cmake --workflow --preset default   # the tests on the host, in three variants
 cmake --workflow --preset sanitize  # the same under AddressSanitizer and UBSan
 tools/coverage.sh                 # the same with --coverage: what of src/ they reach
 tools/lint.sh [--fix]             # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
-tools/tidy.sh                     # clang-tidy on the library and the examples, with the Uno's flags
+tools/tidy.sh                     # clang-tidy: library and examples as for the Uno, and the tests
 ```
+
+The dev container in `.devcontainer/` carries all of it, with clangd for IntelliSense, which
+`.clangd` points at the compilation databases of CMake and of `tools/tidy.sh`; see
+[its README](.devcontainer/README.md).
 
 The tests on the host (`test/`) run the library against a mock of the Arduino core
 (`test/mock/`), built as gnu++11 as avr-gcc builds it, in the three variants `SelfCheck` knows:
