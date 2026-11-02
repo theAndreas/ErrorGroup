@@ -31,6 +31,9 @@ static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
 static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
 static_assert(sizeof(utl::optional<uint8_t>) == 2,
               "an optional is a value and a flag");
+static_assert(sizeof(utl::string_view) == 4 &&
+                  sizeof(utl::flash_string_view) == 4,
+              "a string_view is a pointer and a size");
 constexpr utl::array<uint8_t, 3> kConstantRows = {{1, 2, 3}};
 static_assert(kConstantRows[1] == 2 && kConstantRows.size() == 3,
               "an array is constexpr");
@@ -297,6 +300,54 @@ void CheckOptional() {
   Check(!changed.has_value(), F("optional = {} is empty"));
 }
 
+void CheckStringView() {
+  char buffer[] = "text=Hi";
+  const utl::string_view line = buffer;
+
+  Check(line.size() == 7 && line == "text=Hi" && line != "text=Ho",
+        F("string_view of a string"));
+  Check(line.starts_with("text=") && !line.starts_with("texts") &&
+            line.ends_with("Hi") && !line.ends_with("text=Hi!"),
+        F("string_view::starts_with, ends_with"));
+  Check(line.find('=') == 4 && line.find("Hi") == 5 &&
+            line.find('x', 4) == utl::string_view::npos &&
+            line.find("Ho") == utl::string_view::npos,
+        F("string_view::find"));
+  Check(line.substr(5).ValueOr("") == "Hi" && line.substr(7).value().empty() &&
+            line.substr(8).status() == IndexError::kOutOfRange &&
+            line.substr(1, 3).ValueOr("") == "ext",
+        F("string_view::substr"));
+  Check(line.at(0).ValueOr(0) == 't' &&
+            line.at(7).status() == IndexError::kOutOfRange,
+        F("string_view::at"));
+
+  const utl::flash_string_view keyword = F("text=");
+  Check(keyword.size() == 5 && keyword[4] == '=' && keyword.front() == 't' &&
+            keyword.back() == '=',
+        F("flash_string_view reads flash"));
+  Check(line.starts_with(keyword) && !line.starts_with(F("clear")) &&
+            keyword.starts_with("tex") && !keyword.starts_with("text=Hi"),
+        F("starts_with between RAM and flash"));
+  Check(line.substr(5).value() == F("Hi") &&
+            F("Hi") == line.substr(5).value() && line != F("text=") &&
+            F("text=") != line,
+        F("== between RAM and flash"));
+  Check(keyword.substr(0, 4).value() == F("text") &&
+            keyword.substr(6).status() == IndexError::kOutOfRange,
+        F("flash_string_view::substr"));
+  Check(keyword.find('=') == 4 &&
+            keyword.find('z') == utl::flash_string_view::npos &&
+            keyword.at(5).status() == IndexError::kOutOfRange,
+        F("flash_string_view::find, at"));
+  uint8_t ts = 0;
+  for (const char c : keyword) {
+    if (c == 't') {
+      ++ts;
+    }
+  }
+  Check(ts == 2, F("flash_string_view in a range-based for"));
+}
+
 void CheckArray() {
   utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
 
@@ -383,6 +434,7 @@ void setup() {
   CheckArray();
   CheckSpan();
   CheckOptional();
+  CheckStringView();
 
   Serial.print(F("failed: "));
   Serial.println(failed);

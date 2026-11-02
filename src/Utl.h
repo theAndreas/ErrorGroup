@@ -9,15 +9,17 @@
 #ifndef UTL_SRC_UTL_H_
 #define UTL_SRC_UTL_H_
 
-#include "utl/array.h"           // IWYU pragma: export
-#include "utl/config.h"          // IWYU pragma: export
-#include "utl/error.h"           // IWYU pragma: export
-#include "utl/error_group.h"     // IWYU pragma: export
-#include "utl/index_error.h"     // IWYU pragma: export
-#include "utl/optional.h"        // IWYU pragma: export
-#include "utl/optional_error.h"  // IWYU pragma: export
-#include "utl/result.h"          // IWYU pragma: export
-#include "utl/span.h"            // IWYU pragma: export
-#include "utl/status.h"          // IWYU pragma: export
+#include "utl/array.h"              // IWYU pragma: export
+#include "utl/config.h"             // IWYU pragma: export
+#include "utl/error.h"              // IWYU pragma: export
+#include "utl/error_group.h"        // IWYU pragma: export
+#include "utl/flash_string_view.h"  // IWYU pragma: export
+#include "utl/index_error.h"        // IWYU pragma: export
+#include "utl/optional.h"           // IWYU pragma: export
+#include "utl/optional_error.h"     // IWYU pragma: export
+#include "utl/result.h"             // IWYU pragma: export
+#include "utl/span.h"               // IWYU pragma: export
+#include "utl/status.h"             // IWYU pragma: export
+#include "utl/string_view.h"        // IWYU pragma: export
 
 #endif  // UTL_SRC_UTL_H_
