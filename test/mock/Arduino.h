@@ -1,0 +1,51 @@
+// Copyright 2026 Andreas Burnickl
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// The part of the Arduino core that utl uses, for the tests on the host:
+// __FlashStringHelper and F(), and Print and Serial, which print into a
+// std::string the tests read. The host has no separate flash, so a text "in
+// flash" is a text in RAM here; that the library reads flash with pgm_read is
+// what SelfCheck in simavr checks, not these tests.
+
+#ifndef UTL_TEST_MOCK_ARDUINO_H_
+#define UTL_TEST_MOCK_ARDUINO_H_
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <string>
+
+class __FlashStringHelper;
+
+#define PSTR(text) (text)
+#define F(text) (reinterpret_cast<const __FlashStringHelper*>(PSTR(text)))
+
+// As the core's Print: write() is what a derived class provides, print()
+// what the library calls.
+class Print {
+ public:
+  virtual ~Print() = default;
+
+  virtual size_t write(uint8_t c) = 0;
+
+  size_t print(const __FlashStringHelper* text);
+  size_t print(const char* text);
+  size_t print(char c) { return write(static_cast<uint8_t>(c)); }
+  size_t print(unsigned int number);
+  size_t println();
+};
+
+// What the sketch would print on Serial, in `output`.
+class MockSerial : public Print {
+ public:
+  size_t write(uint8_t c) override {
+    output.push_back(static_cast<char>(c));
+    return 1;
+  }
+
+  std::string output;
+};
+
+extern MockSerial Serial;
+
+#endif  // UTL_TEST_MOCK_ARDUINO_H_

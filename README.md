@@ -300,7 +300,7 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 | Example | Flash, ram | Flash, flash | Flash, notexts | Flash, checked | RAM, ram | RAM, flash | RAM, notexts | RAM, checked |
 |---|---|---|---|---|---|---|---|---|
 | Basics | 2376 | 2378 | 2330 | 2376 | 208 | 174 | 208 | 208 |
-| SelfCheck | 12344 | 12346 | 12256 | 13838 | 303 | 253 | 303 | 305 |
+| SelfCheck | 12344 | 12346 | 12256 | 13704 | 303 | 253 | 303 | 305 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0, `checked` with `UTL_CHECK_ACCESS` at 1.
@@ -328,15 +328,26 @@ core.
 
 ## Build and check
 
-Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, `uv` and `jq`.
+Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, `uv` and `jq`; for
+the tests on the host CMake, Ninja and GoogleTest (`libgtest-dev`).
 
 ```bash
-tools/build_plugin.sh       # build/avr-flash-vtbl.so
-tools/self_check.sh         # examples/SelfCheck in simavr, with and without the plugin
-tools/compile_examples.sh   # every example both ways, fails on a warning; prints the table above
-tools/lint.sh [--fix]       # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
-tools/tidy.sh               # clang-tidy on the library and the examples, with the flags of the Uno
+tools/build_plugin.sh             # build/avr-flash-vtbl.so
+tools/self_check.sh               # examples/SelfCheck in simavr, in each variant
+tools/compile_examples.sh         # every example in each variant, fails on a warning; the table
+cmake --workflow --preset default   # the tests on the host, in three variants
+cmake --workflow --preset sanitize  # the same under AddressSanitizer and UBSan
+tools/coverage.sh                 # the same with --coverage: what of src/ they reach
+tools/lint.sh [--fix]             # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
+tools/tidy.sh                     # clang-tidy on the library and the examples, with the Uno's flags
 ```
+
+The tests on the host (`test/`) run the library against a mock of the Arduino core
+(`test/mock/`), built as gnu++11 as avr-gcc builds it, in the three variants `SelfCheck` knows:
+as built by default, without texts, and with misuse checked. They reach every line and every
+branch of `src/`; gcov counts a template per instance, so the report merges them per line. What
+they cannot see is the AVR itself: the host has no separate flash, so a text in flash read as one
+in RAM passes there. That, and the vtables in flash, is what `SelfCheck` in simavr is for.
 
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
 on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".

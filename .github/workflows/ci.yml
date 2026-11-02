@@ -4,6 +4,9 @@
 #   lint           the Google style: clang-format, cpplint, shellcheck,
 #                  actionlint
 #   clang-tidy     the library and the examples, with the flags of the Uno
+#   host-tests     the tests on GoogleTest against a mock of the core, also
+#                  under ASan and UBSan; what they reach of src/ goes into the
+#                  job summary
 #   examples       every example with vtables in RAM and in flash, without a
 #                  warning; SelfCheck in simavr both ways; flash and RAM go
 #                  into the job summary
@@ -66,6 +69,38 @@ jobs:
 
       - name: clang-tidy
         run: tools/tidy.sh
+
+  host-tests:
+    name: Host tests
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.0
+
+      # From apt, as in the dev container, rather than the cmake the runner
+      # image carries.
+      - name: Install CMake, Ninja and GoogleTest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build \
+            libgtest-dev
+
+      - name: Tests
+        run: cmake --workflow --preset default
+
+      - name: Tests under ASan and UBSan
+        run: cmake --workflow --preset sanitize
+
+      - name: Coverage
+        run: |
+          tools/coverage.sh
+          {
+            echo '```text'
+            cat build/coverage/coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   examples:
     name: Examples on arduino:avr:uno
