@@ -29,6 +29,8 @@ static_assert(sizeof(Result<uint8_t>) == 4, "a Result is a value and a Status");
 static_assert(sizeof(Result<void>) == 3, "a Result<void> is a Status");
 static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
 static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
+static_assert(sizeof(utl::optional<uint8_t>) == 2,
+              "an optional is a value and a flag");
 constexpr utl::array<uint8_t, 3> kConstantRows = {{1, 2, 3}};
 static_assert(kConstantRows[1] == 2 && kConstantRows.size() == 3,
               "an array is constexpr");
@@ -251,6 +253,50 @@ void CheckResultVoid() {
         F("Result<void> recovers as a Status"));
 }
 
+// Returns the index of the first code equal to `wanted`, or none.
+utl::optional<uint8_t> FindCode(uint8_t wanted) {
+  for (size_t index = 0; index < codes.size(); ++index) {
+    if (codes[index] == wanted) {
+      return static_cast<uint8_t>(index);  // codes has 3 elements
+    }
+  }
+  return utl::nullopt;
+}
+
+void CheckOptional() {
+  const utl::optional<uint8_t> none = FindCode(42);
+  const utl::optional<uint8_t> found = FindCode(7);
+
+  Check(!none.has_value() && !none && none == utl::nullopt &&
+            utl::optional<uint8_t>() == none,
+        F("optional is empty"));
+  Check(found.has_value() && static_cast<bool>(found) && *found == 2 &&
+            found == uint8_t{2} && found != none,
+        F("optional holds a value"));
+
+  PrintStatus(none.value().status());
+  Check(found.value().ValueOr(0) == 2 &&
+            none.value().status() == utl::OptionalError::kEmpty,
+        F("optional::value returns a Result"));
+  Check(found.value_or(9) == 2 && none.value_or(9) == 9,
+        F("optional::value_or"));
+  Check(none.ok_or(AlphaError::kSecond).status() == AlphaError::kSecond &&
+            found.ok_or(AlphaError::kSecond).ValueOr(0) == 2,
+        F("optional::ok_or"));
+
+  utl::optional<uint8_t> changed = found;
+  changed.reset();
+  Check(!changed.has_value(), F("optional::reset"));
+  changed.emplace(5);
+  Check(changed.has_value() && *changed == 5 && changed != found,
+        F("optional::emplace"));
+  changed = utl::nullopt;
+  Check(changed == none, F("optional takes nullopt"));
+  changed.emplace(6);
+  changed = {};
+  Check(!changed.has_value(), F("optional = {} is empty"));
+}
+
 void CheckArray() {
   utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
 
@@ -336,6 +382,7 @@ void setup() {
   CheckResultVoid();
   CheckArray();
   CheckSpan();
+  CheckOptional();
 
   Serial.print(F("failed: "));
   Serial.println(failed);
