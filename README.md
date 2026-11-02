@@ -85,13 +85,14 @@ core.
 
 ## Build and check
 
-Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, and `uv`.
+Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, `uv` and `jq`.
 
 ```bash
 tools/build_plugin.sh       # build/avr-flash-vtbl.so
 tools/self_check.sh         # examples/SelfCheck in simavr, with and without the plugin
 tools/compile_examples.sh   # every example both ways, fails on a warning; prints the table above
 tools/lint.sh [--fix]       # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
+tools/tidy.sh               # clang-tidy on the library and the examples, with the flags of the Uno
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
@@ -99,9 +100,12 @@ on top; the table of flash and RAM lands in the summary of the job "Examples on 
 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
-`tools/lint.sh` fetches its tools from PyPI through `uvx`, at fixed versions, so that nothing has to
-be installed. Three exceptions, all forced by Arduino: sources end in `.cpp`, as `arduino-cli`
-compiles no `.cc`; the header `ErrorGroup.h` is named after the library, as Arduino expects;
-and a sketch includes its own headers without a directory (see `examples/CPPLINT.cfg`).
+Three exceptions, all forced by Arduino: sources end in `.cpp`, as `arduino-cli` compiles no
+`.cc`; the header `ErrorGroup.h` is named after the library, as Arduino expects; and a sketch
+includes its own headers without a directory (see `examples/CPPLINT.cfg`).
+
+`tools/lint.sh` and `tools/tidy.sh` fetch their tools from PyPI through `uvx`, at fixed versions, so
+that nothing has to be installed. `.clang-tidy` turns on broad groups of checks and turns off, each
+with its reason, what contradicts the Google style or cannot be had on the AVR.
 
 Nothing has run on a board yet; `SelfCheck` prints the same there as in simavr.

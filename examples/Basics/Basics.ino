@@ -25,8 +25,8 @@ Error SetChar(char c) {
   return Error();
 }
 
-// Returns the byte the other side sent back, or the error of the bus.
-Result<uint8_t> Receive(bool acknowledged) {
+// Returns the char the other side sent back, or the error of the bus.
+Result<char> Receive(bool acknowledged) {
   if (!acknowledged) {
     return BusError::kNack;
   }
@@ -55,7 +55,7 @@ void loop() {
   // Receive a char and show it; either step may fail, and the first error
   // ends the chain.
   const Error error =
-      Receive(digitalRead(3) == HIGH).AndThen([](uint8_t received) {
+      Receive(digitalRead(3) == HIGH).AndThen([](char received) {
         return SetChar(digitalRead(2) == LOW ? '\n' : received);
       });
   PrintError(error);

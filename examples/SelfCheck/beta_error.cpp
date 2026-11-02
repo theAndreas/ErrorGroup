@@ -4,6 +4,7 @@
 #include "beta_error.h"
 
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 namespace self_check {
 namespace {

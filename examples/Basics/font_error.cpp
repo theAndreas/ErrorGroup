@@ -4,6 +4,7 @@
 #include "font_error.h"
 
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 namespace font {
 namespace {

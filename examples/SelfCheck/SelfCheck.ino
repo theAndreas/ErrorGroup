@@ -6,7 +6,9 @@
 // SelfCheck.expected is what a correct run prints.
 
 #include <ErrorGroup.h>
+#include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <stdint.h>
 
 #include "alpha_error.h"
 #include "beta_error.h"
