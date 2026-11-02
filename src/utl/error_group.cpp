@@ -10,7 +10,7 @@
 namespace utl {
 
 const __FlashStringHelper* ErrorGroup::LookUpMessage(
-    const char* const* messages, size_t count, uint8_t code) {
+    const char* const* messages, uint8_t count, uint8_t code) {
   if (code >= count) {
     return F("unknown code");
   }

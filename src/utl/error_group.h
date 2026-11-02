@@ -16,6 +16,12 @@
 
 namespace utl {
 
+// Declared ahead, against Google's advice, because this header cannot include
+// array.h: array.h needs Result, Result needs Error, and Error needs this
+// header. LookUpMessage() below only names it; the group's .cpp includes it.
+template <typename T, size_t N>
+struct array;
+
 // The group an error belongs to, with its name and the text of each code.
 //
 // A group is a class derived from this one, an enum class of its codes, and
@@ -53,20 +59,23 @@ class ErrorGroup {
   // Returns `messages[code]`, read from a table in PROGMEM, or "unknown code"
   // if `code` lies beyond the table.
   static const __FlashStringHelper* LookUpMessage(const char* const* messages,
-                                                  size_t count, uint8_t code);
+                                                  uint8_t count, uint8_t code);
 
-  // The same for a table with data() and size(), a utl::array in PROGMEM:
+  // The same for the table of a group, a utl::array in PROGMEM:
   //
-  //   const utl::array<const char*, 2> kMessages PROGMEM = {{...}};
+  //   const utl::array<const char*, 2> kMessages PROGMEM = {...};
   //   return LookUpMessage(kMessages, code);
   //
-  // A template rather than a parameter of utl::array, which this header
-  // cannot include: array.h needs Result, Result needs Error, and Error needs
-  // this header.
-  template <typename Table>
-  static const __FlashStringHelper* LookUpMessage(const Table& messages,
-                                                  uint8_t code) {
-    return LookUpMessage(messages.data(), messages.size(), code);
+  // The count is a uint8_t, as a code is: a size_t costs 4 bytes of flash
+  // more on the Uno. N is known when compiled, so the static_assert makes
+  // sure that the count is not cut short.
+  template <size_t N>
+  static const __FlashStringHelper* LookUpMessage(
+      const array<const char*, N>& messages, uint8_t code) {
+    // Not UINT8_MAX: avr-libc defines it in C++ only with __STDC_LIMIT_MACROS.
+    static_assert(static_cast<uint8_t>(N) == N,
+                  "a code is a uint8_t: a group has at most 255 texts");
+    return LookUpMessage(messages.data(), static_cast<uint8_t>(N), code);
   }
 };
 

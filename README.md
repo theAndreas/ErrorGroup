@@ -68,8 +68,8 @@ under its own licence, the GPL v2; it is a tool of the build and links nothing i
 
 | Example | Flash, vtables in RAM | Flash, in flash | RAM, vtables in RAM | RAM, in flash |
 |---|---|---|---|---|
-| Basics | 2456 | 2458 | 208 | 174 |
-| SelfCheck | 5600 | 5602 | 221 | 179 |
+| Basics | 2452 | 2454 | 208 | 174 |
+| SelfCheck | 5598 | 5600 | 221 | 179 |
 
 `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
 vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 42, as
