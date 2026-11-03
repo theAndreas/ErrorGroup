@@ -107,9 +107,11 @@ main() {
   # The tests on the host, against the mock, with the database CMake writes.
   # Only what lies in test/: the tests are C++17, and the headers of the
   # library, checked above as the gnu++11 they are, would be held to C++17.
+  # Not the mock in test/mock/, which stands in for the Arduino core and
+  # follows it, not the Google style.
   local tests
   mapfile -t tests < <(git ls-files --cached --others --exclude-standard \
-    'test/*' | grep -E '\.cc$')
+    'test/*' ':!test/mock/*' | grep -E '\.cpp$')
   cmake --preset default >/dev/null
   echo "clang-tidy, the tests on the host:"
   uvx --from "${CLANG_TIDY}" clang-tidy -p "${BUILD_DIR}/host" --quiet \

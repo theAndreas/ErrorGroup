@@ -19,7 +19,7 @@ enum class AlphaError : uint8_t {
   kSecond,
 };
 
-// "alpha", defined in alpha_error.cc; its address is the group.
+// "alpha", defined in alpha_error.cpp; its address is the group.
 // A name in flash is a char array, declared here without its text, as only
 // one file may define it.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
@@ -32,7 +32,7 @@ constexpr utl::ErrorGroup GetErrorGroup(AlphaError) {
 // Turns on the texts of the group: until then its errors print their codes.
 void UseAlphaMessages();
 
-// Made in alpha_error.cc, so that a test compares an error from another
+// Made in alpha_error.cpp, so that a test compares an error from another
 // translation unit: equal only if both see the group at the same address.
 utl::Error MakeAlphaSecondElsewhere();
 
