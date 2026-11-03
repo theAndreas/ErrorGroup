@@ -14,44 +14,54 @@
 
 namespace utl {
 
-// The group an error belongs to, and its name.
+// The group an error belongs to: the address of its name, a text in flash
+// that no other group shares. 2 bytes, a value that is copied and compared.
 //
-// A group is an object of this class, an enum class of its codes, and beside
-// the enum, in the same namespace, a function that argument-dependent lookup
-// finds:
+// A group is its name, an enum class of its codes, and beside the enum, in the
+// same namespace, a function that argument-dependent lookup finds:
 //
-//   char const kFontName[] PROGMEM = "font";
-//   constexpr utl::ErrorGroup kFontErrorGroup{kFontName};  // in font_error.cpp
-//   extern utl::ErrorGroup const kFontErrorGroup;           // in font_error.h
-//   inline utl::ErrorGroup const& GetErrorGroup(FontError) {
-//     return kFontErrorGroup;
+//   // font_error.h; "font" is defined in font_error.cpp
+//   extern char const kFontErrorGroup[] PROGMEM;
+//   constexpr utl::ErrorGroup GetErrorGroup(FontError) {
+//     return utl::ErrorGroup(kFontErrorGroup);
 //   }
 //
-// Define exactly one object for each group, in one .cpp file, and declare it
-// `extern` in the header. A `const` object defined in a header has internal
-// linkage: every translation unit would get its own copy at its own address,
-// and errors from different files would not compare equal.
+// Define the name exactly once, in one .cpp file, and declare it `extern` in
+// the header: a `const` array defined in a header has internal linkage, every
+// translation unit would get a copy at an address of its own, and errors made
+// in different files would not compare equal. Two groups may share the words
+// of their names, never the array.
 //
 // The texts of the codes are not part of it: a sketch that wants them in
 // words turns them on with utl::UseMessages(), see messages.h. A virtual
 // Message(), as before, linked every text of every group into any sketch
 // that made an error, printed or not, as GCC cannot drop a virtual function
 // no one calls; and it put a vtable into RAM, which only a compiler plugin
-// moved to flash. A group is now the 2 bytes of its name's address.
+// moved to flash. A group object, as after that, still took 2 bytes of RAM,
+// as avr-gcc keeps const data there; the name lies in flash already.
 class ErrorGroup {
  public:
-  // `name`, a text in PROGMEM, such as "font".
+  // The group whose name is `name`, an array in PROGMEM.
   constexpr explicit ErrorGroup(char const* name) : name_(name) {}
-
-  ErrorGroup(ErrorGroup const&) = delete;
-  ErrorGroup& operator=(ErrorGroup const&) = delete;
 
   // Returns the name of the group, from flash.
   __FlashStringHelper const* Name() const {
     return reinterpret_cast<__FlashStringHelper const*>(name_);
   }
 
+  friend constexpr bool operator==(ErrorGroup a, ErrorGroup b) {
+    return a.name_ == b.name_;
+  }
+  friend constexpr bool operator!=(ErrorGroup a, ErrorGroup b) {
+    return a.name_ != b.name_;
+  }
+
  private:
+  friend class Error;
+
+  // No group, which only an Error inside a Status holds, for "ok".
+  constexpr explicit ErrorGroup(decltype(nullptr)) : name_(nullptr) {}
+
   char const* name_;
 };
 

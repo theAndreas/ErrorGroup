@@ -16,13 +16,12 @@ Messages* first_messages = nullptr;
 
 }  // namespace
 
-__FlashStringHelper const* Messages::Find(ErrorGroup const& group,
-                                          uint8_t code) {
+__FlashStringHelper const* Messages::Find(ErrorGroup group, uint8_t code) {
   for (Messages const* messages = first_messages; messages != nullptr;
        messages = messages->next_) {
-    if (messages->group_ == &group) {
+    if (messages->group_ == group) {
       if (code >= messages->count_) {
-        return F("unknown code");
+        return nullptr;
       }
       return static_cast<__FlashStringHelper const*>(
           pgm_read_ptr(&messages->texts_[code]));

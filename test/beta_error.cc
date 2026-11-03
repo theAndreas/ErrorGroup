@@ -4,15 +4,9 @@
 #include "test/beta_error.h"
 
 #include <avr/pgmspace.h>
-#include <utl/error_group.h>
 
 namespace utl_test {
-namespace {
 
-char const kName[] PROGMEM = "beta";
-
-}  // namespace
-
-constexpr utl::ErrorGroup kBetaErrorGroup{kName};
+char const kBetaErrorGroup[] PROGMEM = "beta";
 
 }  // namespace utl_test

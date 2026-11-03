@@ -6,6 +6,7 @@
 #ifndef UTL_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
 #define UTL_EXAMPLES_SELFCHECK_ALPHA_ERROR_H_
 
+#include <avr/pgmspace.h>
 #include <stdint.h>
 #include <utl/error.h>
 #include <utl/error_group.h>
@@ -17,10 +18,14 @@ enum class AlphaError : uint8_t {
   kSecond,
 };
 
-extern utl::ErrorGroup const kAlphaErrorGroup;
+// "alpha", defined in alpha_error.cpp; its address is the group.
+// A name in flash is a char array, declared here without its text, as only
+// one file may define it.
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+extern char const kAlphaErrorGroup[] PROGMEM;
 
-inline utl::ErrorGroup const& GetErrorGroup(AlphaError) {
-  return kAlphaErrorGroup;
+constexpr utl::ErrorGroup GetErrorGroup(AlphaError) {
+  return utl::ErrorGroup(kAlphaErrorGroup);
 }
 
 // Turns on the texts of the group: until then its errors print their codes.

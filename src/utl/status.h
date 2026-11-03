@@ -49,7 +49,7 @@ class [[nodiscard]] Status {
   constexpr Status(Code code)  // NOLINT(runtime/explicit)
       : error_(code) {}
 
-  bool IsOk() const { return error_.group_ == nullptr; }
+  bool IsOk() const { return error_.IsNone(); }
 
   // The error, or null if IsOk(). A pointer, so that no one gets hold of an
   // Error that is none.

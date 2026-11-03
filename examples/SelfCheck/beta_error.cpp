@@ -5,13 +5,14 @@
 
 #include <avr/pgmspace.h>
 #include <utl/array.h>
-#include <utl/error_group.h>
 #include <utl/messages.h>
 
 namespace self_check {
+
+char const kBetaErrorGroup[] PROGMEM = "beta";
+
 namespace {
 
-char const kName[] PROGMEM = "beta";
 char const kFirstText[] PROGMEM = "beta first";
 
 // In the order of BetaError.
@@ -19,10 +20,10 @@ constexpr auto kMessages PROGMEM = utl::make_array(kFirstText);
 
 }  // namespace
 
-constexpr utl::ErrorGroup kBetaErrorGroup{kName};
-
 void UseBetaMessages() {
-  static utl::Messages messages{kBetaErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static utl::Messages messages{utl::ErrorGroup(kBetaErrorGroup), kMessages};
   utl::UseMessages(messages);
 }
 

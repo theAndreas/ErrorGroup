@@ -6,13 +6,14 @@
 #include <avr/pgmspace.h>
 
 #include "utl/array.h"
-#include "utl/error_group.h"
 #include "utl/messages.h"
 
 namespace utl {
+
+char const kOptionalErrorGroup[] PROGMEM = "optional";
+
 namespace {
 
-char const kName[] PROGMEM = "optional";
 char const kEmptyText[] PROGMEM = "empty";
 
 // In the order of OptionalError.
@@ -20,10 +21,10 @@ constexpr auto kMessages PROGMEM = make_array(kEmptyText);
 
 }  // namespace
 
-constexpr ErrorGroup kOptionalErrorGroup{kName};
-
 void UseOptionalMessages() {
-  static Messages messages{kOptionalErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static Messages messages{ErrorGroup(kOptionalErrorGroup), kMessages};
   UseMessages(messages);
 }
 

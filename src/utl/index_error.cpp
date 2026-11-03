@@ -6,13 +6,14 @@
 #include <avr/pgmspace.h>
 
 #include "utl/array.h"
-#include "utl/error_group.h"
 #include "utl/messages.h"
 
 namespace utl {
+
+char const kIndexErrorGroup[] PROGMEM = "index";
+
 namespace {
 
-char const kName[] PROGMEM = "index";
 char const kOutOfRangeText[] PROGMEM = "out of range";
 
 // In the order of IndexError.
@@ -20,10 +21,10 @@ constexpr auto kMessages PROGMEM = make_array(kOutOfRangeText);
 
 }  // namespace
 
-constexpr ErrorGroup kIndexErrorGroup{kName};
-
 void UseIndexMessages() {
-  static Messages messages{kIndexErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static Messages messages{ErrorGroup(kIndexErrorGroup), kMessages};
   UseMessages(messages);
 }
 

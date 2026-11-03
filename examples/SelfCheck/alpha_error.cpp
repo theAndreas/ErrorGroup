@@ -6,13 +6,14 @@
 #include <avr/pgmspace.h>
 #include <utl/array.h>
 #include <utl/error.h>
-#include <utl/error_group.h>
 #include <utl/messages.h>
 
 namespace self_check {
+
+char const kAlphaErrorGroup[] PROGMEM = "alpha";
+
 namespace {
 
-char const kName[] PROGMEM = "alpha";
 char const kFirstText[] PROGMEM = "alpha first";
 char const kSecondText[] PROGMEM = "alpha second";
 
@@ -21,10 +22,10 @@ constexpr auto kMessages PROGMEM = utl::make_array(kFirstText, kSecondText);
 
 }  // namespace
 
-constexpr utl::ErrorGroup kAlphaErrorGroup{kName};
-
 void UseAlphaMessages() {
-  static utl::Messages messages{kAlphaErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static utl::Messages messages{utl::ErrorGroup(kAlphaErrorGroup), kMessages};
   utl::UseMessages(messages);
 }
 

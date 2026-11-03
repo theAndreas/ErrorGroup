@@ -30,8 +30,8 @@ class Status;
 class [[nodiscard]] Error {
  public:
   // `code` of `group`.
-  constexpr Error(ErrorGroup const& group, uint8_t code)
-      : group_(&group), code_(code) {}
+  constexpr Error(ErrorGroup group, uint8_t code)
+      : group_(group), code_(code) {}
 
   // A code of a group, found through GetErrorGroup(code). Implicit, unlike the
   // Google default, because a code of a group is an error and nothing else:
@@ -41,9 +41,9 @@ class [[nodiscard]] Error {
   // type converts.
   template <typename Code, typename = decltype(GetErrorGroup(Code()))>
   constexpr Error(Code code)  // NOLINT(runtime/explicit)
-      : group_(&GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
+      : group_(GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
 
-  ErrorGroup const& group() const { return *group_; }
+  ErrorGroup group() const { return group_; }
   uint8_t code() const { return code_; }
 
   // Returns the text of the error, from flash, if the texts of its group are
@@ -66,14 +66,16 @@ class [[nodiscard]] Error {
  private:
   friend class Status;
 
-  // Status keeps an Error with a null group for "ok", so that it needs no
-  // flag beside it and stays 3 bytes. Private: only Status makes one, and it
-  // never hands it out.
-  constexpr explicit Error(decltype(nullptr)) : group_(nullptr), code_(0) {}
+  // Status keeps an Error with no group for "ok", so that it needs no flag
+  // beside it and stays 3 bytes. Private: only Status makes one, and it never
+  // hands it out.
+  constexpr explicit Error(decltype(nullptr))
+      : group_(ErrorGroup(nullptr)), code_(0) {}
 
-  // A pointer, not a reference, so that an Error can be assigned. Never null
-  // outside a Status.
-  ErrorGroup const* group_;
+  // Whether this is the Error of an ok Status.
+  constexpr bool IsNone() const { return group_ == ErrorGroup(nullptr); }
+
+  ErrorGroup group_;
   uint8_t code_;
 };
 

@@ -5,13 +5,14 @@
 
 #include <avr/pgmspace.h>
 #include <utl/array.h>
-#include <utl/error_group.h>
 #include <utl/messages.h>
 
 namespace bus {
+
+char const kBusErrorGroup[] PROGMEM = "bus";
+
 namespace {
 
-char const kName[] PROGMEM = "bus";
 char const kNackText[] PROGMEM = "nack";
 char const kTimeoutText[] PROGMEM = "timeout";
 
@@ -20,10 +21,10 @@ constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeoutText);
 
 }  // namespace
 
-constexpr utl::ErrorGroup kBusErrorGroup{kName};
-
 void UseBusMessages() {
-  static utl::Messages messages{kBusErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static utl::Messages messages{utl::ErrorGroup(kBusErrorGroup), kMessages};
   utl::UseMessages(messages);
 }
 

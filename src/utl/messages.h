@@ -24,23 +24,24 @@ namespace utl {
 //   constexpr auto kMessages PROGMEM = utl::make_array(kUnknownCharText);
 //
 //   void UseFontMessages() {
-//     static utl::Messages messages{kFontErrorGroup, kMessages};
+//     static utl::Messages messages{utl::ErrorGroup(kFontErrorGroup),
+//                                   kMessages};
 //     utl::UseMessages(messages);
 //   }
 //
 // The table is linked only into a sketch that calls UseFontMessages(), as
 // nothing else names it: a sketch pays for the texts it asks for, and the
 // others for none, which a switch for the whole build could not tell apart.
-// The object costs 7 bytes of RAM, in the sketch that calls it; constant
-// initialized, so a static one needs no guard.
+// The object costs 7 bytes of RAM, in the sketch that calls it. Name the group
+// by its array rather than through a function: the static has to be
+// initialized when compiled, or it costs a guard.
 class Messages {
  public:
   // The table of `group`, in PROGMEM, in the order of its codes. A code is a
   // uint8_t, so a group has at most 255 texts.
   template <size_t N>
-  constexpr Messages(ErrorGroup const& group,
-                     array<char const*, N> const& texts)
-      : group_(&group), texts_(texts.data()), count_(static_cast<uint8_t>(N)) {
+  constexpr Messages(ErrorGroup group, array<char const*, N> const& texts)
+      : group_(group), texts_(texts.data()), count_(static_cast<uint8_t>(N)) {
     // Not UINT8_MAX: avr-libc defines it in C++ only with __STDC_LIMIT_MACROS.
     static_assert(static_cast<uint8_t>(N) == N,
                   "a code is a uint8_t: a group has at most 255 texts");
@@ -49,14 +50,15 @@ class Messages {
   Messages(Messages const&) = delete;
   Messages& operator=(Messages const&) = delete;
 
-  // Returns the text of `code` of `group`, from flash; "unknown code" if the
-  // group's texts are on but have none for it, and null if they are off.
-  static __FlashStringHelper const* Find(ErrorGroup const& group, uint8_t code);
+  // Returns the text of `code` of `group`, from flash, or null if the group's
+  // texts are off or have none for the code; Error then prints the code, which
+  // says more than "unknown code" would, and costs no text.
+  static __FlashStringHelper const* Find(ErrorGroup group, uint8_t code);
 
  private:
   friend void UseMessages(Messages& messages);
 
-  ErrorGroup const* group_;
+  ErrorGroup group_;
   char const* const* texts_;
   uint8_t count_;
   // The next group whose texts are on, a list through the objects that
