@@ -100,4 +100,10 @@ pass string_view::compare and <
 pass string_view compares unsigned
 pass ends_with between RAM and flash
 pass flash_string_view::find of a text
+pass to_chars
+pass to_chars beyond the buffer
+pass from_chars takes what it reads
+pass from_chars of a negative
+charconv: out of range
+pass from_chars out of range
 failed: 0

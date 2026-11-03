@@ -4,6 +4,7 @@
 // Error: a group and a code, and how it prints.
 
 #include <gtest/gtest.h>
+#include <utl/charconv_error.h>
 #include <utl/error.h>
 #include <utl/error_group.h>
 #include <utl/index_error.h>
@@ -107,8 +108,14 @@ TEST(ErrorTest, TextsTurnedOnTwice) {
 TEST(ErrorTest, LibraryGroupsSayWhatWentWrong) {
   utl::UseIndexMessages();
   utl::UseOptionalMessages();
+  utl::UseCharconvMessages();
   EXPECT_EQ(Printed(utl::IndexError::kOutOfRange), "index: out of range");
   EXPECT_EQ(Printed(utl::OptionalError::kEmpty), "optional: empty");
+  EXPECT_EQ(Printed(utl::CharconvError::kInvalidArgument),
+            "charconv: invalid argument");
+  EXPECT_EQ(Printed(utl::CharconvError::kOutOfRange), "charconv: out of range");
+  EXPECT_EQ(Printed(utl::CharconvError::kValueTooLarge),
+            "charconv: value too large");
 }
 
 }  // namespace

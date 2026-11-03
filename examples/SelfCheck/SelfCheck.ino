@@ -376,6 +376,30 @@ void CheckReferenceWrapper() {
   Check(first == 0 && second == 0, F("reference_wrapper in an array"));
 }
 
+void CheckCharconv() {
+  utl::array<char, 8> buffer = {};
+  Check(utl::to_chars(buffer, uint8_t{codes[2]}).ValueOr("") == "7" &&
+            utl::to_chars(buffer, int16_t{-32768}).ValueOr("") == "-32768" &&
+            utl::to_chars(buffer, uint8_t{255}, 16).ValueOr("") == "ff",
+        F("to_chars"));
+  Check(utl::to_chars(buffer, int32_t{-12345678}).status() ==
+            utl::CharconvError::kValueTooLarge,
+        F("to_chars beyond the buffer"));
+
+  utl::string_view line = "42,-7";
+  Check(utl::from_chars<uint8_t>(line).ValueOr(0) == 42 && line == ",-7",
+        F("from_chars takes what it reads"));
+  line.remove_prefix(1);
+  Check(utl::from_chars<int8_t>(line).ValueOr(0) == -7 && line.empty(),
+        F("from_chars of a negative"));
+  utl::string_view large = "256";
+  Result<uint8_t> const out_of_range = utl::from_chars<uint8_t>(large);
+  PrintStatus(out_of_range.status());
+  Check(out_of_range.status() == utl::CharconvError::kOutOfRange &&
+            large == "256",
+        F("from_chars out of range"));
+}
+
 void CheckStringView() {
   char buffer[] = "text=Hi";
   utl::string_view const line = buffer;
@@ -573,6 +597,7 @@ void setup() {
   // The library's groups: index in words, optional as a code, so that the
   // output shows both.
   utl::UseIndexMessages();
+  utl::UseCharconvMessages();
 
   CheckError();
   CheckStatus();
@@ -584,6 +609,7 @@ void setup() {
   CheckOptional();
   CheckReferenceWrapper();
   CheckStringView();
+  CheckCharconv();
   CheckMisuse();
 
   Serial.print(F("failed: "));
