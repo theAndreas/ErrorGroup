@@ -112,5 +112,43 @@ TEST(StatusTest, OrElseGetsTheErrorAndRecovers) {
   EXPECT_EQ(calls, 0);
 }
 
+TEST(StatusTest, InspectErrorLooksAndPassesOn) {
+  int seen = 0;
+  auto const count = [&seen](Error const& error) {
+    seen = error == AlphaError::kFirst ? 1 : 2;
+  };
+  Status const failed = AlphaError::kFirst;
+  EXPECT_EQ(failed.InspectError(count), AlphaError::kFirst);
+  EXPECT_EQ(seen, 1);
+  seen = 0;
+  EXPECT_TRUE(Status::Ok().InspectError(count).IsOk());
+  EXPECT_EQ(seen, 0);
+}
+
+TEST(StatusTest, MapErrorSaysItInAnotherGroup) {
+  auto const to_beta = [](Error const&) { return BetaError::kFirst; };
+  Status const failed = AlphaError::kFirst;
+  EXPECT_EQ(failed.MapError(to_beta), BetaError::kFirst);
+  EXPECT_TRUE(Status::Ok().MapError(to_beta).IsOk());
+  // An Error works as well as a code.
+  EXPECT_EQ(
+      failed.MapError([](Error const&) { return Error(BetaError::kFirst); }),
+      BetaError::kFirst);
+}
+
+TEST(StatusTest, ConsumeErrorEndsAChain) {
+  int seen = 0;
+  auto const count = [&seen](Error const&) { ++seen; };
+  Status const failed = AlphaError::kFirst;
+  failed.ConsumeError(count);
+  Status::Ok().ConsumeError(count);
+  EXPECT_EQ(seen, 1);
+  // A Result<void> is a Status: Map() of a function that returns nothing,
+  // then ConsumeError(), deals with both ends, and nothing is left to drop.
+  Result<int> const value = 7;
+  value.Map([&seen](int v) { seen += v; }).ConsumeError(count);
+  EXPECT_EQ(seen, 8);
+}
+
 }  // namespace
 }  // namespace utl_test

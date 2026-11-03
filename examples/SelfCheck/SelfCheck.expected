@@ -88,6 +88,13 @@ pass optional<T&> rebinds when assigned
 pass optional<T&>::ValueOr gives a reference
 pass optional<T&>::value returns a Result<T&>
 pass optional<T&>::Map gets the T&
+pass Result::Inspect
+pass Result::InspectError
+pass Result::MapError
+pass Result::ValueOrElse
+pass Status::ConsumeError ends a chain
+pass optional::Filter
+pass optional::ValueOrElse
 pass reference_wrapper refers to its object
 pass reference_wrapper writes through get()
 pass reference_wrapper rebinds when assigned

@@ -226,5 +226,30 @@ TEST(OptionalReferenceTest, ComparesTheObjects) {
   EXPECT_TRUE(none != 5 && !(none == 5));
 }
 
+TEST(OptionalReferenceTest, ValueOrElseGivesAReference) {
+  int target = 3;
+  int other = 9;
+  optional<int&> const some = target;
+  optional<int&> const none;
+  auto const fallback = [&other]() -> int& { return other; };
+  EXPECT_EQ(&some.ValueOrElse(fallback), &target);
+  EXPECT_EQ(&none.ValueOrElse(fallback), &other);
+}
+
+TEST(OptionalReferenceTest, InspectAndFilterPassTheReferenceOn) {
+  int target = 4;
+  optional<int&> const some = target;
+  optional<int&> const none;
+  int seen = 0;
+  auto const look = [&seen](int const& value) { seen = value; };
+  EXPECT_EQ(&*some.Inspect(look), &target);
+  EXPECT_EQ(seen, 4);
+  EXPECT_FALSE(none.Inspect(look).HasValue());
+  auto const even = [](int const& value) { return value % 2 == 0; };
+  EXPECT_EQ(&*some.Filter(even), &target);
+  EXPECT_FALSE(some.Filter([](int const&) { return false; }).HasValue());
+  EXPECT_FALSE(none.Filter(even).HasValue());
+}
+
 }  // namespace
 }  // namespace utl_test

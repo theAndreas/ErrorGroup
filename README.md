@@ -158,6 +158,31 @@ there is no error, `Map()` changes the value, `OrElse()` recovers from an error 
 to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
 and no RAM: the lambdas are inlined.
 
+More of Rust's, under its names where Utl has a word of its own for them:
+
+- `ValueOrElse(f)`, Rust's `unwrap_or_else()`: the value, or a fallback that `f` makes from the
+  error, only when it is needed.
+- `Inspect(f)` and `InspectError(f)`, Rust's `inspect()` and `inspect_err()`: look at the value or
+  the error on its way, to print it, and pass the `Result` on as it is. `f` gets a `T const&`, as
+  it looks and does not change.
+- `MapError(f)`, Rust's `map_err()`: an error of a lower layer said in a group of one's own. `f`
+  returns an `Error` or a code, never ok; that is what `OrElse()` is for.
+- `ConsumeError(f)`, only on a `Status` and so on a `Result<void>`: calls `f` with the error, if
+  there is one, and returns nothing, the end of a chain. Rust ends one with `if let` or `match`;
+  a `Result<T>` has none, as it would drop the value unseen.
+
+What the function may return is checked when compiled, with a message that says what to use
+instead. A function that only looks, for `Inspect()`, `InspectError()` and `ConsumeError()`,
+returns nothing, as in Rust: one that returns a `Status`, or anything else, would have it dropped
+unseen. `AndThen()` wants a `Result`, a `Status` or an `optional` back, and points to `Map()` for
+a plain value; `MapError()` wants an `Error` or a code, and points to `OrElse()` to recover.
+
+```cpp
+Receive(true)
+    .Map([](char c) { Serial.println(c); })                         // ok: a Result<void>
+    .ConsumeError([](utl::Error const& e) { e.PrintTo(Serial); });  // or the error, and done
+```
+
 `Map()` with a function that returns nothing gives a `Result<void>`, which is a `Status`:
 
 ```cpp
@@ -244,7 +269,9 @@ side, as in a `Result`, so `T` needs a default constructor; an `optional<uint8_t
 `value()` cannot throw `bad_optional_access`, so it returns a `Result` with
 `OptionalError::kEmpty`, the group `optional`; `OkOr()`, as `ok_or()` in Rust, gives your own
 error instead. `AndThen()`, `Map()` and `OrElse()` are what C++23's `std::optional` calls
-`and_then()`, `transform()` and `or_else()`.
+`and_then()`, `transform()` and `or_else()`. From Rust's `Option` it has `ValueOrElse(f)`, a
+fallback made only when it is needed, `Inspect(f)`, and `Filter(predicate)`, which empties it
+unless the predicate holds.
 
 ```cpp
 utl::optional<Led&> FindLed(uint8_t pin);  // a reference, or utl::nullopt
@@ -260,8 +287,9 @@ it. `*` and `->` of an empty one are undefined, as there is no `T` to give, and
 [checked](#checked-access) like those of an `optional<T>`. `value()` gives a `Result<T&>`. One
 change: `ValueOr()` gives a `T&`, of the object or of the fallback, which has to be an lvalue for
 that reason, where C++26's `value_or()` gives a copy, which would switch on a copy of the LED
-above. A reference that is never absent, a member above all, is a
-[`reference_wrapper`](#reference_wrapper).
+above. `ValueOrElse(f)` gives a `T&` as well, and `f` has to return one, of an object that
+outlives the call; a `Result<T&>` does the same. A reference that is never absent, a member above
+all, is a [`reference_wrapper`](#reference_wrapper).
 
 ## reference_wrapper
 
@@ -366,7 +394,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 13552 | 13552 | 15210 | 285 | 267 | 287 |
+| SelfCheck | 14068 | 14068 | 15726 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,

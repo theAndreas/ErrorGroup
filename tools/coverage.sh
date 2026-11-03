@@ -29,9 +29,13 @@ main() {
   # --merge-lines: gcov counts a template per instance, and each lambda is a
   # type of its own, so a line reached by one instance stood as missed by
   # another; merged, a line counts as reached if any instance reaches it.
+  # --exclude-throw-branches: on the host a call that may throw has a branch
+  # to its exception, which no test takes; a sketch is built without
+  # exceptions, so on the AVR there is no such branch to reach.
   uvx "${GCOVR}" --root "${ROOT_DIR}" --filter 'src/' \
     --merge-mode-functions=separate \
     --merge-lines \
+    --exclude-throw-branches \
     --txt-metric line --txt "${COVERAGE_DIR}/coverage.txt" \
     --html-details "${COVERAGE_DIR}/html/index.html" \
     --print-summary "${COVERAGE_DIR}"
