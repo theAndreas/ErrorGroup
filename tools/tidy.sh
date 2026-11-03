@@ -108,10 +108,11 @@ main() {
   # Only what lies in test/: the tests are C++17, and the headers of the
   # library, checked above as the gnu++11 they are, would be held to C++17.
   # Not the mock in test/mock/, which stands in for the Arduino core and
-  # follows it, not the Google style.
+  # follows it, not the Google style. Nor what lies in test/compile_fail/,
+  # which must not compile and is in no database.
   local tests
   mapfile -t tests < <(git ls-files --cached --others --exclude-standard \
-    'test/*' ':!test/mock/*' | grep -E '\.cpp$')
+    'test/*' ':!test/mock/*' ':!test/compile_fail/*' | grep -E '\.cpp$')
   cmake --preset default >/dev/null
   echo "clang-tidy, the tests on the host:"
   uvx --from "${CLANG_TIDY}" clang-tidy -p "${BUILD_DIR}/host" --quiet \

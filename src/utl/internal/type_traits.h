@@ -49,6 +49,55 @@ struct RemoveCvImpl<T const volatile> {
 template <typename T>
 using RemoveCv = typename RemoveCvImpl<T>::Type;
 
+// std::remove_reference_t.
+template <typename T>
+struct RemoveReferenceImpl {
+  using Type = T;
+};
+template <typename T>
+struct RemoveReferenceImpl<T&> {
+  using Type = T;
+};
+template <typename T>
+struct RemoveReferenceImpl<T&&> {
+  using Type = T;
+};
+template <typename T>
+using RemoveReference = typename RemoveReferenceImpl<T>::Type;
+
+// std::remove_cvref_t, from C++20: the type a function returns, whether by
+// value, by reference or const.
+template <typename T>
+using RemoveCvRef = RemoveCv<RemoveReference<T>>;
+
+// std::is_same: kValue is whether A and B are one type.
+template <typename A, typename B>
+struct IsSame {
+  static constexpr bool kValue = false;
+};
+template <typename A>
+struct IsSame<A, A> {
+  static constexpr bool kValue = true;
+};
+
+// std::is_void: kValue is whether T is void, const or not; for a function
+// passed only to look, whose result would otherwise be dropped unseen.
+template <typename T>
+struct IsVoid {
+  static constexpr bool kValue = IsSame<RemoveCv<T>, void>::kValue;
+};
+
+// std::is_lvalue_reference: kValue is whether T is a T&, for a function that
+// has to return a reference to something that outlives the call.
+template <typename T>
+struct IsLvalueReference {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsLvalueReference<T&> {
+  static constexpr bool kValue = true;
+};
+
 // A pointer to an array of T of unknown size: the type the test below works
 // with, not an array that wants to be a utl::array.
 template <typename T>

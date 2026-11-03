@@ -112,5 +112,59 @@ TEST(StatusTest, OrElseGetsTheErrorAndRecovers) {
   EXPECT_EQ(calls, 0);
 }
 
+TEST(StatusTest, InspectErrorLooksAndPassesOn) {
+  int seen = 0;
+  auto const count = [&seen](Error const& error) {
+    seen = error == AlphaError::kFirst ? 1 : 2;
+  };
+  Status const failed = AlphaError::kFirst;
+  EXPECT_EQ(failed.InspectError(count), AlphaError::kFirst);
+  EXPECT_EQ(seen, 1);
+  seen = 0;
+  EXPECT_TRUE(Status::Ok().InspectError(count).IsOk());
+  EXPECT_EQ(seen, 0);
+}
+
+TEST(StatusTest, MapErrorSaysItInAnotherGroup) {
+  auto const to_beta = [](Error const&) { return BetaError::kFirst; };
+  Status const failed = AlphaError::kFirst;
+  EXPECT_EQ(failed.MapError(to_beta), BetaError::kFirst);
+  EXPECT_TRUE(Status::Ok().MapError(to_beta).IsOk());
+  // An Error works as well as a code.
+  EXPECT_EQ(
+      failed.MapError([](Error const&) { return Error(BetaError::kFirst); }),
+      BetaError::kFirst);
+}
+
+TEST(StatusTest, ConsumeErrorEndsAChain) {
+  int seen = 0;
+  auto const count = [&seen](Error const&) { ++seen; };
+  Status const failed = AlphaError::kFirst;
+  failed.ConsumeError(count);
+  Status::Ok().ConsumeError(count);
+  EXPECT_EQ(seen, 1);
+  // A Result<void> is a Status: Map() of a function that returns nothing,
+  // then ConsumeError(), deals with both ends, and nothing is left to drop.
+  Result<int> const value = 7;
+  value.Map([&seen](int v) { seen += v; }).ConsumeError(count);
+  EXPECT_EQ(seen, 8);
+}
+
+// What the checks on what `f` returns let pass, at their edges; the cases
+// they stop lie in test/compile_fail/.
+TEST(StatusTest, FluentFunctionsTakeWhatTheyShould) {
+  Status const failed = AlphaError::kFirst;
+  // MapError(): an Error by reference is an Error.
+  Error const beta = BetaError::kFirst;
+  EXPECT_EQ(
+      failed.MapError([&beta](Error const&) -> Error const& { return beta; }),
+      BetaError::kFirst);
+  // AndThen(): a Result<void> is a Result, a const Result one as well.
+  EXPECT_TRUE(Status::Ok().AndThen([] { return Result<void>::Ok(); }).IsOk());
+  EXPECT_EQ(
+      Status::Ok().AndThen([]() -> Result<int> const { return 2; }).ValueOr(0),
+      2);
+}
+
 }  // namespace
 }  // namespace utl_test

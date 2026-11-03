@@ -39,8 +39,10 @@ set(test_sources
     test/error_test.cpp
     test/flash_string_view_test.cpp
     test/misuse_test.cpp
+    test/optional_reference_test.cpp
     test/optional_test.cpp
     test/reference_wrapper_test.cpp
+    test/result_reference_test.cpp
     test/result_test.cpp
     test/span_test.cpp
     test/status_test.cpp
@@ -72,3 +74,28 @@ endfunction()
 
 add_variant(default)
 add_variant(checked UTL_CHECK_ACCESS=1)
+
+# What must not compile: each file in test/compile_fail/ uses utl wrongly, and
+# its test passes only if the compiler stops it with the message of the
+# static_assert that its line "// Expected: ..." names. A static_assert that
+# went missing, or another error, fails it. The compiler is called directly,
+# with -fsyntax-only and as gnu++11, as avr-gcc builds a sketch: no target,
+# so that tests run in parallel never build in the same tree at once.
+file(GLOB compile_fail_cases CONFIGURE_DEPENDS test/compile_fail/*.cpp)
+foreach(case IN LISTS compile_fail_cases)
+  get_filename_component(name ${case} NAME_WE)
+  file(STRINGS ${case} expected REGEX "^// Expected: " LIMIT_COUNT 1)
+  string(REGEX REPLACE "^// Expected: " "" expected "${expected}")
+  if(expected STREQUAL "")
+    message(FATAL_ERROR "${case} names no message: a line \"// Expected: \".")
+  endif()
+  add_test(NAME compile_fail/${name}
+           COMMAND ${CMAKE_CXX_COMPILER} -std=gnu++11 -fsyntax-only
+                   -I${CMAKE_SOURCE_DIR}/src -I${CMAKE_SOURCE_DIR}/test/mock
+                   ${case})
+  # GCC says "static assertion failed: <message>", Clang "static assertion
+  # failed due to requirement '...': <message>"; both on one line.
+  set_tests_properties(
+    compile_fail/${name}
+    PROPERTIES PASS_REGULAR_EXPRESSION "static assertion failed[^\n]*${expected}")
+endforeach()
