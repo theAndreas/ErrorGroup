@@ -77,10 +77,14 @@ Result<uint8_t> GetCode(uint8_t index) {
 }
 
 void CheckError() {
-  Error const alpha_first(self_check::kAlphaErrorGroup, codes[0]);
-  Error const alpha_second(self_check::kAlphaErrorGroup, codes[1]);
-  Error const beta_first(self_check::kBetaErrorGroup, codes[0]);
-  Error const beta_unknown(self_check::kBetaErrorGroup, codes[2]);
+  Error const alpha_first(utl::ErrorGroup(self_check::kAlphaErrorGroup),
+                          codes[0]);
+  Error const alpha_second(utl::ErrorGroup(self_check::kAlphaErrorGroup),
+                           codes[1]);
+  Error const beta_first(utl::ErrorGroup(self_check::kBetaErrorGroup),
+                         codes[0]);
+  Error const beta_unknown(utl::ErrorGroup(self_check::kBetaErrorGroup),
+                           codes[2]);
 
   // Until its texts are on, a group prints its code; then its text.
   PrintStatus(alpha_first);
@@ -92,15 +96,15 @@ void CheckError() {
   PrintStatus(alpha_second);
   PrintStatus(beta_first);
   PrintStatus(beta_unknown);
-  PrintStatus(Error(self_check::kBetaErrorGroup, 10));
-  PrintStatus(Error(self_check::kBetaErrorGroup, 105));
+  PrintStatus(Error(utl::ErrorGroup(self_check::kBetaErrorGroup), 10));
+  PrintStatus(Error(utl::ErrorGroup(self_check::kBetaErrorGroup), 105));
 
   // "alpha: alpha first", 18 chars.
   size_t const printed = alpha_first.PrintTo(Serial);
   Serial.println();
   Check(printed == 18, F("PrintTo returns the number of chars"));
 
-  Check(&alpha_first.group() == &self_check::kAlphaErrorGroup &&
+  Check(alpha_first.group() == utl::ErrorGroup(self_check::kAlphaErrorGroup) &&
             alpha_first.code() == 0,
         F("an Error has a group and a code"));
   Check(alpha_first == AlphaError::kFirst, F("compares with its enum"));

@@ -71,8 +71,8 @@ in order, and only once it has found it does `<utl/...>` work.
 
 ### Defining a group
 
-A group is an enum class of its codes, one `utl::ErrorGroup` object with its name, a
-`GetErrorGroup()` beside the enum, and, for a group with texts, a table of them and a function
+A group is its name, a text in flash whose address no other group has; an enum class of its codes;
+a `GetErrorGroup()` beside the enum; and, for a group with texts, a table of them and a function
 that turns them on. From `examples/Basics`:
 
 ```cpp
@@ -82,10 +82,10 @@ enum class FontError : uint8_t {
   kNullText,
 };
 
-extern utl::ErrorGroup const kFontErrorGroup;  // its address is the group
+extern char const kFontErrorGroup[] PROGMEM;  // "font"; its address is the group
 
-inline utl::ErrorGroup const& GetErrorGroup(FontError) {
-  return kFontErrorGroup;
+constexpr utl::ErrorGroup GetErrorGroup(FontError) {
+  return utl::ErrorGroup(kFontErrorGroup);
 }
 
 void UseFontMessages();  // turns the texts on
@@ -93,7 +93,8 @@ void UseFontMessages();  // turns the texts on
 
 ```cpp
 // font_error.cpp
-char const kName[] PROGMEM = "font";
+char const kFontErrorGroup[] PROGMEM = "font";
+
 char const kUnknownCharText[] PROGMEM = "unknown char";
 char const kNullTextText[] PROGMEM = "null text";
 
@@ -101,17 +102,19 @@ char const kNullTextText[] PROGMEM = "null text";
 constexpr auto kMessages PROGMEM =
     utl::make_array(kUnknownCharText, kNullTextText);
 
-constexpr utl::ErrorGroup kFontErrorGroup{kName};
-
 void UseFontMessages() {
-  static utl::Messages messages{kFontErrorGroup, kMessages};
+  static utl::Messages messages{utl::ErrorGroup(kFontErrorGroup), kMessages};
   utl::UseMessages(messages);
 }
 ```
 
-- **One object, defined in one `.cpp`**, and declared `extern` in the header. A `const` object
+- **The name, defined in one `.cpp`**, and declared `extern` in the header. A `const` array
   defined in a header gets a copy in every file that includes it, each at an address of its own,
-  and errors made in different files would not compare equal.
+  and errors made in different files would not compare equal. Two groups may say the same words;
+  they are two groups, as their arrays are two.
+- **`static` with a constant initializer**: `Messages` names the group by its array, not through
+  a function, so that it is set up when compiled; a call in the initializer would make it a static
+  initialized at run time, with a guard, which costs flash and RAM.
 - **`GetErrorGroup()` lies beside the enum**, in its namespace, where argument-dependent lookup
   finds it. It is what lets a code convert to an `Error`; an enum without one does not.
 - **The texts lie in a `constexpr` table in `PROGMEM`.** `constexpr`, so that the table is
@@ -137,7 +140,8 @@ One class per file in `src/utl/`:
 - `Result<void>` (`result.h`): a `Status`, for code that is generic in `T`. It is one, by
   inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
   its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
-- `ErrorGroup` (`error_group.h`): a group, the 2 bytes of its name's address; no virtual function.
+- `ErrorGroup` (`error_group.h`): a group, the address of its name in flash, a value of 2 bytes that
+  takes no memory of its own; no virtual function.
 - `Messages` (`messages.h`): the texts of a group, and `UseMessages()`, which turns them on.
 
 The fluent functions follow Rust's `Result`, on `Status` and `Result`: `AndThen()` goes on while
@@ -165,7 +169,8 @@ A sketch that wants an error in words turns its group's texts on, once, usually 
 bus::UseBusMessages();  // "bus: nack" from now on; before, "bus: 0"
 ```
 
-Until then an error prints its code, `font: 0`, and `Message()` is empty. Only a sketch that calls
+Until then an error prints its code, `font: 0`, and `Message()` is empty; so does a code that its
+group has no text for. Only a sketch that calls
 a group's function links its texts, as nothing else names them: a sketch that never prints an
 error, or prints only codes, pays for no text, and one that prints some groups in words pays for
 those. A switch for the whole build, `UTL_ERROR_TEXTS` before, could not tell them apart, and the
@@ -174,11 +179,12 @@ Arduino IDE sets no switch of a library without `platform.local.txt`.
 Before, `Name()` and `Message()` were virtual. GCC cannot drop a virtual function no one calls, so
 every text of every group was linked into any sketch that made an error, printed or not; and each
 group had a vtable in RAM, which only the plugin of [vtables in flash](#vtables-in-flash) moved.
-Now a group is its name's address, and the texts of the groups that are on are a list through
-their `Messages` objects, 7 bytes of RAM each, in the sketch that turns them on.
+Now a group is the address of its name, which lies in flash anyway, and the texts of the groups
+that are on are a list through their `Messages` objects, 7 bytes of RAM each, in the sketch that
+turns them on.
 
-On the Uno, with `Basics` printing both of its groups in words: 2476 bytes of flash and 208 of RAM,
-against 2376 and 208 with virtual groups, or 2378 and 174 with those and the plugin. The 100 bytes
+On the Uno, with `Basics` printing both of its groups in words: 2452 bytes of flash and 204 of RAM,
+against 2376 and 208 with virtual groups, or 2378 and 174 with those and the plugin. The 76 bytes
 are the search through the list and the printing of a code, which a sketch that prints an error
 links whether it needs it or not. A sketch that makes errors and prints none links neither, nor
 any text.
@@ -307,8 +313,8 @@ examples are built with it to show that utl does not depend on it.
 
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
-| Basics | 2430 | 2430 | 2430 | 200 | 182 | 200 |
-| SelfCheck | 12464 | 12464 | 13824 | 293 | 275 | 295 |
+| Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
+| SelfCheck | 12434 | 12434 | 13792 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,

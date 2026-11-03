@@ -5,13 +5,14 @@
 
 #include <avr/pgmspace.h>
 #include <utl/array.h>
-#include <utl/error_group.h>
 #include <utl/messages.h>
 
 namespace font {
+
+char const kFontErrorGroup[] PROGMEM = "font";
+
 namespace {
 
-char const kName[] PROGMEM = "font";
 char const kUnknownCharText[] PROGMEM = "unknown char";
 char const kNullTextText[] PROGMEM = "null text";
 
@@ -21,10 +22,10 @@ constexpr auto kMessages PROGMEM =
 
 }  // namespace
 
-constexpr utl::ErrorGroup kFontErrorGroup{kName};
-
 void UseFontMessages() {
-  static utl::Messages messages{kFontErrorGroup, kMessages};
+  // The group by its name, a constant: a static whose initializer calls a
+  // function would be initialized at run time, with a guard.
+  static utl::Messages messages{utl::ErrorGroup(kFontErrorGroup), kMessages};
   utl::UseMessages(messages);
 }
 

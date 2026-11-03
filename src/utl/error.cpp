@@ -44,14 +44,14 @@ size_t PrintCode(Print& out, uint8_t code) {
 }  // namespace
 
 __FlashStringHelper const* Error::Message() const {
-  __FlashStringHelper const* const text = Messages::Find(*group_, code_);
+  __FlashStringHelper const* const text = Messages::Find(group_, code_);
   return text != nullptr ? text : F("");
 }
 
 size_t Error::PrintTo(Print& out) const {
-  size_t count = out.print(group_->Name());
+  size_t count = out.print(group_.Name());
   count += out.print(F(": "));
-  __FlashStringHelper const* const text = Messages::Find(*group_, code_);
+  __FlashStringHelper const* const text = Messages::Find(group_, code_);
   if (text != nullptr) {
     count += out.print(text);
   } else {

@@ -3,9 +3,9 @@ ok
 alpha: alpha first
 alpha: alpha second
 beta: beta first
-beta: unknown code
-beta: unknown code
-beta: unknown code
+beta: 7
+beta: 10
+beta: 105
 alpha: alpha first
 pass PrintTo returns the number of chars
 pass an Error has a group and a code

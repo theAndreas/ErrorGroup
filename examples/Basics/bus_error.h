@@ -7,6 +7,7 @@
 #ifndef UTL_EXAMPLES_BASICS_BUS_ERROR_H_
 #define UTL_EXAMPLES_BASICS_BUS_ERROR_H_
 
+#include <avr/pgmspace.h>
 #include <stdint.h>
 #include <utl/error_group.h>
 
@@ -17,10 +18,15 @@ enum class BusError : uint8_t {
   kTimeout,
 };
 
-// Defined in bus_error.cpp, and nowhere else: its address is the group.
-extern utl::ErrorGroup const kBusErrorGroup;
+// "bus", defined in bus_error.cpp; its address is the group.
+// A name in flash is a char array, declared here without its text, as only
+// one file may define it.
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+extern char const kBusErrorGroup[] PROGMEM;
 
-inline utl::ErrorGroup const& GetErrorGroup(BusError) { return kBusErrorGroup; }
+constexpr utl::ErrorGroup GetErrorGroup(BusError) {
+  return utl::ErrorGroup(kBusErrorGroup);
+}
 
 // Turns on the texts of the group: until then its errors print their codes.
 void UseBusMessages();

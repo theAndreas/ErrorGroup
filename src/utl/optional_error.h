@@ -6,6 +6,7 @@
 #ifndef UTL_SRC_UTL_OPTIONAL_ERROR_H_
 #define UTL_SRC_UTL_OPTIONAL_ERROR_H_
 
+#include <avr/pgmspace.h>
 #include <stdint.h>
 
 #include "utl/error_group.h"
@@ -16,12 +17,16 @@ enum class OptionalError : uint8_t {
   kEmpty,
 };
 
-// Defined in optional_error.cpp. A sketch that never calls value() of an
-// optional does not reference it, and the linker leaves it out.
-extern ErrorGroup const kOptionalErrorGroup;
+// "optional", defined in optional_error.cpp; its address is the group. A
+// sketch that never calls value() of an optional does not reference it, and
+// the linker leaves it out.
+// A name in flash is a char array, declared here without its text, as only
+// one file may define it.
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+extern char const kOptionalErrorGroup[] PROGMEM;
 
-inline ErrorGroup const& GetErrorGroup(OptionalError) {
-  return kOptionalErrorGroup;
+constexpr ErrorGroup GetErrorGroup(OptionalError) {
+  return ErrorGroup(kOptionalErrorGroup);
 }
 
 // Turns on the texts of the group, see messages.h.
