@@ -4,12 +4,14 @@
 #include "bus_error.h"
 
 #include <avr/pgmspace.h>
-#include <stdint.h>
 #include <utl/array.h>
+#include <utl/error_group.h>
+#include <utl/messages.h>
 
 namespace bus {
 namespace {
 
+char const kName[] PROGMEM = "bus";
 char const kNackText[] PROGMEM = "nack";
 char const kTimeoutText[] PROGMEM = "timeout";
 
@@ -18,12 +20,11 @@ constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeoutText);
 
 }  // namespace
 
-constexpr BusErrorGroup kBusErrorGroup{};
+constexpr utl::ErrorGroup kBusErrorGroup{kName};
 
-__FlashStringHelper const* BusErrorGroup::Name() const { return F("bus"); }
-
-__FlashStringHelper const* BusErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, code);
+void UseBusMessages() {
+  static utl::Messages messages{kBusErrorGroup, kMessages};
+  utl::UseMessages(messages);
 }
 
 }  // namespace bus

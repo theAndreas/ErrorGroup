@@ -17,18 +17,13 @@ enum class BusError : uint8_t {
   kTimeout,
 };
 
-class BusErrorGroup : public utl::ErrorGroup {
- public:
-  constexpr BusErrorGroup() = default;
-
-  __FlashStringHelper const* Name() const override;
-  __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
 // Defined in bus_error.cpp, and nowhere else: its address is the group.
-extern BusErrorGroup const kBusErrorGroup;
+extern utl::ErrorGroup const kBusErrorGroup;
 
 inline utl::ErrorGroup const& GetErrorGroup(BusError) { return kBusErrorGroup; }
+
+// Turns on the texts of the group: until then its errors print their codes.
+void UseBusMessages();
 
 }  // namespace bus
 

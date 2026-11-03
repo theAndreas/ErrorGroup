@@ -82,6 +82,11 @@ void CheckError() {
   Error const beta_first(self_check::kBetaErrorGroup, codes[0]);
   Error const beta_unknown(self_check::kBetaErrorGroup, codes[2]);
 
+  // Until its texts are on, a group prints its code; then its text.
+  PrintStatus(alpha_first);
+  self_check::UseAlphaMessages();
+  self_check::UseBetaMessages();
+
   PrintStatus(Status::Ok());
   PrintStatus(alpha_first);
   PrintStatus(alpha_second);
@@ -90,11 +95,10 @@ void CheckError() {
   PrintStatus(Error(self_check::kBetaErrorGroup, 10));
   PrintStatus(Error(self_check::kBetaErrorGroup, 105));
 
-  // "alpha: alpha first", 18 chars, or "alpha: 0", 8, without texts.
+  // "alpha: alpha first", 18 chars.
   size_t const printed = alpha_first.PrintTo(Serial);
   Serial.println();
-  Check(printed == (UTL_ERROR_TEXTS ? 18 : 8),
-        F("PrintTo returns the number of chars"));
+  Check(printed == 18, F("PrintTo returns the number of chars"));
 
   Check(&alpha_first.group() == &self_check::kAlphaErrorGroup &&
             alpha_first.code() == 0,
@@ -516,6 +520,9 @@ void CheckSpan() {
 
 void setup() {
   Serial.begin(115200);
+  // The library's groups: index in words, optional as a code, so that the
+  // output shows both.
+  utl::UseIndexMessages();
 
   CheckError();
   CheckStatus();

@@ -4,9 +4,6 @@
 // Error: a group and a code, and how it prints.
 
 #include <gtest/gtest.h>
-// For UTL_ERROR_TEXTS, which only #if reads: include-cleaner takes that for
-// no use.
-#include <utl/config.h>  // IWYU pragma: keep
 #include <utl/error.h>
 #include <utl/index_error.h>
 #include <utl/optional_error.h>
@@ -58,40 +55,47 @@ TEST(ErrorTest, IsAssignable) {
   EXPECT_EQ(error, BetaError::kFirst);
 }
 
-#if UTL_ERROR_TEXTS
+// A group whose texts are on says what went wrong.
 TEST(ErrorTest, SaysWhatWentWrong) {
+  UseAlphaMessages();
   EXPECT_STREQ(
       reinterpret_cast<char const*>(Error(AlphaError::kSecond).Message()),
       "alpha second");
-  EXPECT_EQ(Printed(BetaError::kFirst), "beta: beta first");
+  EXPECT_EQ(Printed(AlphaError::kFirst), "alpha: alpha first");
 }
 
 // A code beyond a group's table of texts.
 TEST(ErrorTest, UnknownCode) {
-  EXPECT_EQ(Printed(Error(kBetaErrorGroup, 7)), "beta: unknown code");
+  UseAlphaMessages();
+  EXPECT_EQ(Printed(Error(kAlphaErrorGroup, 7)), "alpha: unknown code");
 }
 
-// The groups of the library itself.
-TEST(ErrorTest, LibraryGroupsSayWhatWentWrong) {
-  EXPECT_EQ(Printed(utl::IndexError::kOutOfRange), "index: out of range");
-  EXPECT_EQ(Printed(utl::OptionalError::kEmpty), "optional: empty");
-}
-#else
-// Without texts an error prints its code, every digit of it.
+// A group whose texts are off prints its code, every digit of it, and has an
+// empty text.
 TEST(ErrorTest, PrintsCodeWithoutTexts) {
   EXPECT_STREQ(
-      reinterpret_cast<char const*>(Error(AlphaError::kSecond).Message()), "");
-  EXPECT_EQ(Printed(AlphaError::kSecond), "alpha: 1");
+      reinterpret_cast<char const*>(Error(BetaError::kFirst).Message()), "");
+  EXPECT_EQ(Printed(BetaError::kFirst), "beta: 0");
   EXPECT_EQ(Printed(Error(kBetaErrorGroup, 10)), "beta: 10");
   EXPECT_EQ(Printed(Error(kBetaErrorGroup, 105)), "beta: 105");
   EXPECT_EQ(Printed(Error(kBetaErrorGroup, 255)), "beta: 255");
 }
 
-TEST(ErrorTest, LibraryGroupsPrintCodesWithoutTexts) {
-  EXPECT_EQ(Printed(utl::IndexError::kOutOfRange), "index: 0");
-  EXPECT_EQ(Printed(utl::OptionalError::kEmpty), "optional: 0");
+// Turning the texts on twice keeps one entry: the list does not loop.
+TEST(ErrorTest, TextsTurnedOnTwice) {
+  UseAlphaMessages();
+  UseAlphaMessages();
+  EXPECT_EQ(Printed(AlphaError::kSecond), "alpha: alpha second");
+  EXPECT_EQ(Printed(BetaError::kFirst), "beta: 0");
 }
-#endif
+
+// The groups of the library itself, each turned on by a function of its own.
+TEST(ErrorTest, LibraryGroupsSayWhatWentWrong) {
+  utl::UseIndexMessages();
+  utl::UseOptionalMessages();
+  EXPECT_EQ(Printed(utl::IndexError::kOutOfRange), "index: out of range");
+  EXPECT_EQ(Printed(utl::OptionalError::kEmpty), "optional: empty");
+}
 
 }  // namespace
 }  // namespace utl_test

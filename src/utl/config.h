@@ -6,25 +6,14 @@
 // value. The Arduino IDE passes no flags per sketch, so a switch goes into
 // platform.local.txt beside the platform.txt of the core,
 //
-//   compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0
+//   compiler.cpp.extra_flags=-DUTL_CHECK_ACCESS=1
 //
 // or, with arduino-cli, into
 //
-//   --build-property "compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0"
+//   --build-property "compiler.cpp.extra_flags=-DUTL_CHECK_ACCESS=1"
 
 #ifndef UTL_SRC_UTL_CONFIG_H_
 #define UTL_SRC_UTL_CONFIG_H_
-
-// 1, the default: an error says what went wrong, "bus: nack". 0: the texts of
-// the groups are left out, and an error prints its code, "bus: 0". It saves
-// 46 bytes of flash in Basics, with two groups and four texts, and 62 in
-// SelfCheck, after the code that prints the number in their place. A group's
-// code stays the same either way: with the switch at 0, LookUpMessage() does
-// not read its table, so the table and its texts are unused and the linker
-// leaves them out.
-#ifndef UTL_ERROR_TEXTS
-#define UTL_ERROR_TEXTS 1
-#endif
 
 // 0, the default: nothing is checked, and nothing is compiled for it. 1: an
 // access that the standard leaves undefined, or that gives a placeholder

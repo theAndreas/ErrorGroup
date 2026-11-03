@@ -15,19 +15,14 @@ enum class BetaError : uint8_t {
   kFirst,
 };
 
-class BetaErrorGroup : public utl::ErrorGroup {
- public:
-  constexpr BetaErrorGroup() = default;
-
-  __FlashStringHelper const* Name() const override;
-  __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
-extern BetaErrorGroup const kBetaErrorGroup;
+extern utl::ErrorGroup const kBetaErrorGroup;
 
 inline utl::ErrorGroup const& GetErrorGroup(BetaError) {
   return kBetaErrorGroup;
 }
+
+// Turns on the texts of the group: until then its errors print their codes.
+void UseBetaMessages();
 
 }  // namespace self_check
 

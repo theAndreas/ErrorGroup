@@ -6,7 +6,6 @@
 #ifndef UTL_SRC_UTL_INDEX_ERROR_H_
 #define UTL_SRC_UTL_INDEX_ERROR_H_
 
-#include <Arduino.h>
 #include <stdint.h>
 
 #include "utl/error_group.h"
@@ -17,20 +16,14 @@ enum class IndexError : uint8_t {
   kOutOfRange,
 };
 
-class IndexErrorGroup : public ErrorGroup {
- public:
-  constexpr IndexErrorGroup() = default;
-
-  __FlashStringHelper const* Name() const override;
-  __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
 // Defined in index_error.cpp. A sketch that never calls at(), first(), last()
-// or subspan() does not reference it, and the linker leaves it out with its
-// vtable.
-extern IndexErrorGroup const kIndexErrorGroup;
+// or subspan() does not reference it, and the linker leaves it out.
+extern ErrorGroup const kIndexErrorGroup;
 
 inline ErrorGroup const& GetErrorGroup(IndexError) { return kIndexErrorGroup; }
+
+// Turns on the texts of the group, see messages.h.
+void UseIndexMessages();
 
 }  // namespace utl
 

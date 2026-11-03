@@ -11,90 +11,48 @@
 #define UTL_SRC_UTL_ERROR_GROUP_H_
 
 #include <Arduino.h>
-#include <stddef.h>
-#include <stdint.h>
-
-#include "utl/config.h"
 
 namespace utl {
 
-// Declared ahead, against Google's advice, because this header cannot include
-// array.h: array.h needs Result, Result needs Error, and Error needs this
-// header. LookUpMessage() below only names it; the group's .cpp includes it.
-template <typename T, size_t N>
-struct array;
-
-// The group an error belongs to, with its name and the text of each code.
+// The group an error belongs to, and its name.
 //
-// A group is a class derived from this one, an enum class of its codes, and
-// beside the enum, in the same namespace, a function that argument-dependent
-// lookup finds:
+// A group is an object of this class, an enum class of its codes, and beside
+// the enum, in the same namespace, a function that argument-dependent lookup
+// finds:
 //
-//   const utl::ErrorGroup& GetErrorGroup(FontError);
+//   char const kFontName[] PROGMEM = "font";
+//   constexpr utl::ErrorGroup kFontErrorGroup{kFontName};  // in font_error.cpp
+//   extern utl::ErrorGroup const kFontErrorGroup;           // in font_error.h
+//   inline utl::ErrorGroup const& GetErrorGroup(FontError) {
+//     return kFontErrorGroup;
+//   }
 //
-// Define exactly one object of each derived class, in one .cpp file, and
-// declare it `extern` in the header. A `const` object defined in a header has
-// internal linkage: every translation unit would get its own copy at its own
-// address, and errors from different files would not compare equal.
+// Define exactly one object for each group, in one .cpp file, and declare it
+// `extern` in the header. A `const` object defined in a header has internal
+// linkage: every translation unit would get its own copy at its own address,
+// and errors from different files would not compare equal.
 //
-// On the Uno a class with virtual functions keeps its vtable in RAM, as
-// avr-gcc reads it with LD from the data space; the texts stay in flash.
+// The texts of the codes are not part of it: a sketch that wants them in
+// words turns them on with utl::UseMessages(), see messages.h. A virtual
+// Message(), as before, linked every text of every group into any sketch
+// that made an error, printed or not, as GCC cannot drop a virtual function
+// no one calls; and it put a vtable into RAM, which only a compiler plugin
+// moved to flash. A group is now the 2 bytes of its name's address.
 class ErrorGroup {
  public:
+  // `name`, a text in PROGMEM, such as "font".
+  constexpr explicit ErrorGroup(char const* name) : name_(name) {}
+
   ErrorGroup(ErrorGroup const&) = delete;
   ErrorGroup& operator=(ErrorGroup const&) = delete;
 
   // Returns the name of the group, from flash.
-  virtual __FlashStringHelper const* Name() const = 0;
-
-  // Returns the text of `code`, from flash, or "unknown code"; an empty text,
-  // never null, if UTL_ERROR_TEXTS is 0.
-  virtual __FlashStringHelper const* Message(uint8_t code) const = 0;
-
- protected:
-  constexpr ErrorGroup() = default;
-
-  // Not virtual, and protected so that no one deletes a group through this
-  // base: a virtual destructor would pull `operator delete` into every sketch,
-  // and a group is never created on the heap.
-  ~ErrorGroup() = default;
-
-  // Returns `messages[code]`, read from a table in PROGMEM, or "unknown code"
-  // if `code` lies beyond the table.
-  static __FlashStringHelper const* LookUpMessage(char const* const* messages,
-                                                  uint8_t count, uint8_t code);
-
-  // The same for the table of a group, a utl::array in PROGMEM:
-  //
-  //   const utl::array<const char*, 2> kMessages PROGMEM = {...};
-  //   return LookUpMessage(kMessages, code);
-  //
-  // The count is a uint8_t, as a code is: a size_t costs 4 bytes of flash
-  // more on the Uno. N is known when compiled, so the static_assert makes
-  // sure that the count is not cut short.
-  //
-  // With UTL_ERROR_TEXTS at 0 it returns an empty text and does not touch
-  // the table, so that the table and its texts drop out of the build.
-  template <size_t N>
-  static __FlashStringHelper const* LookUpMessage(
-      array<char const*, N> const& messages, uint8_t code) {
-    // Not UINT8_MAX: avr-libc defines it in C++ only with __STDC_LIMIT_MACROS.
-    static_assert(static_cast<uint8_t>(N) == N,
-                  "a code is a uint8_t: a group has at most 255 texts");
-#if UTL_ERROR_TEXTS
-    return LookUpMessage(messages.data(), static_cast<uint8_t>(N), code);
-#else
-    static_cast<void>(messages);
-    static_cast<void>(code);
-    return NoMessage();
-#endif
+  __FlashStringHelper const* Name() const {
+    return reinterpret_cast<__FlashStringHelper const*>(name_);
   }
 
  private:
-  // An empty text, in flash, shared by every group, for UTL_ERROR_TEXTS at
-  // 0. Not F("") in the template above, which would put one into flash for
-  // every size of table.
-  static __FlashStringHelper const* NoMessage();
+  char const* name_;
 };
 
 }  // namespace utl
