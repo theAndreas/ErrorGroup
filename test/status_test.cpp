@@ -150,5 +150,21 @@ TEST(StatusTest, ConsumeErrorEndsAChain) {
   EXPECT_EQ(seen, 8);
 }
 
+// What the checks on what `f` returns let pass, at their edges; the cases
+// they stop lie in test/compile_fail/.
+TEST(StatusTest, FluentFunctionsTakeWhatTheyShould) {
+  Status const failed = AlphaError::kFirst;
+  // MapError(): an Error by reference is an Error.
+  Error const beta = BetaError::kFirst;
+  EXPECT_EQ(
+      failed.MapError([&beta](Error const&) -> Error const& { return beta; }),
+      BetaError::kFirst);
+  // AndThen(): a Result<void> is a Result, a const Result one as well.
+  EXPECT_TRUE(Status::Ok().AndThen([] { return Result<void>::Ok(); }).IsOk());
+  EXPECT_EQ(
+      Status::Ok().AndThen([]() -> Result<int> const { return 2; }).ValueOr(0),
+      2);
+}
+
 }  // namespace
 }  // namespace utl_test

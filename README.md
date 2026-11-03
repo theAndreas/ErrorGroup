@@ -442,6 +442,12 @@ template per instance, so the report merges them per line. What they cannot see 
 the host has no separate flash, so a text in flash read as one in RAM passes there. That, and the
 core's vtables in flash, is what `SelfCheck` in simavr is for.
 
+What must not compile has tests too. Each file in `test/compile_fail/` uses utl wrongly, an
+`Inspect()` whose function returns a value, say, and names in a line `// Expected: ...` the
+message of the `static_assert` that has to stop it. CMake makes a test of each, which calls the
+compiler on the file and passes only if that message comes; a `static_assert` that went missing
+fails it. A new case is a new file there, nothing else.
+
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
 on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".
 
