@@ -156,10 +156,12 @@ and no RAM: the lambdas are inlined.
 utl::Result<void> const printed = Receive(true).Map([](char c) { Serial.println(c); });
 ```
 
-Every `Error`, `Status` and `Result` is `[[nodiscard]]`: a call whose result is dropped warns, as
-`[[nodiscard]]` on a type, from C++17, which avr-gcc 7 takes under gnu++11 as well.
-`static_cast<void>(Set())` drops one on purpose. The Arduino IDE shows the warning once
-"Compiler warnings" is set above "None".
+An `Error` and a `Result<T>` are `[[nodiscard]]`: a call that returns a value and has it dropped
+warns, as `[[nodiscard]]` on a type, from C++17, which avr-gcc 7 takes under gnu++11 as well. A
+`Status` is not, nor `Result<void>`: a sketch drops the status of `SetText("Hi!")` as a matter of
+course, and with the attribute every such call warned. A library marks a function whose status
+must be looked at itself, `[[nodiscard]] utl::Status Begin();`. `static_cast<void>(Get())` drops
+a value on purpose. The Arduino IDE shows the warning once "Compiler warnings" is set above "None".
 
 ### Texts
 

@@ -52,6 +52,17 @@ TEST(StatusTest, MessageOfAnError) {
       reinterpret_cast<char const*>(Status(BetaError::kFirst).Message()), "");
 }
 
+Status SetAlpha() { return AlphaError::kFirst; }
+Result<void> SetBeta() { return BetaError::kFirst; }
+
+// A Status may be dropped without a warning, as a sketch drops the status of
+// SetText(); the tests are built with -Werror, so a [[nodiscard]] back on the
+// type fails this file.
+TEST(StatusTest, MayBeDropped) {
+  SetAlpha();
+  SetBeta();
+}
+
 TEST(StatusTest, PrintsOkOrTheError) {
   StringPrint ok;
   EXPECT_EQ(Status::Ok().PrintTo(ok), 2U);
