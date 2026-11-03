@@ -376,7 +376,10 @@ The guide prefers it on the left but does not require it; `.clang-format` moves 
 
 `tools/lint.sh` and `tools/tidy.sh` fetch their tools from PyPI through `uvx`, at fixed versions, so
 that nothing has to be installed. `.clang-tidy` turns on broad groups of checks and turns off, each
-with its reason, what contradicts the Google style or cannot be had on the AVR.
+with its reason, what contradicts the Google style or cannot be had on the AVR. It also checks Google's names
+with `readability-identifier-naming`, a private member ending in `_`, a parameter in `snake_case`,
+a constant with `k`, apart from what mimics the standard library and the accessors, which Google
+names like variables: clang-format cannot rename, and cpplint does not look at names.
 
 Nothing has run on a board yet; `SelfCheck` should print the same there as in simavr.
 

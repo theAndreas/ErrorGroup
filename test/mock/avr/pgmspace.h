@@ -14,18 +14,23 @@
 #define PROGMEM
 #define PGM_P const char*
 
+// avr-libc's names, which the library calls.
+// NOLINTNEXTLINE(readability-identifier-naming)
 inline uint8_t pgm_read_byte(void const* address) {
   return *static_cast<uint8_t const*>(address);
 }
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 inline void const* pgm_read_ptr(void const* address) {
   return *static_cast<void const* const*>(address);
 }
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 inline int memcmp_P(void const* ram, void const* flash, size_t count) {
   return memcmp(ram, flash, count);
 }
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 inline size_t strlen_P(char const* flash) { return strlen(flash); }
 
 #endif  // UTL_TEST_MOCK_AVR_PGMSPACE_H_
