@@ -162,6 +162,159 @@ class optional {
   bool has_value_;
 };
 
+// A reference to a T that lies elsewhere, or none, as std::optional<T&> from
+// C++26: a pointer, 2 bytes on the Uno, null if empty, with no flag beside it.
+// T needs no default constructor, as there is no value of its own:
+//
+//   utl::optional<Led&> FindLed(uint8_t pin);
+//
+//   if (utl::optional<Led&> const led = FindLed(13)) { led->On(); }
+//   FindLed(13).ValueOr(spare).On();
+//
+// Whether it may be empty is what sets it apart from a reference_wrapper; a
+// member that always refers to something is one of those.
+//
+// It binds an lvalue only: a temporary would be gone before the first use.
+// Assigning one rebinds it, as in C++26, and never writes through it; to
+// write, use * or ->. Its constness is its own: an optional<T&> const still
+// gives a T&.
+//
+// The changes, beyond the names of optional<T>: * and -> of an empty one are
+// undefined, as in the standard, as there is no T to give; with
+// UTL_CHECK_ACCESS at 1 that is reported first. And ValueOr() gives a T&, of
+// the object referred to or of the fallback, which is an lvalue for that
+// reason, where C++26's value_or() gives a copy: a copy would let
+// `FindLed(13).ValueOr(spare).On()` switch on a copy of the LED, and copy it
+// first.
+template <typename T>
+class optional<T&> {
+ public:
+  using value_type = T;
+
+  // Empty.
+  constexpr optional() : pointer_(nullptr) {}
+  constexpr optional(nullopt_t)  // NOLINT(runtime/explicit)
+      : pointer_(nullptr) {}
+
+  // A reference to `object`. Implicit, as in std::optional, so that a
+  // function returns the object as it is. __builtin_addressof, what
+  // std::addressof is built on, takes the address even of a T that overloads
+  // unary &.
+  constexpr optional(T& object)  // NOLINT(runtime/explicit)
+      : pointer_(__builtin_addressof(object)) {}
+
+  // No temporary, as for reference_wrapper: deleted, and not explicit, so
+  // that `optional<int const&> o = 5` does not bind the 5 through T const&.
+  optional(T&&) = delete;  // NOLINT(runtime/explicit)
+
+  // One of U& that is also one of T&: of int& to int const&, of Derived& to
+  // Base&. Only where a U* converts to a T*, so never of long& to int&.
+  template <typename U, typename = decltype(internal::ConvertTo<T*>(
+                            internal::DeclVal<U*>()))>
+  constexpr optional(optional<U&> const& other)  // NOLINT(runtime/explicit)
+      : pointer_(other.HasValue() ? __builtin_addressof(*other) : nullptr) {}
+
+  constexpr bool HasValue() const { return pointer_ != nullptr; }
+  constexpr explicit operator bool() const { return pointer_ != nullptr; }
+
+  // Undefined if empty, as in std::optional<T&>. With UTL_CHECK_ACCESS at 1
+  // an empty one is reported first. The analyzer sees the null reference that
+  // follows; it is what the standard leaves undefined, not an oversight.
+  constexpr T& operator*() const {
+    // NOLINTNEXTLINE(clang-analyzer-core.uninitialized.UndefReturn)
+    return static_cast<void>(Checked()), *pointer_;
+  }
+  constexpr T* operator->() const {
+    return static_cast<void>(Checked()), pointer_;
+  }
+
+  // The reference, or OptionalError::kEmpty.
+  Result<T&> value() const {
+    if (pointer_ == nullptr) {
+      return OptionalError::kEmpty;
+    }
+    return *pointer_;
+  }
+
+  // The object referred to, or `fallback` if empty: a reference either way.
+  T& ValueOr(T& fallback) const {
+    return pointer_ != nullptr ? *pointer_ : fallback;
+  }
+  // No temporary as the fallback: the T& returned would outlive it.
+  T& ValueOr(T&& fallback) const = delete;
+
+  // The reference, or `error`, as Rust's ok_or().
+  Result<T&> OkOr(Error const& error) const {
+    if (pointer_ == nullptr) {
+      return error;
+    }
+    return *pointer_;
+  }
+
+  // As in optional<T>, with a T& given to `f`: AndThen() returns what `f`
+  // returns, an optional, Map() an optional of it, OrElse() this or `f()`.
+  // None of them calls `f` when there is nothing to give it.
+  template <typename F>
+  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T&>())) {
+    if (pointer_ == nullptr) {
+      return nullopt;
+    }
+    return f(*pointer_);
+  }
+
+  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
+                            internal::DeclVal<T&>()))>
+  optional<U> Map(F f) const {
+    if (pointer_ == nullptr) {
+      return nullopt;
+    }
+    return f(*pointer_);
+  }
+
+  template <typename F>
+  optional OrElse(F f) const {
+    if (pointer_ != nullptr) {
+      return *this;
+    }
+    return f();
+  }
+
+  void reset() { pointer_ = nullptr; }
+
+  // Rebinds to `object`, as in C++26.
+  T& emplace(T& object) {
+    pointer_ = __builtin_addressof(object);
+    return object;
+  }
+  T& emplace(T&& object) = delete;
+
+  // Hidden friends. Two compare by the objects they refer to, as in C++26,
+  // not by where these lie; two empty ones are equal. A T compares with the
+  // object referred to, and nullopt converts, so `led == utl::nullopt` needs
+  // no overload of its own.
+  friend bool operator==(optional const& a, optional const& b) {
+    return a.pointer_ == nullptr
+               ? b.pointer_ == nullptr
+               : b.pointer_ != nullptr && *a.pointer_ == *b.pointer_;
+  }
+  friend bool operator!=(optional const& a, optional const& b) {
+    return !(a == b);
+  }
+  friend bool operator==(optional const& a, T const& b) {
+    return a.pointer_ != nullptr && *a.pointer_ == b;
+  }
+  friend bool operator==(T const& a, optional const& b) { return b == a; }
+  friend bool operator!=(optional const& a, T const& b) { return !(a == b); }
+  friend bool operator!=(T const& a, optional const& b) { return !(b == a); }
+
+ private:
+  constexpr bool Checked() const {
+    return internal::Check(pointer_ != nullptr, Misuse::kOptionalValue);
+  }
+
+  T* pointer_;
+};
+
 }  // namespace utl
 
 #endif  // UTL_SRC_UTL_OPTIONAL_H_

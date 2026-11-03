@@ -20,7 +20,9 @@ namespace internal {
 
 // Calls `f(args...)` and makes a Result<U> of what it returns, for Map(). The
 // specialization for void calls `f` and returns ok, as `return f(args...);`
-// cannot make a Result of nothing. Defined below Result<void>.
+// cannot make a Result of nothing. The arguments are passed on as they are, so
+// that the T& of a Result<T&> reaches `f` as a T&, not a T const&. Defined
+// below Result<void>.
 template <typename U>
 struct MapCall;
 
@@ -116,6 +118,104 @@ class [[nodiscard]] Result {
   Status status_;
 };
 
+// A reference to a T that lies elsewhere, or an Error: a pointer and a
+// Status, 5 bytes on the Uno, for a function that finds an object or fails.
+// T needs no default constructor:
+//
+//   Result<Led&> GetLed(uint8_t pin) {
+//     if (pin >= kLeds) {
+//       return PanelError::kNoSuchLed;
+//     }
+//     return leds[pin];
+//   }
+//
+//   GetLed(13).Map([](Led& led) { led.On(); });
+//
+// As Result<T>, with a T& in place of the value. It binds an lvalue only, as
+// a temporary would be gone before the first use, and assigning one rebinds
+// it. value() of one with an error is undefined, as there is no T to give,
+// where Result<T> gives T(); with UTL_CHECK_ACCESS at 1 that is reported
+// first. ValueOr() gives a T&, of the object or of the fallback, which is an
+// lvalue for that reason.
+template <typename T>
+class [[nodiscard]] Result<T&> {
+ public:
+  // A reference to `object`. Implicit, as the conversions of Result<T>.
+  // __builtin_addressof, what std::addressof is built on, takes the address
+  // even of a T that overloads unary &.
+  constexpr Result(T& object)  // NOLINT(runtime/explicit)
+      : pointer_(__builtin_addressof(object)) {}
+
+  // No temporary: deleted, and not explicit, so that a Result<int const&>
+  // made from a 5 does not bind it through T const&.
+  Result(T&&) = delete;  // NOLINT(runtime/explicit)
+
+  // An error, and no reference.
+  constexpr Result(Error const& error)  // NOLINT(runtime/explicit)
+      : pointer_(nullptr), status_(error) {}
+
+  // A code of a group, as in the implicit constructor of Error.
+  template <typename Code, typename = decltype(GetErrorGroup(Code()))>
+  constexpr Result(Code code)  // NOLINT(runtime/explicit)
+      : pointer_(nullptr), status_(code) {}
+
+  // One of U& that is also one of T&: of int& to int const&, of Derived& to
+  // Base&. Only where a U* converts to a T*, so never of long& to int&.
+  template <typename U, typename = decltype(internal::ConvertTo<T*>(
+                            internal::DeclVal<U*>()))>
+  Result(Result<U&> const& other)  // NOLINT(runtime/explicit)
+      : pointer_(other.IsOk() ? __builtin_addressof(other.value()) : nullptr),
+        status_(other.status()) {}
+
+  bool IsOk() const { return status_.IsOk(); }
+  Error const* error() const { return status_.error(); }
+  Status const& status() const { return status_; }
+
+  // The object referred to; undefined if !IsOk(): ask first, or use ValueOr().
+  // The analyzer sees the null reference that follows an error; it is what
+  // the standard leaves undefined, not an oversight.
+  T& value() const {
+    // NOLINTNEXTLINE(clang-analyzer-core.uninitialized.UndefReturn)
+    return static_cast<void>(internal::Check(IsOk(), Misuse::kResultValue)),
+           *pointer_;
+  }
+
+  // The object referred to, or `fallback` if there is an error.
+  T& ValueOr(T& fallback) const { return IsOk() ? *pointer_ : fallback; }
+  // No temporary as the fallback: the T& returned would outlive it.
+  T& ValueOr(T&& fallback) const = delete;
+
+  // As in Result<T>, with a T& given to `f`.
+  template <typename F>
+  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T&>())) {
+    if (!IsOk()) {
+      return *error();
+    }
+    return f(*pointer_);
+  }
+
+  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
+                            internal::DeclVal<T&>()))>
+  Result<U> Map(F f) const {
+    if (!IsOk()) {
+      return *error();
+    }
+    return internal::MapCall<U>::Call(f, *pointer_);
+  }
+
+  template <typename F>
+  Result OrElse(F f) const {
+    if (IsOk()) {
+      return *this;
+    }
+    return f(*error());
+  }
+
+ private:
+  T* pointer_;
+  Status status_;
+};
+
 // The Result of a function that returns no value: ok or an Error, that is, a
 // Status, as Rust's Result<(), E>. It is a Status, so that it has all of it,
 // IsOk(), error(), AndThen(), OrElse() and the comparisons, and converts to
@@ -152,7 +252,7 @@ namespace internal {
 template <typename U>
 struct MapCall {
   template <typename F, typename... Args>
-  static Result<U> Call(F& f, Args const&... args) {
+  static Result<U> Call(F& f, Args&... args) {
     return f(args...);
   }
 };
@@ -160,7 +260,7 @@ struct MapCall {
 template <>
 struct MapCall<void> {
   template <typename F, typename... Args>
-  static Result<void> Call(F& f, Args const&... args) {
+  static Result<void> Call(F& f, Args&... args) {
     f(args...);
     return Result<void>::Ok();
   }

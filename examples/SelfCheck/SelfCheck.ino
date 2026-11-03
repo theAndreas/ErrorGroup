@@ -34,6 +34,10 @@ static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
 static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
 static_assert(sizeof(utl::optional<uint8_t>) == 2,
               "an optional is a value and a flag");
+static_assert(sizeof(utl::optional<uint8_t&>) == 2,
+              "an optional of a reference is a pointer");
+static_assert(sizeof(Result<uint8_t&>) == 5,
+              "a Result of a reference is a pointer and a Status");
 static_assert(sizeof(utl::reference_wrapper<uint8_t>) == 2,
               "a reference_wrapper is a pointer");
 static_assert(sizeof(utl::string_view) == 4 &&
@@ -269,6 +273,35 @@ void CheckResultVoid() {
         F("Result<void> recovers as a Status"));
 }
 
+// The element of `rows` at `index`, or BetaError::kFirst past the end: a
+// Result of a reference.
+Result<uint8_t&> GetRow(utl::array<uint8_t, 3>& rows, uint8_t index) {
+  if (index >= rows.size()) {
+    return BetaError::kFirst;
+  }
+  return rows[index];
+}
+
+void CheckResultReference() {
+  utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
+  uint8_t spare = 9;
+  Result<uint8_t&> const found = GetRow(rows, 2);
+
+  Check(found.IsOk() && &found.value() == &rows[2],
+        F("Result<T&> holds a reference"));
+  Check(GetRow(rows, 3).status() == BetaError::kFirst,
+        F("Result<T&> holds an error"));
+  Result<void> const set = GetRow(rows, 1).Map([](uint8_t& row) { row = 5; });
+  Check(set.IsOk() && rows[1] == 5, F("Result<T&>::Map writes through"));
+  Check(&GetRow(rows, 3).ValueOr(spare) == &spare &&
+            &found.ValueOr(spare) == &rows[2],
+        F("Result<T&>::ValueOr gives a reference"));
+  Result<uint8_t&> const chained =
+      GetRow(rows, 0).AndThen([&rows](uint8_t& row) {
+        return GetRow(rows, static_cast<uint8_t>(row + 2));
+      });
+  Check(&chained.value() == &rows[2], F("Result<T&>::AndThen chains"));
+}
 // Returns the index of the first code equal to `wanted`, or none.
 utl::optional<uint8_t> FindCode(uint8_t wanted) {
   for (size_t index = 0; index < codes.size(); ++index) {
@@ -332,6 +365,42 @@ void CheckOptional() {
         F("optional::OrElse"));
 }
 
+// The element of `rows` equal to `wanted`, or none: an optional of a
+// reference, through which the caller writes.
+utl::optional<uint8_t&> FindRow(utl::array<uint8_t, 3>& rows, uint8_t wanted) {
+  for (uint8_t& row : rows) {
+    if (row == wanted) {
+      return row;
+    }
+  }
+  return utl::nullopt;
+}
+
+void CheckOptionalReference() {
+  utl::array<uint8_t, 3> rows = {{codes[0], codes[1], codes[2]}};
+  uint8_t spare = 9;
+  utl::optional<uint8_t&> const none = FindRow(rows, 42);
+  utl::optional<uint8_t&> const found = FindRow(rows, 7);
+
+  Check(!none && none == utl::nullopt && found && &*found == &rows[2],
+        F("optional<T&> is empty or refers"));
+  *found = 8;
+  Check(rows[2] == 8 && found == uint8_t{8}, F("optional<T&> writes through"));
+  utl::optional<uint8_t&> rebound = found;
+  rebound = spare;
+  Check(&*rebound == &spare && rows[2] == 8,
+        F("optional<T&> rebinds when assigned"));
+  Check(&none.ValueOr(spare) == &spare && &found.ValueOr(spare) == &rows[2],
+        F("optional<T&>::ValueOr gives a reference"));
+  Check(&found.value().value() == &rows[2] &&
+            none.value().status() == utl::OptionalError::kEmpty,
+        F("optional<T&>::value returns a Result<T&>"));
+  utl::optional<bool> const mapped = found.Map([](uint8_t& row) {
+    row = 7;
+    return true;
+  });
+  Check(mapped == true && rows[2] == 7, F("optional<T&>::Map gets the T&"));
+}
 // Counts into a counter another owns: a reference_wrapper as a member, what it
 // is made for.
 class Counter {
@@ -472,6 +541,18 @@ void CheckMisuse() {
   static_cast<void>(empty.front());
   Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kEmpty,
         F("front() of an empty span is reported"));
+  utl::optional<uint8_t&> const no_row;
+  before = MisuseCount();
+  static_cast<void>(*no_row);
+  Check(MisuseCount() == before + 1 &&
+            LastMisuse() == utl::Misuse::kOptionalValue,
+        F("* of an empty optional<T&> is reported"));
+  Result<uint8_t&> const no_reference = BetaError::kFirst;
+  before = MisuseCount();
+  static_cast<void>(no_reference.value());
+  Check(
+      MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kResultValue,
+      F("value() of a Result<T&> with an error is reported"));
 
   utl::string_view shortened = "ab";
   before = MisuseCount();
@@ -579,9 +660,11 @@ void setup() {
   CheckStatusFluent();
   CheckResult();
   CheckResultVoid();
+  CheckResultReference();
   CheckArray();
   CheckSpan();
   CheckOptional();
+  CheckOptionalReference();
   CheckReferenceWrapper();
   CheckStringView();
   CheckMisuse();

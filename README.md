@@ -10,7 +10,7 @@ standard where it has an answer, and checked where the standard leaves a call un
 - **Containers**: `array`, `span` and `make_array`, as in the standard, except that what can go
   out of range returns a `Result` rather than being undefined.
 - **`optional`**, a value or none, as in the standard, except that `value()` of an empty one
-  returns a `Result` rather than throwing.
+  returns a `Result` rather than throwing; also of a reference, `optional<T&>`, as in C++26.
 - **`reference_wrapper`**, a reference that copies, as in the standard, for a member that refers to
   an object another owns.
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
@@ -142,6 +142,12 @@ One class per file in `src/utl/`:
 - `Result<void>` (`result.h`): a `Status`, for code that is generic in `T`. It is one, by
   inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
   its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
+- `Result<T&>` (`result.h`): a reference to an object that lies elsewhere, or an `Error`, for a
+  function that finds an object or fails, `Result<Led&> GetLed(uint8_t pin)`. A pointer and a
+  `Status`, 5 bytes; `T` needs no default constructor. It binds an lvalue only, assigning one
+  rebinds it, and `Map()` and the others give their function the `T&` itself. `value()` of one
+  with an error is undefined, as there is no `T` to give; `ValueOr()` gives a `T&`, of the object
+  or of the fallback.
 - `ErrorGroup` (`error_group.h`): a group, the address of its name in flash, a value of 2 bytes that
   takes no memory of its own; no virtual function.
 - `Messages` (`messages.h`): the texts of a group, and `UseMessages()`, which turns them on.
@@ -239,6 +245,23 @@ side, as in a `Result`, so `T` needs a default constructor; an `optional<uint8_t
 `OptionalError::kEmpty`, the group `optional`; `OkOr()`, as `ok_or()` in Rust, gives your own
 error instead. `AndThen()`, `Map()` and `OrElse()` are what C++23's `std::optional` calls
 `and_then()`, `transform()` and `or_else()`.
+
+```cpp
+utl::optional<Led&> FindLed(uint8_t pin);  // a reference, or utl::nullopt
+
+if (utl::optional<Led&> const led = FindLed(13)) { led->On(); }
+FindLed(13).ValueOr(spare).On();  // the LED, or the spare itself, not a copy
+```
+
+`optional<T&>` is C++26's `std::optional<T&>`: a reference to an object that lies elsewhere, or
+none. It is a pointer, 2 bytes, null if empty, and `T` needs no default constructor. It binds an
+lvalue only, never a temporary; assigning one rebinds it, as in C++26, and never writes through
+it. `*` and `->` of an empty one are undefined, as there is no `T` to give, and
+[checked](#checked-access) like those of an `optional<T>`. `value()` gives a `Result<T&>`. One
+change: `ValueOr()` gives a `T&`, of the object or of the fallback, which has to be an lvalue for
+that reason, where C++26's `value_or()` gives a copy, which would switch on a copy of the LED
+above. A reference that is never absent, a member above all, is a
+[`reference_wrapper`](#reference_wrapper).
 
 ## reference_wrapper
 
@@ -343,7 +366,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 12736 | 12736 | 14094 | 285 | 267 | 287 |
+| SelfCheck | 13552 | 13552 | 15210 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
