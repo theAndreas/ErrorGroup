@@ -41,9 +41,9 @@ class basic_string_view {
  public:
   using value_type = CharT;
   using size_type = size_t;
-  using const_reference = const CharT&;
-  using const_pointer = const CharT*;
-  using const_iterator = const CharT*;
+  using const_reference = CharT const&;
+  using const_pointer = CharT const*;
+  using const_iterator = CharT const*;
   using iterator = const_iterator;
 
   static constexpr size_type npos = static_cast<size_type>(-1);
@@ -52,13 +52,13 @@ class basic_string_view {
   constexpr basic_string_view() : data_(nullptr), size_(0) {}
 
   // `size` chars from `data` on.
-  constexpr basic_string_view(const CharT* data, size_type size)
+  constexpr basic_string_view(CharT const* data, size_type size)
       : data_(data), size_(size) {}
 
   // The chars of a string up to its terminating '\0'. Implicit, as in
   // std::string_view. Not constexpr: a constexpr length in C++11 would be a
   // recursion, one call per char at run time, on a stack of 2 KB.
-  basic_string_view(const CharT* text)  // NOLINT(runtime/explicit)
+  basic_string_view(CharT const* text)  // NOLINT(runtime/explicit)
       : data_(text), size_(strlen(text)) {}
 
   constexpr const_pointer data() const { return data_; }
@@ -100,7 +100,7 @@ class basic_string_view {
     if (position > size_) {
       return IndexError::kOutOfRange;
     }
-    const size_type rest = size_ - position;
+    size_type const rest = size_ - position;
     return basic_string_view(data_ + position, count < rest ? count : rest);
   }
 
@@ -129,7 +129,7 @@ class basic_string_view {
   // and leaves an empty view either way.
   void remove_prefix(size_type count) {
     static_cast<void>(internal::Check(count <= size_, Misuse::kRemove));
-    const size_type removed = count < size_ ? count : size_;
+    size_type const removed = count < size_ ? count : size_;
     data_ += removed;
     size_ -= removed;
   }
@@ -141,10 +141,10 @@ class basic_string_view {
   // Less than 0, 0 or more than 0 as this lies before, at or after `other`:
   // char by char, as unsigned char as in std::string_view, a prefix first.
   int compare(basic_string_view other) const {
-    const size_type common = size_ < other.size_ ? size_ : other.size_;
+    size_type const common = size_ < other.size_ ? size_ : other.size_;
     for (size_type index = 0; index < common; ++index) {
-      const auto a = static_cast<unsigned char>(data_[index]);
-      const auto b = static_cast<unsigned char>(other.data_[index]);
+      auto const a = static_cast<unsigned char>(data_[index]);
+      auto const b = static_cast<unsigned char>(other.data_[index]);
       if (a != b) {
         return a < b ? -1 : 1;
       }
@@ -223,7 +223,7 @@ class basic_string_view {
     return b.Equals(a);
   }
 
-  static bool Equal(const CharT* a, const CharT* b, size_type count) {
+  static bool Equal(CharT const* a, CharT const* b, size_type count) {
     for (size_type index = 0; index < count; ++index) {
       if (a[index] != b[index]) {
         return false;
@@ -232,7 +232,7 @@ class basic_string_view {
     return true;
   }
 
-  const CharT* data_;
+  CharT const* data_;
   size_type size_;
 };
 

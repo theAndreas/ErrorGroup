@@ -30,7 +30,7 @@ class Status;
 class [[nodiscard]] Error {
  public:
   // `code` of `group`.
-  constexpr Error(const ErrorGroup& group, uint8_t code)
+  constexpr Error(ErrorGroup const& group, uint8_t code)
       : group_(&group), code_(code) {}
 
   // A code of a group, found through GetErrorGroup(code). Implicit, unlike the
@@ -43,12 +43,12 @@ class [[nodiscard]] Error {
   constexpr Error(Code code)  // NOLINT(runtime/explicit)
       : group_(&GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
 
-  const ErrorGroup& group() const { return *group_; }
+  ErrorGroup const& group() const { return *group_; }
   uint8_t code() const { return code_; }
 
   // Returns the text of the error, from flash; an empty text if
   // UTL_ERROR_TEXTS is 0.
-  const __FlashStringHelper* Message() const;
+  __FlashStringHelper const* Message() const;
 
   // Prints the group and the text, "bus: nack", or the group and the code,
   // "bus: 0", if UTL_ERROR_TEXTS is 0. Returns the number of chars, as
@@ -58,10 +58,10 @@ class [[nodiscard]] Error {
 
   // Hidden friends: found only through an Error, and with the implicit
   // conversion above on either side.
-  friend bool operator==(const Error& a, const Error& b) {
+  friend bool operator==(Error const& a, Error const& b) {
     return a.group_ == b.group_ && a.code_ == b.code_;
   }
-  friend bool operator!=(const Error& a, const Error& b) { return !(a == b); }
+  friend bool operator!=(Error const& a, Error const& b) { return !(a == b); }
 
  private:
   friend class Status;
@@ -73,7 +73,7 @@ class [[nodiscard]] Error {
 
   // A pointer, not a reference, so that an Error can be assigned. Never null
   // outside a Status.
-  const ErrorGroup* group_;
+  ErrorGroup const* group_;
   uint8_t code_;
 };
 

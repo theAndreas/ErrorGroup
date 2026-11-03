@@ -39,7 +39,7 @@ class [[nodiscard]] Status {
 
   // An error. Implicit, as a function that returns a Status returns its error
   // as it is.
-  constexpr Status(const Error& error)  // NOLINT(runtime/explicit)
+  constexpr Status(Error const& error)  // NOLINT(runtime/explicit)
       : error_(error) {}
 
   // A code of a group, as in the implicit constructor of Error. Without it,
@@ -53,10 +53,10 @@ class [[nodiscard]] Status {
 
   // The error, or null if IsOk(). A pointer, so that no one gets hold of an
   // Error that is none.
-  const Error* error() const { return IsOk() ? nullptr : &error_; }
+  Error const* error() const { return IsOk() ? nullptr : &error_; }
 
   // Returns the text of the error, or "ok", from flash.
-  const __FlashStringHelper* Message() const;
+  __FlashStringHelper const* Message() const;
 
   // Prints "ok", or the error as Error::PrintTo() does. Returns the number of
   // chars.
@@ -85,10 +85,10 @@ class [[nodiscard]] Status {
   // Hidden friends, with the conversions above on either side, so that a
   // Status compares with another, an Error or a code. Two ok ones are equal,
   // as both hold the same null group and code 0.
-  friend bool operator==(const Status& a, const Status& b) {
+  friend bool operator==(Status const& a, Status const& b) {
     return a.error_ == b.error_;
   }
-  friend bool operator!=(const Status& a, const Status& b) { return !(a == b); }
+  friend bool operator!=(Status const& a, Status const& b) { return !(a == b); }
 
  private:
   // With a null group if ok.

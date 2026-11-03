@@ -10,8 +10,8 @@
 namespace font {
 namespace {
 
-const char kUnknownCharText[] PROGMEM = "unknown char";
-const char kNullTextText[] PROGMEM = "null text";
+char const kUnknownCharText[] PROGMEM = "unknown char";
+char const kNullTextText[] PROGMEM = "null text";
 
 // In the order of FontError.
 constexpr auto kMessages PROGMEM =
@@ -21,9 +21,9 @@ constexpr auto kMessages PROGMEM =
 
 constexpr FontErrorGroup kFontErrorGroup{};
 
-const __FlashStringHelper* FontErrorGroup::Name() const { return F("font"); }
+__FlashStringHelper const* FontErrorGroup::Name() const { return F("font"); }
 
-const __FlashStringHelper* FontErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* FontErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 

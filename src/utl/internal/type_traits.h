@@ -35,15 +35,15 @@ struct RemoveCvImpl {
   using Type = T;
 };
 template <typename T>
-struct RemoveCvImpl<const T> {
+struct RemoveCvImpl<T const> {
   using Type = T;
 };
 template <typename T>
-struct RemoveCvImpl<volatile T> {
+struct RemoveCvImpl<T volatile> {
   using Type = T;
 };
 template <typename T>
-struct RemoveCvImpl<const volatile T> {
+struct RemoveCvImpl<T const volatile> {
   using Type = T;
 };
 template <typename T>

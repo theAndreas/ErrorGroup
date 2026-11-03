@@ -26,7 +26,7 @@ TEST(ArrayTest, SizeAndElements) {
   rows.front() = 4;
   rows.back() = 6;
   rows[1] = 5;
-  const array<int, 3>& same = rows;
+  array<int, 3> const& same = rows;
   EXPECT_EQ(same.front() + same[1] + same.back(), 15);
   EXPECT_EQ(same.data(), rows.data());
 }
@@ -37,7 +37,7 @@ TEST(ArrayTest, Iterates) {
   for (int& row : rows) {
     row *= 2;
   }
-  for (const int row : static_cast<const array<int, 3>&>(rows)) {
+  for (int const row : static_cast<array<int, 3> const&>(rows)) {
     sum += row;
   }
   EXPECT_EQ(sum, 12);
@@ -45,13 +45,13 @@ TEST(ArrayTest, Iterates) {
 }
 
 TEST(ArrayTest, AtReturnsAResult) {
-  const array<int, 3> rows = {{1, 2, 3}};
+  array<int, 3> const rows = {{1, 2, 3}};
   EXPECT_EQ(rows.at(2).ValueOr(0), 3);
   EXPECT_EQ(rows.at(3).status(), utl::IndexError::kOutOfRange);
 }
 
 TEST(ArrayTest, CopiesComparesAndFills) {
-  const array<int, 3> rows = {{1, 2, 3}};
+  array<int, 3> const rows = {{1, 2, 3}};
   array<int, 3> copy = rows;
   EXPECT_EQ(copy, rows);
   copy.fill(5);

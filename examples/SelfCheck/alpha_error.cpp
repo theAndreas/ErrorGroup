@@ -11,8 +11,8 @@
 namespace self_check {
 namespace {
 
-const char kFirstText[] PROGMEM = "alpha first";
-const char kSecondText[] PROGMEM = "alpha second";
+char const kFirstText[] PROGMEM = "alpha first";
+char const kSecondText[] PROGMEM = "alpha second";
 
 // In the order of AlphaError.
 constexpr auto kMessages PROGMEM = utl::make_array(kFirstText, kSecondText);
@@ -21,9 +21,9 @@ constexpr auto kMessages PROGMEM = utl::make_array(kFirstText, kSecondText);
 
 constexpr AlphaErrorGroup kAlphaErrorGroup{};
 
-const __FlashStringHelper* AlphaErrorGroup::Name() const { return F("alpha"); }
+__FlashStringHelper const* AlphaErrorGroup::Name() const { return F("alpha"); }
 
-const __FlashStringHelper* AlphaErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* AlphaErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 

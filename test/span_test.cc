@@ -16,9 +16,9 @@ namespace {
 using utl::IndexError;
 using utl::span;
 
-int Sum(span<const int> values) {
+int Sum(span<int const> values) {
   int sum = 0;
-  for (const int value : values) {
+  for (int const value : values) {
     sum += value;
   }
   return sum;
@@ -26,10 +26,10 @@ int Sum(span<const int> values) {
 
 TEST(SpanTest, MadeFromAnything) {
   utl::array<int, 4> rows = {{0, 1, 7, 3}};
-  const utl::array<int, 4>& const_rows = rows;
+  utl::array<int, 4> const& const_rows = rows;
   // A C array, as a span is to take one.
   int c_array[] = {7, 7};  // NOLINT(modernize-avoid-c-arrays)
-  const span<int> all = rows;
+  span<int> const all = rows;
   EXPECT_TRUE(span<int>().empty());
   EXPECT_EQ(span<int>().data(), nullptr);
   EXPECT_EQ(all.size(), 4U);
@@ -38,12 +38,12 @@ TEST(SpanTest, MadeFromAnything) {
   EXPECT_EQ(Sum(const_rows), 11);
   EXPECT_EQ(Sum(c_array), 14);
   EXPECT_EQ(Sum(all), 11);
-  EXPECT_EQ(Sum(span<const int>(rows.data(), 2)), 1);
+  EXPECT_EQ(Sum(span<int const>(rows.data(), 2)), 1);
 }
 
 TEST(SpanTest, WritesThrough) {
   utl::array<int, 4> rows = {{0, 1, 7, 3}};
-  const span<int> all = rows;
+  span<int> const all = rows;
   all[0] = 9;
   EXPECT_EQ(rows[0], 9);
   EXPECT_EQ(all.front(), 9);
@@ -53,7 +53,7 @@ TEST(SpanTest, WritesThrough) {
 
 TEST(SpanTest, CheckedAccess) {
   utl::array<int, 4> rows = {{0, 1, 7, 3}};
-  const span<int> all = rows;
+  span<int> const all = rows;
   EXPECT_EQ(all.at(3).ValueOr(0), 3);
   EXPECT_EQ(all.at(4).status(), IndexError::kOutOfRange);
   EXPECT_EQ(Sum(all.first(2).value()), 1);
@@ -65,7 +65,7 @@ TEST(SpanTest, CheckedAccess) {
 
 TEST(SpanTest, BeyondTheEnd) {
   utl::array<int, 4> rows = {{0, 1, 7, 3}};
-  const span<int> all = rows;
+  span<int> const all = rows;
   EXPECT_EQ(all.first(5).status(), IndexError::kOutOfRange);
   EXPECT_EQ(all.last(5).status(), IndexError::kOutOfRange);
   EXPECT_EQ(all.subspan(5).status(), IndexError::kOutOfRange);

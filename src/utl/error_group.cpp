@@ -9,14 +9,14 @@
 
 namespace utl {
 
-const __FlashStringHelper* ErrorGroup::LookUpMessage(
-    const char* const* messages, uint8_t count, uint8_t code) {
+__FlashStringHelper const* ErrorGroup::LookUpMessage(
+    char const* const* messages, uint8_t count, uint8_t code) {
   if (code >= count) {
     return F("unknown code");
   }
-  return static_cast<const __FlashStringHelper*>(pgm_read_ptr(&messages[code]));
+  return static_cast<__FlashStringHelper const*>(pgm_read_ptr(&messages[code]));
 }
 
-const __FlashStringHelper* ErrorGroup::NoMessage() { return F(""); }
+__FlashStringHelper const* ErrorGroup::NoMessage() { return F(""); }
 
 }  // namespace utl

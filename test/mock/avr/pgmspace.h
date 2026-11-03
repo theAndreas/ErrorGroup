@@ -14,18 +14,18 @@
 #define PROGMEM
 #define PGM_P const char*
 
-inline uint8_t pgm_read_byte(const void* address) {
-  return *static_cast<const uint8_t*>(address);
+inline uint8_t pgm_read_byte(void const* address) {
+  return *static_cast<uint8_t const*>(address);
 }
 
-inline const void* pgm_read_ptr(const void* address) {
-  return *static_cast<const void* const*>(address);
+inline void const* pgm_read_ptr(void const* address) {
+  return *static_cast<void const* const*>(address);
 }
 
-inline int memcmp_P(const void* ram, const void* flash, size_t count) {
+inline int memcmp_P(void const* ram, void const* flash, size_t count) {
   return memcmp(ram, flash, count);
 }
 
-inline size_t strlen_P(const char* flash) { return strlen(flash); }
+inline size_t strlen_P(char const* flash) { return strlen(flash); }
 
 #endif  // UTL_TEST_MOCK_AVR_PGMSPACE_H_

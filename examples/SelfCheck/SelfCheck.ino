@@ -49,11 +49,11 @@ namespace {
 
 // Volatile, so that the compiler cannot fold the checks away and the virtual
 // calls really go through the vtable.
-utl::array<volatile uint8_t, 3> codes = {{0, 1, 7}};
+utl::array<uint8_t volatile, 3> codes = {{0, 1, 7}};
 
 uint8_t failed = 0;
 
-void Check(bool passed, const __FlashStringHelper* name) {
+void Check(bool passed, __FlashStringHelper const* name) {
   Serial.print(passed ? F("pass ") : F("FAIL "));
   Serial.println(name);
   if (!passed) {
@@ -61,7 +61,7 @@ void Check(bool passed, const __FlashStringHelper* name) {
   }
 }
 
-void PrintStatus(const Status& status) {
+void PrintStatus(Status const& status) {
   status.PrintTo(Serial);
   Serial.println();
 }
@@ -72,15 +72,15 @@ Result<uint8_t> GetCode(uint8_t index) {
     return BetaError::kFirst;
   }
   // Read first: a const reference does not bind to a volatile.
-  const uint8_t code = codes[index];
+  uint8_t const code = codes[index];
   return code;
 }
 
 void CheckError() {
-  const Error alpha_first(self_check::kAlphaErrorGroup, codes[0]);
-  const Error alpha_second(self_check::kAlphaErrorGroup, codes[1]);
-  const Error beta_first(self_check::kBetaErrorGroup, codes[0]);
-  const Error beta_unknown(self_check::kBetaErrorGroup, codes[2]);
+  Error const alpha_first(self_check::kAlphaErrorGroup, codes[0]);
+  Error const alpha_second(self_check::kAlphaErrorGroup, codes[1]);
+  Error const beta_first(self_check::kBetaErrorGroup, codes[0]);
+  Error const beta_unknown(self_check::kBetaErrorGroup, codes[2]);
 
   PrintStatus(Status::Ok());
   PrintStatus(alpha_first);
@@ -91,7 +91,7 @@ void CheckError() {
   PrintStatus(Error(self_check::kBetaErrorGroup, 105));
 
   // "alpha: alpha first", 18 chars, or "alpha: 0", 8, without texts.
-  const size_t printed = alpha_first.PrintTo(Serial);
+  size_t const printed = alpha_first.PrintTo(Serial);
   Serial.println();
   Check(printed == (UTL_ERROR_TEXTS ? 18 : 8),
         F("PrintTo returns the number of chars"));
@@ -105,8 +105,8 @@ void CheckError() {
   Check(beta_first != AlphaError::kFirst, F("differs in the group"));
   Check(alpha_first != beta_first, F("same code, other group"));
 
-  const Error braced{BetaError::kFirst};
-  const Error converted = BetaError::kFirst;
+  Error const braced{BetaError::kFirst};
+  Error const converted = BetaError::kFirst;
   Check(braced == beta_first && converted == beta_first,
         F("made from its enum"));
   Check(self_check::MakeAlphaSecondElsewhere() == alpha_second,
@@ -118,8 +118,8 @@ void CheckError() {
 }
 
 void CheckStatus() {
-  const Status ok = Status::Ok();
-  const Status alpha_first = AlphaError::kFirst;
+  Status const ok = Status::Ok();
+  Status const alpha_first = AlphaError::kFirst;
 
   Check(ok.IsOk() && ok.error() == nullptr && Status() == ok,
         F("Status::Ok() is ok and has no Error"));
@@ -135,13 +135,13 @@ void CheckStatus() {
 }
 
 void CheckStatusFluent() {
-  const Status alpha_first = AlphaError::kFirst;
+  Status const alpha_first = AlphaError::kFirst;
   uint8_t calls = 0;
 
   Check(Status::Ok().AndThen([] { return Status(AlphaError::kSecond); }) ==
             AlphaError::kSecond,
         F("Status::AndThen goes on when ok"));
-  const Status stopped = alpha_first.AndThen([&calls] {
+  Status const stopped = alpha_first.AndThen([&calls] {
     ++calls;
     return Status::Ok();
   });
@@ -150,15 +150,15 @@ void CheckStatusFluent() {
   Check(Status::Ok().AndThen([] { return Result<uint8_t>(5); }).ValueOr(0) == 5,
         F("Status::AndThen into a Result"));
 
-  Check(alpha_first.OrElse([](const Error&) { return Status::Ok(); }).IsOk(),
+  Check(alpha_first.OrElse([](Error const&) { return Status::Ok(); }).IsOk(),
         F("Status::OrElse recovers"));
-  Check(alpha_first.OrElse([](const Error& error) {
+  Check(alpha_first.OrElse([](Error const& error) {
     return error == AlphaError::kFirst ? Status(BetaError::kFirst)
                                        : Status::Ok();
   }) == BetaError::kFirst,
         F("Status::OrElse gets the Error"));
   calls = 0;
-  const Status untouched = Status::Ok().OrElse([&calls](const Error&) {
+  Status const untouched = Status::Ok().OrElse([&calls](Error const&) {
     ++calls;
     return Status(AlphaError::kFirst);
   });
@@ -176,23 +176,23 @@ void CheckResult() {
   Check(GetCode(2).ValueOr(42) == 7 && GetCode(9).ValueOr(42) == 42,
         F("Result::ValueOr"));
 
-  const Result<bool> mapped =
+  Result<bool> const mapped =
       GetCode(2).Map([](uint8_t code) { return code == 7; });
   Check(mapped.IsOk() && mapped.value(), F("Result::Map"));
-  const Result<bool> not_mapped = GetCode(9).Map([&calls](uint8_t) {
+  Result<bool> const not_mapped = GetCode(9).Map([&calls](uint8_t) {
     ++calls;
     return true;
   });
   Check(not_mapped.status() == BetaError::kFirst && calls == 0,
         F("Result::Map keeps the error"));
 
-  const Result<uint8_t> chained =
+  Result<uint8_t> const chained =
       GetCode(0)
           .AndThen([](uint8_t code) { return GetCode(code + 1); })
           .AndThen([](uint8_t code) { return GetCode(code + 1); });
   Check(chained.ValueOr(0) == 7, F("Result::AndThen chains"));
   calls = 0;
-  const Result<uint8_t> broken =
+  Result<uint8_t> const broken =
       GetCode(1)
           .AndThen([](uint8_t code) { return GetCode(code + 8); })
           .AndThen([&calls](uint8_t code) {
@@ -201,16 +201,16 @@ void CheckResult() {
           });
   Check(broken.status() == BetaError::kFirst && calls == 0,
         F("Result::AndThen stops at an error"));
-  const Status checked = GetCode(2).AndThen([](uint8_t code) {
+  Status const checked = GetCode(2).AndThen([](uint8_t code) {
     return code == 7 ? Status::Ok() : Status(AlphaError::kFirst);
   });
   Check(checked.IsOk(), F("Result::AndThen into a Status"));
 
-  const Result<uint8_t> recovered =
-      GetCode(9).OrElse([](const Error&) -> uint8_t { return 3; });
+  Result<uint8_t> const recovered =
+      GetCode(9).OrElse([](Error const&) -> uint8_t { return 3; });
   Check(recovered.IsOk() && recovered.value() == 3, F("Result::OrElse"));
   calls = 0;
-  const Result<uint8_t> kept = GetCode(2).OrElse([&calls](const Error&) {
+  Result<uint8_t> const kept = GetCode(2).OrElse([&calls](Error const&) {
     ++calls;
     return Result<uint8_t>(0);
   });
@@ -227,16 +227,16 @@ void CheckResultVoid() {
   uint8_t stored = 0;
   uint8_t calls = 0;
 
-  const Result<void> ok = Result<void>::Ok();
-  const Result<void> failed_result = AlphaError::kFirst;
+  Result<void> const ok = Result<void>::Ok();
+  Result<void> const failed_result = AlphaError::kFirst;
   Check(ok.IsOk() && ok.error() == nullptr && Result<void>() == ok,
         F("Result<void>::Ok() is ok"));
   Check(failed_result == AlphaError::kFirst &&
             *failed_result.error() == AlphaError::kFirst,
         F("Result<void> holds its Error"));
 
-  const Status status = failed_result;
-  const Result<void> from_status = Status(BetaError::kFirst);
+  Status const status = failed_result;
+  Result<void> const from_status = Status(BetaError::kFirst);
   Check(status == AlphaError::kFirst && from_status == BetaError::kFirst &&
             failed_result.status() == AlphaError::kFirst,
         F("Result<void> is a Status, and back"));
@@ -249,13 +249,13 @@ void CheckResultVoid() {
 
   Check(Result<void>::Ok().Map([] { return uint8_t{5}; }).ValueOr(0) == 5,
         F("Result<void>::Map makes a value"));
-  const Result<uint8_t> not_made = failed_result.Map([&calls] {
+  Result<uint8_t> const not_made = failed_result.Map([&calls] {
     ++calls;
     return uint8_t{5};
   });
   Check(not_made.status() == AlphaError::kFirst && calls == 0,
         F("Result<void>::Map keeps the error"));
-  Check(failed_result.OrElse([](const Error&) { return Status::Ok(); }).IsOk(),
+  Check(failed_result.OrElse([](Error const&) { return Status::Ok(); }).IsOk(),
         F("Result<void> recovers as a Status"));
 }
 
@@ -270,8 +270,8 @@ utl::optional<uint8_t> FindCode(uint8_t wanted) {
 }
 
 void CheckOptional() {
-  const utl::optional<uint8_t> none = FindCode(42);
-  const utl::optional<uint8_t> found = FindCode(7);
+  utl::optional<uint8_t> const none = FindCode(42);
+  utl::optional<uint8_t> const found = FindCode(7);
 
   Check(!none.HasValue() && !none && none == utl::nullopt &&
             utl::optional<uint8_t>() == none,
@@ -302,7 +302,7 @@ void CheckOptional() {
   Check(!changed.HasValue(), F("optional = {} is empty"));
 
   uint8_t calls = 0;
-  const auto find_again = [](uint8_t index) { return FindCode(index); };
+  auto const find_again = [](uint8_t index) { return FindCode(index); };
   Check(FindCode(1).AndThen(find_again) == uint8_t{1} &&
             found.AndThen(find_again) == utl::nullopt,
         F("optional::AndThen"));
@@ -313,7 +313,7 @@ void CheckOptional() {
             }) == utl::nullopt &&
             calls == 0,
         F("optional::Map"));
-  const auto three = [&calls] {
+  auto const three = [&calls] {
     ++calls;
     return utl::optional<uint8_t>(3);
   };
@@ -324,7 +324,7 @@ void CheckOptional() {
 
 void CheckStringView() {
   char buffer[] = "text=Hi";
-  const utl::string_view line = buffer;
+  utl::string_view const line = buffer;
 
   Check(line.size() == 7 && line == "text=Hi" && line != "text=Ho",
         F("string_view of a string"));
@@ -343,7 +343,7 @@ void CheckStringView() {
             line.at(7).status() == IndexError::kOutOfRange,
         F("string_view::at"));
 
-  const utl::flash_string_view keyword = F("text=");
+  utl::flash_string_view const keyword = F("text=");
   Check(keyword.size() == 5 && keyword[4] == '=' && keyword.front() == 't' &&
             keyword.back() == '=',
         F("flash_string_view reads flash"));
@@ -362,7 +362,7 @@ void CheckStringView() {
             keyword.at(5).status() == IndexError::kOutOfRange,
         F("flash_string_view::find, at"));
   uint8_t ts = 0;
-  for (const char c : keyword) {
+  for (char const c : keyword) {
     if (c == 't') {
       ++ts;
     }
@@ -397,13 +397,13 @@ void CheckMisuse() {
   using self_check::LastMisuse;
   using self_check::MisuseCount;
   uint8_t before = MisuseCount();
-  const Result<uint8_t> failed_result = GetCode(9);
+  Result<uint8_t> const failed_result = GetCode(9);
   static_cast<void>(failed_result.value());
   Check(
       MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kResultValue,
       F("value() of a Result with an error is reported"));
   before = MisuseCount();
-  const utl::optional<uint8_t> none;
+  utl::optional<uint8_t> const none;
   static_cast<void>(*none);
   Check(MisuseCount() == before + 1 &&
             LastMisuse() == utl::Misuse::kOptionalValue,
@@ -413,7 +413,7 @@ void CheckMisuse() {
   static_cast<void>(pair[2]);
   Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kIndex,
         F("[] beyond the end is reported"));
-  const span<uint8_t> empty;
+  span<uint8_t> const empty;
   before = MisuseCount();
   static_cast<void>(empty.front());
   Check(MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kEmpty,
@@ -446,12 +446,12 @@ void CheckArray() {
   Check(rows[2] == 7 && rows.front() == 0 && rows.back() == 7,
         F("array::operator[], front, back"));
   uint16_t sum = 0;
-  for (const uint8_t row : rows) {
+  for (uint8_t const row : rows) {
     sum += row;
   }
   Check(sum == 8, F("array in a range-based for"));
   Check(rows.at(2).ValueOr(0) == 7, F("array::at"));
-  const Result<uint8_t> beyond = rows.at(3);
+  Result<uint8_t> const beyond = rows.at(3);
   PrintStatus(beyond.status());
   Check(beyond.status() == IndexError::kOutOfRange,
         F("array::at beyond the end"));
@@ -464,9 +464,9 @@ void CheckArray() {
 }
 
 // Takes a C array, a utl::array and a span alike, through a span of const.
-uint16_t Sum(span<const uint8_t> values) {
+uint16_t Sum(span<uint8_t const> values) {
   uint16_t sum = 0;
-  for (const uint8_t value : values) {
+  for (uint8_t const value : values) {
     sum += value;
   }
   return sum;
@@ -474,10 +474,10 @@ uint16_t Sum(span<const uint8_t> values) {
 
 void CheckSpan() {
   utl::array<uint8_t, 4> rows = {{codes[0], codes[1], codes[2], 3}};
-  const utl::array<uint8_t, 4>& const_rows = rows;
+  utl::array<uint8_t, 4> const& const_rows = rows;
   // The C array is what this checks a span of.
   uint8_t c_array[] = {codes[2], codes[2]};  // NOLINT(modernize-avoid-c-arrays)
-  const span<uint8_t> all = rows;
+  span<uint8_t> const all = rows;
 
   Check(span<uint8_t>().empty() && span<uint8_t>().data() == nullptr,
         F("span() is empty"));

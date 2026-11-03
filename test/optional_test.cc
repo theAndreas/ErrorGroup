@@ -18,7 +18,7 @@ using utl::optional;
 
 // Returns the index of `value` in {0, 1, 7}, or none.
 optional<int> Find(int value) {
-  const utl::array<int, 3> values = {{0, 1, 7}};
+  utl::array<int, 3> const values = {{0, 1, 7}};
   for (int index = 0; index < 3; ++index) {
     if (values[index] == value) {
       return index;
@@ -28,8 +28,8 @@ optional<int> Find(int value) {
 }
 
 TEST(OptionalTest, EmptyOrAValue) {
-  const optional<int> none = Find(42);
-  const optional<int> found = Find(7);
+  optional<int> const none = Find(42);
+  optional<int> const found = Find(7);
   EXPECT_FALSE(none.HasValue());
   EXPECT_FALSE(static_cast<bool>(none));
   EXPECT_EQ(none, nullopt);
@@ -45,14 +45,14 @@ TEST(OptionalTest, ArrowReachesTheValue) {
   struct Pair {
     int first;
     int second;
-    bool operator==(const Pair& other) const {
+    bool operator==(Pair const& other) const {
       return first == other.first && second == other.second;
     }
   };
   optional<Pair> pair = Pair{1, 2};
   EXPECT_EQ(pair->second, 2);
   pair->second = 3;
-  const optional<Pair>& same = pair;
+  optional<Pair> const& same = pair;
   EXPECT_EQ(same->second, 3);
   *pair = Pair{4, 5};
   EXPECT_EQ((*same).first, 4);
@@ -84,7 +84,7 @@ TEST(OptionalTest, ResetEmplaceAndAssign) {
 }
 
 TEST(OptionalTest, AndThen) {
-  const auto find_again = [](int index) { return Find(index); };
+  auto const find_again = [](int index) { return Find(index); };
   EXPECT_EQ(Find(1).AndThen(find_again), 1);
   EXPECT_EQ(Find(7).AndThen(find_again), nullopt);
   EXPECT_EQ(Find(42).AndThen(find_again), nullopt);
@@ -103,7 +103,7 @@ TEST(OptionalTest, Map) {
 
 TEST(OptionalTest, OrElse) {
   int calls = 0;
-  const auto three = [&calls] {
+  auto const three = [&calls] {
     ++calls;
     return optional<int>(3);
   };

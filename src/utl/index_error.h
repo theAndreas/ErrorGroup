@@ -21,16 +21,16 @@ class IndexErrorGroup : public ErrorGroup {
  public:
   constexpr IndexErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
 // Defined in index_error.cpp. A sketch that never calls at(), first(), last()
 // or subspan() does not reference it, and the linker leaves it out with its
 // vtable.
-extern const IndexErrorGroup kIndexErrorGroup;
+extern IndexErrorGroup const kIndexErrorGroup;
 
-inline const ErrorGroup& GetErrorGroup(IndexError) { return kIndexErrorGroup; }
+inline ErrorGroup const& GetErrorGroup(IndexError) { return kIndexErrorGroup; }
 
 }  // namespace utl
 

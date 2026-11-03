@@ -10,8 +10,8 @@
 namespace bus {
 namespace {
 
-const char kNackText[] PROGMEM = "nack";
-const char kTimeoutText[] PROGMEM = "timeout";
+char const kNackText[] PROGMEM = "nack";
+char const kTimeoutText[] PROGMEM = "timeout";
 
 // In the order of BusError.
 constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeoutText);
@@ -20,9 +20,9 @@ constexpr auto kMessages PROGMEM = utl::make_array(kNackText, kTimeoutText);
 
 constexpr BusErrorGroup kBusErrorGroup{};
 
-const __FlashStringHelper* BusErrorGroup::Name() const { return F("bus"); }
+__FlashStringHelper const* BusErrorGroup::Name() const { return F("bus"); }
 
-const __FlashStringHelper* BusErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* BusErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 

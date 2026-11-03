@@ -21,16 +21,16 @@ class OptionalErrorGroup : public ErrorGroup {
  public:
   constexpr OptionalErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
 // Defined in optional_error.cpp. A sketch that never calls value() of an
 // optional does not reference it, and the linker leaves it out with its
 // vtable.
-extern const OptionalErrorGroup kOptionalErrorGroup;
+extern OptionalErrorGroup const kOptionalErrorGroup;
 
-inline const ErrorGroup& GetErrorGroup(OptionalError) {
+inline ErrorGroup const& GetErrorGroup(OptionalError) {
   return kOptionalErrorGroup;
 }
 

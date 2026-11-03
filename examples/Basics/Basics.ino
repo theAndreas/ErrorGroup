@@ -45,7 +45,7 @@ void setup() {
 void loop() {
   // Receive a char and show it; either step may fail, and the first error
   // ends the chain.
-  const Status status =
+  Status const status =
       Receive(digitalRead(3) == HIGH).AndThen([](char received) {
         return SetChar(digitalRead(2) == LOW ? '\n' : received);
       });
@@ -60,7 +60,7 @@ void loop() {
     Serial.println(F("retry"));
   }
 
-  const Error unknown_char{FontError::kUnknownChar};
+  Error const unknown_char{FontError::kUnknownChar};
   if (SetChar('\n') == unknown_char) {
     Serial.println(F("a control char is not in the font"));
   }

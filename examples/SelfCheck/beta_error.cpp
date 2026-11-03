@@ -10,7 +10,7 @@
 namespace self_check {
 namespace {
 
-const char kFirstText[] PROGMEM = "beta first";
+char const kFirstText[] PROGMEM = "beta first";
 
 // In the order of BetaError.
 constexpr auto kMessages PROGMEM = utl::make_array(kFirstText);
@@ -19,9 +19,9 @@ constexpr auto kMessages PROGMEM = utl::make_array(kFirstText);
 
 constexpr BetaErrorGroup kBetaErrorGroup{};
 
-const __FlashStringHelper* BetaErrorGroup::Name() const { return F("beta"); }
+__FlashStringHelper const* BetaErrorGroup::Name() const { return F("beta"); }
 
-const __FlashStringHelper* BetaErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* BetaErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 
