@@ -14,6 +14,28 @@
 
 namespace utl {
 
+template <typename T>
+class optional;
+
+namespace internal {
+
+// kValue: whether T is an optional, what optional::AndThen() goes on with;
+// see IsStatusOrResult in status.h.
+template <typename T>
+struct IsOptionalImpl {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsOptionalImpl<optional<T>> {
+  static constexpr bool kValue = true;
+};
+template <typename T>
+struct IsOptional {
+  static constexpr bool kValue = IsOptionalImpl<RemoveCvRef<T>>::kValue;
+};
+
+}  // namespace internal
+
 // The type of nullopt, as std::nullopt_t: not default-constructible, so that
 // `optional = {}` stays an empty optional rather than a nullopt_t.
 struct nullopt_t {
@@ -103,6 +125,10 @@ class optional {
   // value, `f` returning an optional, or else an empty optional of that type.
   template <typename F>
   auto AndThen(F f) const -> decltype(f(internal::DeclVal<T const&>())) {
+    static_assert(internal::IsOptional<decltype(f(
+                      internal::DeclVal<T const&>()))>::kValue,
+                  "AndThen: f returns an optional; for a plain value, use "
+                  "Map()");
     if (!has_value_) {
       return nullopt;
     }
@@ -127,6 +153,41 @@ class optional {
       return *this;
     }
     return f();
+  }
+
+  // The value, or else `f()`, as Rust's unwrap_or_else(): a fallback made
+  // only when it is needed.
+  template <typename F>
+  T ValueOrElse(F f) const {
+    if (has_value_) {
+      return value_;
+    }
+    return f();
+  }
+
+  // Calls `f(value)` if there is one, and returns this as it is: to look at
+  // the value on its way, as Rust's inspect(). `f` gets a T const&, as it
+  // looks and does not change.
+  template <typename F>
+  optional Inspect(F f) const {
+    static_assert(
+        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
+        "Inspect: f returns nothing; it only looks, and what it returned "
+        "would be dropped unseen");
+    if (has_value_) {
+      f(value_);
+    }
+    return *this;
+  }
+
+  // This if there is a value and `predicate(value)` holds, or else an empty
+  // one, as Rust's filter().
+  template <typename P>
+  optional Filter(P predicate) const {
+    if (has_value_ && predicate(value_)) {
+      return *this;
+    }
+    return nullopt;
   }
 
   void reset() {
@@ -256,6 +317,10 @@ class optional<T&> {
   // None of them calls `f` when there is nothing to give it.
   template <typename F>
   auto AndThen(F f) const -> decltype(f(internal::DeclVal<T&>())) {
+    static_assert(
+        internal::IsOptional<decltype(f(internal::DeclVal<T&>()))>::kValue,
+        "AndThen: f returns an optional; for a plain value, use "
+        "Map()");
     if (pointer_ == nullptr) {
       return nullopt;
     }
@@ -277,6 +342,41 @@ class optional<T&> {
       return *this;
     }
     return f();
+  }
+
+  // The object referred to, or else the one `f()` refers to. `f` returns a
+  // T&, of an object that outlives the call, as for ValueOr().
+  template <typename F>
+  T& ValueOrElse(F f) const {
+    static_assert(
+        internal::IsLvalueReference<decltype(f())>::kValue,
+        "f returns a T&: the reference returned would outlive a T made in f");
+    if (pointer_ != nullptr) {
+      return *pointer_;
+    }
+    return f();
+  }
+
+  // As in optional<T>: `f` and `predicate` get a T const&, as they look and
+  // do not change.
+  template <typename F>
+  optional Inspect(F f) const {
+    static_assert(
+        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
+        "Inspect: f returns nothing; it only looks, and what it returned "
+        "would be dropped unseen");
+    if (pointer_ != nullptr) {
+      f(static_cast<T const&>(*pointer_));
+    }
+    return *this;
+  }
+
+  template <typename P>
+  optional Filter(P predicate) const {
+    if (pointer_ != nullptr && predicate(static_cast<T const&>(*pointer_))) {
+      return *this;
+    }
+    return nullopt;
   }
 
   void reset() { pointer_ = nullptr; }

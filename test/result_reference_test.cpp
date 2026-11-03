@@ -174,5 +174,36 @@ TEST(ResultReferenceTest, MapOfAValueGivesAReference) {
   EXPECT_EQ(&element.value(), &values[2]);
 }
 
+TEST(ResultReferenceTest, ValueOrElseGivesAReference) {
+  utl::array<int, 3> values = {{0, 1, 7}};
+  int other = 9;
+  auto const fallback = [&other](Error const&) -> int& { return other; };
+  EXPECT_EQ(&Get(values, 1).ValueOrElse(fallback), &values[1]);
+  EXPECT_EQ(&Get(values, 4).ValueOrElse(fallback), &other);
+}
+
+TEST(ResultReferenceTest, InspectPassesTheReferenceOn) {
+  utl::array<int, 3> values = {{0, 1, 7}};
+  int seen = 0;
+  auto const look = [&seen](int const& value) { seen = value; };
+  EXPECT_EQ(&Get(values, 2).Inspect(look).value(), &values[2]);
+  EXPECT_EQ(seen, 7);
+  seen = 0;
+  EXPECT_EQ(Get(values, 4).Inspect(look).status(), BetaError::kFirst);
+  EXPECT_EQ(seen, 0);
+}
+
+TEST(ResultReferenceTest, InspectErrorAndMapErrorPassItOn) {
+  utl::array<int, 3> values = {{0, 1, 7}};
+  int seen = 0;
+  auto const count = [&seen](Error const&) { ++seen; };
+  EXPECT_EQ(Get(values, 4).InspectError(count).status(), BetaError::kFirst);
+  EXPECT_EQ(&Get(values, 0).InspectError(count).value(), values.data());
+  EXPECT_EQ(seen, 1);
+  auto const to_alpha = [](Error const&) { return AlphaError::kFirst; };
+  EXPECT_EQ(Get(values, 4).MapError(to_alpha).status(), AlphaError::kFirst);
+  EXPECT_EQ(&Get(values, 2).MapError(to_alpha).value(), &values[2]);
+}
+
 }  // namespace
 }  // namespace utl_test

@@ -10,8 +10,56 @@
 #include <stddef.h>
 
 #include "utl/error.h"
+#include "utl/internal/type_traits.h"
 
 namespace utl {
+
+template <typename T>
+class Result;
+
+namespace internal {
+
+// What the functions passed to the fluent functions may return, checked with
+// a static_assert and a message that says what to use instead: the error
+// that a template deep in AndThen() or MapError() gives otherwise names
+// neither. Each takes the type as the function returns it, by value, by
+// reference or const.
+
+// kValue: whether T is a Status or a Result, what AndThen() goes on with.
+// The specialization for Status lies below it, as it needs the class.
+template <typename T>
+struct IsStatusOrResultImpl {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsStatusOrResultImpl<Result<T>> {
+  static constexpr bool kValue = true;
+};
+template <typename T>
+struct IsStatusOrResult {
+  static constexpr bool kValue = IsStatusOrResultImpl<RemoveCvRef<T>>::kValue;
+};
+
+// kValue: whether T is an Error or a code of a group, what MapError() turns
+// an error into; never a Status, which could be ok.
+template <typename T, typename = void>
+struct IsErrorOrCodeImpl {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsErrorOrCodeImpl<T, Void<decltype(GetErrorGroup(T()))>> {
+  static constexpr bool kValue = true;
+};
+template <>
+struct IsErrorOrCodeImpl<Error, void> {
+  static constexpr bool kValue = true;
+};
+template <typename T>
+struct IsErrorOrCode {
+  static constexpr bool kValue = IsErrorOrCodeImpl<RemoveCvRef<T>>::kValue;
+};
+
+}  // namespace internal
 
 // Ok, or an Error: 3 bytes on the Uno, as Rust's Result<(), E> or
 // absl::Status.
@@ -72,6 +120,9 @@ class Status {
   // then. `f` returns a Status or a Result.
   template <typename F>
   auto AndThen(F f) const -> decltype(f()) {
+    static_assert(internal::IsStatusOrResult<decltype(f())>::kValue,
+                  "AndThen: f returns a Status or a Result; for a plain value, "
+                  "use Map()");
     if (!IsOk()) {
       return error_;
     }
@@ -88,6 +139,48 @@ class Status {
     return f(error_);
   }
 
+  // Calls `f(error)` if there is one, and returns this as it is: to look at
+  // an error on its way, as Rust's inspect_err(), to print it, say.
+  template <typename F>
+  Status InspectError(F f) const {
+    static_assert(internal::IsVoid<decltype(f(error_))>::kValue,
+                  "InspectError: f returns nothing; it only looks, and what "
+                  "it returned would be dropped unseen");
+    if (!IsOk()) {
+      f(error_);
+    }
+    return *this;
+  }
+
+  // Returns this if there is no error, or else the error `f(error)` returns,
+  // as Rust's map_err(): to say an error of a lower layer in a group of one's
+  // own. `f` returns an Error or a code, never ok, which only OrElse() makes.
+  template <typename F>
+  Status MapError(F f) const {
+    static_assert(internal::IsErrorOrCode<decltype(f(error_))>::kValue,
+                  "MapError: f returns an Error or a code; to recover from the "
+                  "error, use OrElse()");
+    if (IsOk()) {
+      return *this;
+    }
+    Error const mapped = f(error_);
+    return mapped;
+  }
+
+  // Calls `f(error)` if there is one, and returns nothing: the end of a
+  // chain, where the error is dealt with and nothing is left to look at.
+  // Only here, on a Status: on a Result<T> it would drop the value unseen,
+  // which is what [[nodiscard]] there keeps from happening.
+  template <typename F>
+  void ConsumeError(F f) const {
+    static_assert(internal::IsVoid<decltype(f(error_))>::kValue,
+                  "ConsumeError: f returns nothing; a Status or a Result it "
+                  "returned would be dropped unseen");
+    if (!IsOk()) {
+      f(error_);
+    }
+  }
+
   // Hidden friends, with the conversions above on either side, so that a
   // Status compares with another, an Error or a code. Two ok ones are equal,
   // as both hold the same null group and code 0.
@@ -100,6 +193,15 @@ class Status {
   // With a null group if ok.
   Error error_;
 };
+
+namespace internal {
+
+template <>
+struct IsStatusOrResultImpl<Status> {
+  static constexpr bool kValue = true;
+};
+
+}  // namespace internal
 
 }  // namespace utl
 

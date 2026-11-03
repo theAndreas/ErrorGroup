@@ -85,6 +85,10 @@ class [[nodiscard]] Result {
   // a Result of any type, or a Status.
   template <typename F>
   auto AndThen(F f) const -> decltype(f(internal::DeclVal<T const&>())) {
+    static_assert(internal::IsStatusOrResult<decltype(f(
+                      internal::DeclVal<T const&>()))>::kValue,
+                  "AndThen: f returns a Status or a Result; for a plain value, "
+                  "use Map()");
     if (!IsOk()) {
       return *error();
     }
@@ -111,6 +115,58 @@ class [[nodiscard]] Result {
       return *this;
     }
     return f(*error());
+  }
+
+  // Returns the value, or else `f(*error())`, as Rust's unwrap_or_else(): a
+  // fallback made only when it is needed, and from the error.
+  template <typename F>
+  T ValueOrElse(F f) const {
+    if (IsOk()) {
+      return value_;
+    }
+    return f(*error());
+  }
+
+  // Calls `f(value())` if there is no error, and returns this as it is: to
+  // look at the value on its way, as Rust's inspect(). `f` gets a T const&,
+  // as it looks and does not change.
+  template <typename F>
+  Result Inspect(F f) const {
+    static_assert(
+        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
+        "Inspect: f returns nothing; it only looks, and what it returned "
+        "would be dropped unseen");
+    if (IsOk()) {
+      f(value_);
+    }
+    return *this;
+  }
+
+  // Calls `f(*error())` if there is one, and returns this as it is, as
+  // Status::InspectError().
+  template <typename F>
+  Result InspectError(F f) const {
+    static_assert(internal::IsVoid<decltype(f(*error()))>::kValue,
+                  "InspectError: f returns nothing; it only looks, and what "
+                  "it returned would be dropped unseen");
+    if (!IsOk()) {
+      f(*error());
+    }
+    return *this;
+  }
+
+  // Returns this if there is no error, or else the error `f(*error())`
+  // returns, as Status::MapError(): an Error or a code, never a value.
+  template <typename F>
+  Result MapError(F f) const {
+    static_assert(internal::IsErrorOrCode<decltype(f(*error()))>::kValue,
+                  "MapError: f returns an Error or a code; to recover from the "
+                  "error, use OrElse()");
+    if (IsOk()) {
+      return *this;
+    }
+    Error const mapped = f(*error());
+    return mapped;
   }
 
  private:
@@ -188,6 +244,10 @@ class [[nodiscard]] Result<T&> {
   // As in Result<T>, with a T& given to `f`.
   template <typename F>
   auto AndThen(F f) const -> decltype(f(internal::DeclVal<T&>())) {
+    static_assert(internal::IsStatusOrResult<decltype(f(
+                      internal::DeclVal<T&>()))>::kValue,
+                  "AndThen: f returns a Status or a Result; for a plain value, "
+                  "use Map()");
     if (!IsOk()) {
       return *error();
     }
@@ -209,6 +269,56 @@ class [[nodiscard]] Result<T&> {
       return *this;
     }
     return f(*error());
+  }
+
+  // The object referred to, or else the one `f(*error())` refers to. `f`
+  // returns a T&, of an object that outlives the call; a T made in `f` would
+  // be gone before the caller got to it, so that does not compile.
+  template <typename F>
+  T& ValueOrElse(F f) const {
+    static_assert(
+        internal::IsLvalueReference<decltype(f(*error()))>::kValue,
+        "f returns a T&: the reference returned would outlive a T made in f");
+    if (IsOk()) {
+      return *pointer_;
+    }
+    return f(*error());
+  }
+
+  // As in Result<T>: `f` gets a T const&, as it looks and does not change.
+  template <typename F>
+  Result Inspect(F f) const {
+    static_assert(
+        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
+        "Inspect: f returns nothing; it only looks, and what it returned "
+        "would be dropped unseen");
+    if (IsOk()) {
+      f(static_cast<T const&>(*pointer_));
+    }
+    return *this;
+  }
+
+  template <typename F>
+  Result InspectError(F f) const {
+    static_assert(internal::IsVoid<decltype(f(*error()))>::kValue,
+                  "InspectError: f returns nothing; it only looks, and what "
+                  "it returned would be dropped unseen");
+    if (!IsOk()) {
+      f(*error());
+    }
+    return *this;
+  }
+
+  template <typename F>
+  Result MapError(F f) const {
+    static_assert(internal::IsErrorOrCode<decltype(f(*error()))>::kValue,
+                  "MapError: f returns an Error or a code; to recover from the "
+                  "error, use OrElse()");
+    if (IsOk()) {
+      return *this;
+    }
+    Error const mapped = f(*error());
+    return mapped;
   }
 
  private:

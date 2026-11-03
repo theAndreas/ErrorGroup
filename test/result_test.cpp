@@ -128,5 +128,41 @@ TEST(ResultVoidTest, MapMakesAValue) {
   EXPECT_EQ(printed, 1);
 }
 
+TEST(ResultTest, ValueOrElseMakesTheFallbackFromTheError) {
+  int calls = 0;
+  auto const fallback = [&calls](Error const& error) {
+    ++calls;
+    return error == BetaError::kFirst ? -1 : -2;
+  };
+  EXPECT_EQ(Get(1).ValueOrElse(fallback), 10);
+  EXPECT_EQ(calls, 0);
+  EXPECT_EQ(Get(5).ValueOrElse(fallback), -1);
+  EXPECT_EQ(calls, 1);
+}
+
+TEST(ResultTest, InspectLooksAtTheValue) {
+  int seen = 0;
+  auto const look = [&seen](int const& value) { seen = value; };
+  EXPECT_EQ(Get(2).Inspect(look).value(), 20);
+  EXPECT_EQ(seen, 20);
+  seen = 0;
+  EXPECT_EQ(Get(5).Inspect(look).status(), BetaError::kFirst);
+  EXPECT_EQ(seen, 0);
+}
+
+TEST(ResultTest, InspectErrorLooksAtTheError) {
+  int seen = 0;
+  auto const look = [&seen](Error const&) { ++seen; };
+  EXPECT_EQ(Get(5).InspectError(look).status(), BetaError::kFirst);
+  EXPECT_EQ(Get(2).InspectError(look).value(), 20);
+  EXPECT_EQ(seen, 1);
+}
+
+TEST(ResultTest, MapErrorKeepsTheValue) {
+  auto const to_alpha = [](Error const&) { return AlphaError::kSecond; };
+  EXPECT_EQ(Get(5).MapError(to_alpha).status(), AlphaError::kSecond);
+  EXPECT_EQ(Get(1).MapError(to_alpha).value(), 10);
+}
+
 }  // namespace
 }  // namespace utl_test

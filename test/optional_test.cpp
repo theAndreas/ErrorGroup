@@ -112,5 +112,34 @@ TEST(OptionalTest, OrElse) {
   EXPECT_EQ(calls, 1);
 }
 
+TEST(OptionalTest, ValueOrElseCallsOnlyWhenEmpty) {
+  int calls = 0;
+  auto const fallback = [&calls] {
+    ++calls;
+    return 9;
+  };
+  EXPECT_EQ(Find(7).ValueOrElse(fallback), 2);
+  EXPECT_EQ(calls, 0);
+  EXPECT_EQ(Find(42).ValueOrElse(fallback), 9);
+  EXPECT_EQ(calls, 1);
+}
+
+TEST(OptionalTest, InspectLooksAtTheValue) {
+  int seen = -1;
+  auto const look = [&seen](int const& index) { seen = index; };
+  EXPECT_EQ(Find(7).Inspect(look), 2);
+  EXPECT_EQ(seen, 2);
+  seen = -1;
+  EXPECT_EQ(Find(42).Inspect(look), nullopt);
+  EXPECT_EQ(seen, -1);
+}
+
+TEST(OptionalTest, FilterKeepsWhatHolds) {
+  auto const even = [](int const& index) { return index % 2 == 0; };
+  EXPECT_EQ(Find(7).Filter(even), 2);
+  EXPECT_EQ(Find(1).Filter(even), nullopt);
+  EXPECT_EQ(Find(42).Filter(even), nullopt);
+}
+
 }  // namespace
 }  // namespace utl_test
