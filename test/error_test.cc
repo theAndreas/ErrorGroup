@@ -23,23 +23,23 @@ namespace {
 
 using utl::Error;
 
-std::string Printed(const Error& error) {
+std::string Printed(Error const& error) {
   StringPrint out;
-  const size_t count = error.PrintTo(out);
+  size_t const count = error.PrintTo(out);
   EXPECT_EQ(count, out.text.size());
   return out.text;
 }
 
 // An error knows its group by address and its code.
 TEST(ErrorTest, HasGroupAndCode) {
-  const Error error = AlphaError::kSecond;
+  Error const error = AlphaError::kSecond;
   EXPECT_EQ(&error.group(), &kAlphaErrorGroup);
   EXPECT_EQ(error.code(), 1);
 }
 
 // Equal only if group and code are; codes of two groups may overlap.
 TEST(ErrorTest, ComparesGroupAndCode) {
-  const Error alpha_first = AlphaError::kFirst;
+  Error const alpha_first = AlphaError::kFirst;
   EXPECT_EQ(alpha_first, AlphaError::kFirst);
   EXPECT_EQ(AlphaError::kFirst, alpha_first);
   EXPECT_NE(alpha_first, AlphaError::kSecond);
@@ -61,7 +61,7 @@ TEST(ErrorTest, IsAssignable) {
 #if UTL_ERROR_TEXTS
 TEST(ErrorTest, SaysWhatWentWrong) {
   EXPECT_STREQ(
-      reinterpret_cast<const char*>(Error(AlphaError::kSecond).Message()),
+      reinterpret_cast<char const*>(Error(AlphaError::kSecond).Message()),
       "alpha second");
   EXPECT_EQ(Printed(BetaError::kFirst), "beta: beta first");
 }
@@ -80,7 +80,7 @@ TEST(ErrorTest, LibraryGroupsSayWhatWentWrong) {
 // Without texts an error prints its code, every digit of it.
 TEST(ErrorTest, PrintsCodeWithoutTexts) {
   EXPECT_STREQ(
-      reinterpret_cast<const char*>(Error(AlphaError::kSecond).Message()), "");
+      reinterpret_cast<char const*>(Error(AlphaError::kSecond).Message()), "");
   EXPECT_EQ(Printed(AlphaError::kSecond), "alpha: 1");
   EXPECT_EQ(Printed(Error(kBetaErrorGroup, 10)), "beta: 10");
   EXPECT_EQ(Printed(Error(kBetaErrorGroup, 105)), "beta: 105");

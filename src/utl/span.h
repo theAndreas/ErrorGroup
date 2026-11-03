@@ -66,13 +66,13 @@ class span {
 
   // A whole utl::array that is const, for a span of const.
   template <typename U, size_t N,
-            typename = internal::ArrayConvertible<const U, T>>
-  constexpr span(const array<U, N>& elements)  // NOLINT(runtime/explicit)
+            typename = internal::ArrayConvertible<U const, T>>
+  constexpr span(array<U, N> const& elements)  // NOLINT(runtime/explicit)
       : data_(elements.data()), size_(N) {}
 
   // Another span, as span<uint8_t> to span<const uint8_t>.
   template <typename U, typename = internal::ArrayConvertible<U, T>>
-  constexpr span(const span<U>& other)  // NOLINT(runtime/explicit)
+  constexpr span(span<U> const& other)  // NOLINT(runtime/explicit)
       : data_(other.data()), size_(other.size()) {}
 
   constexpr pointer data() const { return data_; }

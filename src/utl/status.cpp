@@ -7,7 +7,7 @@
 
 namespace utl {
 
-const __FlashStringHelper* Status::Message() const {
+__FlashStringHelper const* Status::Message() const {
   if (IsOk()) {
     return F("ok");
   }

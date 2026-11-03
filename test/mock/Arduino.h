@@ -19,7 +19,7 @@
 class __FlashStringHelper;  // NOLINT(bugprone-reserved-identifier)
 
 #define PSTR(text) (text)
-#define F(text) (reinterpret_cast<const __FlashStringHelper*>(PSTR(text)))
+#define F(text) (reinterpret_cast<__FlashStringHelper const*>(PSTR(text)))
 
 // As the core's Print: write() is what a derived class provides, print()
 // what the library calls.
@@ -29,8 +29,8 @@ class Print {
 
   virtual size_t write(uint8_t c) = 0;
 
-  size_t print(const __FlashStringHelper* text);
-  size_t print(const char* text);
+  size_t print(__FlashStringHelper const* text);
+  size_t print(char const* text);
   size_t print(char c) { return write(static_cast<uint8_t>(c)); }
   size_t print(unsigned int number);
   size_t println();

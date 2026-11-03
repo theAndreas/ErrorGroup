@@ -19,7 +19,7 @@ using utl::IndexError;
 using utl::string_view;
 
 TEST(FlashStringViewTest, ReadsFlash) {
-  const flash_string_view keyword = F("text=");
+  flash_string_view const keyword = F("text=");
   EXPECT_EQ(keyword.size(), 5U);
   EXPECT_EQ(keyword.length(), 5U);
   EXPECT_FALSE(keyword.empty());
@@ -27,13 +27,13 @@ TEST(FlashStringViewTest, ReadsFlash) {
   EXPECT_EQ(keyword[4], '=');
   EXPECT_EQ(keyword.front(), 't');
   EXPECT_EQ(keyword.back(), '=');
-  EXPECT_EQ(reinterpret_cast<const char*>(keyword.data())[0], 't');
+  EXPECT_EQ(reinterpret_cast<char const*>(keyword.data())[0], 't');
   EXPECT_EQ(flash_string_view(F("text="), 4), F("text"));
 }
 
 TEST(FlashStringViewTest, Iterates) {
   int ts = 0;
-  for (const char c : flash_string_view(F("text="))) {
+  for (char const c : flash_string_view(F("text="))) {
     if (c == 't') {
       ++ts;
     }
@@ -42,7 +42,7 @@ TEST(FlashStringViewTest, Iterates) {
 }
 
 TEST(FlashStringViewTest, SubstrFindAndAt) {
-  const flash_string_view keyword = F("text=");
+  flash_string_view const keyword = F("text=");
   EXPECT_EQ(keyword.substr(0, 4).value(), F("text"));
   EXPECT_EQ(keyword.substr(1).value(), F("ext="));
   EXPECT_EQ(keyword.substr(6).status(), IndexError::kOutOfRange);
@@ -58,15 +58,15 @@ TEST(FlashStringViewTest, SubstrFindAndAt) {
 }
 
 TEST(FlashStringViewTest, ComparesWithFlash) {
-  const flash_string_view keyword = F("text=");
+  flash_string_view const keyword = F("text=");
   EXPECT_EQ(keyword, F("text="));
   EXPECT_NE(keyword, F("text!"));
   EXPECT_NE(keyword, F("text"));
 }
 
 TEST(FlashStringViewTest, MeetsRam) {
-  const string_view line = "text=Hi";
-  const flash_string_view keyword = F("text=");
+  string_view const line = "text=Hi";
+  flash_string_view const keyword = F("text=");
   EXPECT_TRUE(line.starts_with(keyword));
   EXPECT_FALSE(line.starts_with(F("clear")));
   EXPECT_FALSE(string_view("tex").starts_with(keyword));

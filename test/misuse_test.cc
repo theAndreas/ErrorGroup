@@ -35,7 +35,7 @@ using utl::Misuse;
 
 std::string Printed(Misuse misuse) {
   StringPrint out;
-  const size_t count = utl::PrintMisuse(out, misuse);
+  size_t const count = utl::PrintMisuse(out, misuse);
   EXPECT_EQ(count, out.text.size());
   return out.text;
 }
@@ -51,7 +51,7 @@ TEST(MisuseTest, PrintsEachKind) {
             "utl: remove_prefix() or remove_suffix() beyond the end");
   // A value beyond the enum, which PrintMisuse() has to leave without a text.
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-  const auto beyond = static_cast<Misuse>(200);
+  auto const beyond = static_cast<Misuse>(200);
   EXPECT_EQ(Printed(beyond), "utl: ");
 }
 
@@ -69,20 +69,20 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
   // reference reads nothing, so the sanitizers have nothing to stop. The views
   // point at memory that is there all the same, the array of three below.
   utl::array<int, 3> storage = {{1, 2, 3}};
-  const utl::span<int> two(storage.data(), 2);
-  const utl::span<int> none(storage.data() + 1, 0);
-  const char text[] = "ab";
-  const utl::string_view one(text, 1);
+  utl::span<int> const two(storage.data(), 2);
+  utl::span<int> const none(storage.data() + 1, 0);
+  char const text[] = "ab";
+  utl::string_view const one(text, 1);
 
   EXPECT_EQ(Reported([] {
-              const utl::Result<int> failed = BetaError::kFirst;
+              utl::Result<int> const failed = BetaError::kFirst;
               static_cast<void>(failed.value());
             }),
             "utl: value() of a Result with an error\r\n");
   EXPECT_EQ(Reported([] {
               utl::optional<int> empty;
               static_cast<void>(*empty);
-              const utl::optional<int>& same = empty;
+              utl::optional<int> const& same = empty;
               static_cast<void>(*same);
             }),
             "utl: * or -> of an empty optional\r\n"
@@ -113,7 +113,7 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
 
 TEST(MisuseTest, ReportsAnArrayIndexBeyondTheEnd) {
   EXPECT_EQ(Reported([] {
-              const volatile size_t beyond = 2;
+              size_t const volatile beyond = 2;
               utl::array<int, 2> pair = {{1, 2}};
               static_cast<void>(pair[beyond]);
             }),
@@ -124,9 +124,9 @@ TEST(MisuseTest, RightAccessIsNotReported) {
   EXPECT_EQ(Reported([] {
               utl::array<int, 2> pair = {{1, 2}};
               static_cast<void>(pair[1]);
-              const utl::Result<int> ok = 1;
+              utl::Result<int> const ok = 1;
               static_cast<void>(ok.value());
-              const utl::optional<int> found = 2;
+              utl::optional<int> const found = 2;
               static_cast<void>(*found);
             }),
             "");

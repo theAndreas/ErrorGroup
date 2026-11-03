@@ -11,7 +11,7 @@
 namespace utl {
 namespace {
 
-const char kEmptyText[] PROGMEM = "empty";
+char const kEmptyText[] PROGMEM = "empty";
 
 // In the order of OptionalError.
 constexpr auto kMessages PROGMEM = make_array(kEmptyText);
@@ -20,11 +20,11 @@ constexpr auto kMessages PROGMEM = make_array(kEmptyText);
 
 constexpr OptionalErrorGroup kOptionalErrorGroup{};
 
-const __FlashStringHelper* OptionalErrorGroup::Name() const {
+__FlashStringHelper const* OptionalErrorGroup::Name() const {
   return F("optional");
 }
 
-const __FlashStringHelper* OptionalErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* OptionalErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 

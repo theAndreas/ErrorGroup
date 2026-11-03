@@ -50,7 +50,7 @@ size_t PrintCode(Print& out, uint8_t code) {
 
 }  // namespace
 
-const __FlashStringHelper* Error::Message() const {
+__FlashStringHelper const* Error::Message() const {
   return group_->Message(code_);
 }
 

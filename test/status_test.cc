@@ -26,15 +26,15 @@ using utl::Result;
 using utl::Status;
 
 TEST(StatusTest, OkHasNoError) {
-  const Status ok = Status::Ok();
+  Status const ok = Status::Ok();
   EXPECT_TRUE(ok.IsOk());
   EXPECT_EQ(ok.error(), nullptr);
   EXPECT_EQ(ok, Status());
-  EXPECT_STREQ(reinterpret_cast<const char*>(ok.Message()), "ok");
+  EXPECT_STREQ(reinterpret_cast<char const*>(ok.Message()), "ok");
 }
 
 TEST(StatusTest, HoldsItsError) {
-  const Status status = AlphaError::kSecond;
+  Status const status = AlphaError::kSecond;
   EXPECT_FALSE(status.IsOk());
   ASSERT_NE(status.error(), nullptr);
   EXPECT_EQ(*status.error(), AlphaError::kSecond);
@@ -48,11 +48,11 @@ TEST(StatusTest, HoldsItsError) {
 TEST(StatusTest, MessageOfAnError) {
 #if UTL_ERROR_TEXTS
   EXPECT_STREQ(
-      reinterpret_cast<const char*>(Status(BetaError::kFirst).Message()),
+      reinterpret_cast<char const*>(Status(BetaError::kFirst).Message()),
       "beta first");
 #else
   EXPECT_STREQ(
-      reinterpret_cast<const char*>(Status(BetaError::kFirst).Message()), "");
+      reinterpret_cast<char const*>(Status(BetaError::kFirst).Message()), "");
 #endif
 }
 
@@ -61,7 +61,7 @@ TEST(StatusTest, PrintsOkOrTheError) {
   EXPECT_EQ(Status::Ok().PrintTo(ok), 2U);
   EXPECT_EQ(ok.text, "ok");
   StringPrint error;
-  const size_t count = Status(BetaError::kFirst).PrintTo(error);
+  size_t const count = Status(BetaError::kFirst).PrintTo(error);
   EXPECT_EQ(count, error.text.size());
 #if UTL_ERROR_TEXTS
   EXPECT_EQ(error.text, "beta: beta first");
@@ -78,26 +78,26 @@ TEST(StatusTest, AndThenGoesOnWhenOk) {
 
 TEST(StatusTest, AndThenStopsAtAnError) {
   int calls = 0;
-  const Status stopped = Status(AlphaError::kFirst).AndThen([&calls] {
+  Status const stopped = Status(AlphaError::kFirst).AndThen([&calls] {
     ++calls;
     return Status::Ok();
   });
   EXPECT_EQ(stopped, AlphaError::kFirst);
   EXPECT_EQ(calls, 0);
-  const Result<int> no_value =
+  Result<int> const no_value =
       Status(AlphaError::kFirst).AndThen([] { return Result<int>(5); });
   EXPECT_EQ(no_value.status(), AlphaError::kFirst);
 }
 
 TEST(StatusTest, OrElseGetsTheErrorAndRecovers) {
-  const Status recovered =
-      Status(AlphaError::kFirst).OrElse([](const Error& error) {
+  Status const recovered =
+      Status(AlphaError::kFirst).OrElse([](Error const& error) {
         return error == AlphaError::kFirst ? Status::Ok()
                                            : Status(BetaError::kFirst);
       });
   EXPECT_TRUE(recovered.IsOk());
   int calls = 0;
-  const Status untouched = Status::Ok().OrElse([&calls](const Error&) {
+  Status const untouched = Status::Ok().OrElse([&calls](Error const&) {
     ++calls;
     return Status(AlphaError::kFirst);
   });

@@ -11,7 +11,7 @@
 namespace utl {
 namespace {
 
-const char kOutOfRangeText[] PROGMEM = "out of range";
+char const kOutOfRangeText[] PROGMEM = "out of range";
 
 // In the order of IndexError.
 constexpr auto kMessages PROGMEM = make_array(kOutOfRangeText);
@@ -20,9 +20,9 @@ constexpr auto kMessages PROGMEM = make_array(kOutOfRangeText);
 
 constexpr IndexErrorGroup kIndexErrorGroup{};
 
-const __FlashStringHelper* IndexErrorGroup::Name() const { return F("index"); }
+__FlashStringHelper const* IndexErrorGroup::Name() const { return F("index"); }
 
-const __FlashStringHelper* IndexErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* IndexErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);
 }
 

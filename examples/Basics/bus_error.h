@@ -21,14 +21,14 @@ class BusErrorGroup : public utl::ErrorGroup {
  public:
   constexpr BusErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
 // Defined in bus_error.cpp, and nowhere else: its address is the group.
-extern const BusErrorGroup kBusErrorGroup;
+extern BusErrorGroup const kBusErrorGroup;
 
-inline const utl::ErrorGroup& GetErrorGroup(BusError) { return kBusErrorGroup; }
+inline utl::ErrorGroup const& GetErrorGroup(BusError) { return kBusErrorGroup; }
 
 }  // namespace bus
 

@@ -27,7 +27,7 @@ Result<int> Get(int index) {
 }
 
 TEST(ResultTest, HoldsAValue) {
-  const Result<int> result = Get(2);
+  Result<int> const result = Get(2);
   EXPECT_TRUE(result.IsOk());
   EXPECT_EQ(result.value(), 20);
   EXPECT_EQ(result.error(), nullptr);
@@ -35,7 +35,7 @@ TEST(ResultTest, HoldsAValue) {
 }
 
 TEST(ResultTest, HoldsAnError) {
-  const Result<int> result = Get(3);
+  Result<int> const result = Get(3);
   EXPECT_FALSE(result.IsOk());
   ASSERT_NE(result.error(), nullptr);
   EXPECT_EQ(*result.error(), BetaError::kFirst);
@@ -52,7 +52,7 @@ TEST(ResultTest, ValueOr) {
 TEST(ResultTest, MapChangesTheValue) {
   EXPECT_EQ(Get(2).Map([](int value) { return value + 1; }).ValueOr(0), 21);
   int calls = 0;
-  const Result<bool> mapped = Get(5).Map([&calls](int) {
+  Result<bool> const mapped = Get(5).Map([&calls](int) {
     ++calls;
     return true;
   });
@@ -63,23 +63,23 @@ TEST(ResultTest, MapChangesTheValue) {
 TEST(ResultTest, AndThenChainsAndStops) {
   EXPECT_EQ(Get(0).AndThen([](int) { return Get(2); }).ValueOr(0), 20);
   int calls = 0;
-  const Result<int> broken =
+  Result<int> const broken =
       Get(1).AndThen([](int) { return Get(9); }).AndThen([&calls](int value) {
         ++calls;
         return Get(value);
       });
   EXPECT_EQ(broken.status(), BetaError::kFirst);
   EXPECT_EQ(calls, 0);
-  const Status checked = Get(2).AndThen([](int value) {
+  Status const checked = Get(2).AndThen([](int value) {
     return value == 20 ? Status::Ok() : Status(AlphaError::kFirst);
   });
   EXPECT_TRUE(checked.IsOk());
 }
 
 TEST(ResultTest, OrElseRecoversOrKeeps) {
-  EXPECT_EQ(Get(9).OrElse([](const Error&) { return 7; }).ValueOr(0), 7);
+  EXPECT_EQ(Get(9).OrElse([](Error const&) { return 7; }).ValueOr(0), 7);
   int calls = 0;
-  const Result<int> kept = Get(1).OrElse([&calls](const Error&) {
+  Result<int> const kept = Get(1).OrElse([&calls](Error const&) {
     ++calls;
     return Result<int>(0);
   });
@@ -88,25 +88,25 @@ TEST(ResultTest, OrElseRecoversOrKeeps) {
 }
 
 TEST(ResultVoidTest, IsAStatus) {
-  const Result<void> ok = Result<void>::Ok();
+  Result<void> const ok = Result<void>::Ok();
   EXPECT_TRUE(ok.IsOk());
   EXPECT_EQ(ok, Result<void>());
-  const Result<void> failed = AlphaError::kFirst;
-  const Status status = failed;
+  Result<void> const failed = AlphaError::kFirst;
+  Status const status = failed;
   EXPECT_EQ(status, AlphaError::kFirst);
   EXPECT_EQ(failed.status(), AlphaError::kFirst);
-  const Result<void> from_status = Status(BetaError::kFirst);
+  Result<void> const from_status = Status(BetaError::kFirst);
   EXPECT_EQ(from_status, BetaError::kFirst);
 }
 
 TEST(ResultVoidTest, MapOfAFunctionThatReturnsNothing) {
   int stored = 0;
-  const Result<void> done =
+  Result<void> const done =
       Get(2).Map([&stored](int value) { stored = value; });
   EXPECT_TRUE(done.IsOk());
   EXPECT_EQ(stored, 20);
   stored = 0;
-  const Result<void> not_done =
+  Result<void> const not_done =
       Get(9).Map([&stored](int value) { stored = value; });
   EXPECT_EQ(not_done, BetaError::kFirst);
   EXPECT_EQ(stored, 0);
@@ -115,14 +115,14 @@ TEST(ResultVoidTest, MapOfAFunctionThatReturnsNothing) {
 TEST(ResultVoidTest, MapMakesAValue) {
   EXPECT_EQ(Result<void>::Ok().Map([] { return 5; }).ValueOr(0), 5);
   int calls = 0;
-  const Result<int> none = Result<void>(AlphaError::kFirst).Map([&calls] {
+  Result<int> const none = Result<void>(AlphaError::kFirst).Map([&calls] {
     ++calls;
     return 5;
   });
   EXPECT_EQ(none.status(), AlphaError::kFirst);
   EXPECT_EQ(calls, 0);
   int printed = 0;
-  const Result<void> nothing =
+  Result<void> const nothing =
       Result<void>::Ok().Map([&printed] { ++printed; });
   EXPECT_TRUE(nothing.IsOk());
   EXPECT_EQ(printed, 1);

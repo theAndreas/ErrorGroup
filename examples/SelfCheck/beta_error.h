@@ -19,13 +19,13 @@ class BetaErrorGroup : public utl::ErrorGroup {
  public:
   constexpr BetaErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
-extern const BetaErrorGroup kBetaErrorGroup;
+extern BetaErrorGroup const kBetaErrorGroup;
 
-inline const utl::ErrorGroup& GetErrorGroup(BetaError) {
+inline utl::ErrorGroup const& GetErrorGroup(BetaError) {
   return kBetaErrorGroup;
 }
 

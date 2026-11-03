@@ -41,15 +41,15 @@ struct array;
 // avr-gcc reads it with LD from the data space; the texts stay in flash.
 class ErrorGroup {
  public:
-  ErrorGroup(const ErrorGroup&) = delete;
-  ErrorGroup& operator=(const ErrorGroup&) = delete;
+  ErrorGroup(ErrorGroup const&) = delete;
+  ErrorGroup& operator=(ErrorGroup const&) = delete;
 
   // Returns the name of the group, from flash.
-  virtual const __FlashStringHelper* Name() const = 0;
+  virtual __FlashStringHelper const* Name() const = 0;
 
   // Returns the text of `code`, from flash, or "unknown code"; an empty text,
   // never null, if UTL_ERROR_TEXTS is 0.
-  virtual const __FlashStringHelper* Message(uint8_t code) const = 0;
+  virtual __FlashStringHelper const* Message(uint8_t code) const = 0;
 
  protected:
   constexpr ErrorGroup() = default;
@@ -61,7 +61,7 @@ class ErrorGroup {
 
   // Returns `messages[code]`, read from a table in PROGMEM, or "unknown code"
   // if `code` lies beyond the table.
-  static const __FlashStringHelper* LookUpMessage(const char* const* messages,
+  static __FlashStringHelper const* LookUpMessage(char const* const* messages,
                                                   uint8_t count, uint8_t code);
 
   // The same for the table of a group, a utl::array in PROGMEM:
@@ -76,8 +76,8 @@ class ErrorGroup {
   // With UTL_ERROR_TEXTS at 0 it returns an empty text and does not touch
   // the table, so that the table and its texts drop out of the build.
   template <size_t N>
-  static const __FlashStringHelper* LookUpMessage(
-      const array<const char*, N>& messages, uint8_t code) {
+  static __FlashStringHelper const* LookUpMessage(
+      array<char const*, N> const& messages, uint8_t code) {
     // Not UINT8_MAX: avr-libc defines it in C++ only with __STDC_LIMIT_MACROS.
     static_assert(static_cast<uint8_t>(N) == N,
                   "a code is a uint8_t: a group has at most 255 texts");
@@ -94,7 +94,7 @@ class ErrorGroup {
   // An empty text, in flash, shared by every group, for UTL_ERROR_TEXTS at
   // 0. Not F("") in the template above, which would put one into flash for
   // every size of table.
-  static const __FlashStringHelper* NoMessage();
+  static __FlashStringHelper const* NoMessage();
 };
 
 }  // namespace utl

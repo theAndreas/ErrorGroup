@@ -55,10 +55,10 @@ utl::Result<char> Receive(bool acknowledged) {
 }
 
 // The first error ends the chain.
-const utl::Status status =
+utl::Status const status =
     Receive(false).AndThen([](char c) { return SetChar(c); });
 if (status == BusError::kNack) { ... }
-if (const utl::Error* error = status.error()) {
+if (utl::Error const* error = status.error()) {
   Serial.println(error->code());  // 0: kNack, within the group "bus"
 }
 status.PrintTo(Serial);  // "bus: nack", or "ok"
@@ -85,21 +85,21 @@ enum class FontError : uint8_t {
 class FontErrorGroup : public utl::ErrorGroup {
  public:
   constexpr FontErrorGroup() = default;
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
-extern const FontErrorGroup kFontErrorGroup;  // its address is the group
+extern FontErrorGroup const kFontErrorGroup;  // its address is the group
 
-inline const utl::ErrorGroup& GetErrorGroup(FontError) {
+inline utl::ErrorGroup const& GetErrorGroup(FontError) {
   return kFontErrorGroup;
 }
 ```
 
 ```cpp
 // font_error.cpp
-const char kUnknownCharText[] PROGMEM = "unknown char";
-const char kNullTextText[] PROGMEM = "null text";
+char const kUnknownCharText[] PROGMEM = "unknown char";
+char const kNullTextText[] PROGMEM = "null text";
 
 // In the order of FontError.
 constexpr auto kMessages PROGMEM =
@@ -107,9 +107,9 @@ constexpr auto kMessages PROGMEM =
 
 constexpr FontErrorGroup kFontErrorGroup{};
 
-const __FlashStringHelper* FontErrorGroup::Name() const { return F("font"); }
+__FlashStringHelper const* FontErrorGroup::Name() const { return F("font"); }
 
-const __FlashStringHelper* FontErrorGroup::Message(uint8_t code) const {
+__FlashStringHelper const* FontErrorGroup::Message(uint8_t code) const {
   return LookUpMessage(kMessages, code);  // "unknown code" beyond the table
 }
 ```
@@ -153,7 +153,7 @@ and no RAM: the lambdas are inlined.
 `Map()` with a function that returns nothing gives a `Result<void>`, which is a `Status`:
 
 ```cpp
-const utl::Result<void> printed = Receive(true).Map([](char c) { Serial.println(c); });
+utl::Result<void> const printed = Receive(true).Map([](char c) { Serial.println(c); });
 ```
 
 Every `Error`, `Status` and `Result` is `[[nodiscard]]`: a call whose result is dropped warns, as
@@ -183,11 +183,11 @@ second one would replace the first:
 
 ```cpp
 utl::array<uint8_t, 3> rows = {{0x18, 0x3c, 0x18}};
-for (const uint8_t row : rows) { ... }
+for (uint8_t const row : rows) { ... }
 rows.at(5).ValueOr(0);  // 0, as 5 lies beyond the end: at() returns a Result
 
 // A span takes a C array, a utl::array and another span alike.
-uint16_t Sum(utl::span<const uint8_t> values);
+uint16_t Sum(utl::span<uint8_t const> values);
 Sum(rows);
 utl::span<uint8_t>(rows).subspan(1).Map(Sum);  // a Result: subspan() can fail
 
@@ -209,7 +209,7 @@ constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<u
 ```cpp
 utl::optional<uint8_t> FindRow(uint8_t value);  // returns utl::nullopt if there is none
 
-if (const utl::optional<uint8_t> row = FindRow(0x3c)) { Use(*row); }
+if (utl::optional<uint8_t> const row = FindRow(0x3c)) { Use(*row); }
 FindRow(0x3c).ValueOr(0);
 FindRow(0x3c).value();                         // a Result: OptionalError::kEmpty if none
 FindRow(0x3c).OkOr(PanelError::kNoSuchRow);  // a Result, with an error of your own
@@ -241,8 +241,8 @@ utl::Status Execute(utl::string_view line) {
 
 line.find('=');  // 4 in "text=Hi", or utl::string_view::npos
 
-const utl::flash_string_view keyword = F("text=");
-for (const char c : keyword) { ... }  // each char read from flash
+utl::flash_string_view const keyword = F("text=");
+for (char const c : keyword) { ... }  // each char read from flash
 ```
 
 `string_view` (`string_view.h`) is `std::string_view` for text in RAM, with its names; `at()`
@@ -250,7 +250,7 @@ and `substr()` return a `Result` where the standard throws, and `find()` returns
 found" is no error. `flash_string_view` (`flash_string_view.h`) has the same names for text in
 flash. On the AVR flash is an address space of its own, and a pointer into it read as one into
 RAM gives whatever lies at that address in RAM; so it reads every char with `pgm_read_byte()`,
-takes the type `F()` gives rather than a `const char*`, and its `operator[]` returns a char, not a
+takes the type `F()` gives rather than a `char const*`, and its `operator[]` returns a char, not a
 reference. Both are 4 bytes, a pointer and a size, and own nothing. `string_view` also has
 `remove_prefix()`, `remove_suffix()`, `compare()` and `<`, which orders as `unsigned char`, as the
 standard does; `starts_with()`, `ends_with()`, `find()` and `==` work between RAM and flash.
@@ -359,9 +359,12 @@ on top; the table of flash and RAM lands in the summary of the job "Examples on 
 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
-Three exceptions, all forced by Arduino: sources end in `.cpp`, as `arduino-cli` compiles no
+Three exceptions are forced by Arduino: sources end in `.cpp`, as `arduino-cli` compiles no
 `.cc`; the header `Utl.h` is named after the library, as Arduino expects; and a sketch
-includes its own headers without a directory (see `examples/CPPLINT.cfg`).
+includes its own headers without a directory (see `examples/CPPLINT.cfg`). One is chosen:
+`const` stands right of what it qualifies, `char const*` and `Status const&`, as in MaxMatrix.
+The guide prefers it on the left but does not require it; `.clang-format` moves it, and
+`tools/lint.sh` fails on one on the left.
 
 `tools/lint.sh` and `tools/tidy.sh` fetch their tools from PyPI through `uvx`, at fixed versions, so
 that nothing has to be installed. `.clang-tidy` turns on broad groups of checks and turns off, each

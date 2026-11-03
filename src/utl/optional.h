@@ -59,7 +59,7 @@ class optional {
 
   // A value. Implicit, as in std::optional, so that a function returns its
   // value as it is.
-  constexpr optional(const T& value)  // NOLINT(runtime/explicit)
+  constexpr optional(T const& value)  // NOLINT(runtime/explicit)
       : value_(value), has_value_(true) {}
 
   constexpr bool HasValue() const { return has_value_; }
@@ -68,11 +68,11 @@ class optional {
   // Unchecked, as in std::optional: T() if empty. With UTL_CHECK_ACCESS at 1
   // an empty one is reported first.
   T& operator*() { return static_cast<void>(Checked()), value_; }
-  constexpr const T& operator*() const {
+  constexpr T const& operator*() const {
     return static_cast<void>(Checked()), value_;
   }
   T* operator->() { return static_cast<void>(Checked()), &value_; }
-  constexpr const T* operator->() const {
+  constexpr T const* operator->() const {
     return static_cast<void>(Checked()), &value_;
   }
 
@@ -84,13 +84,13 @@ class optional {
     return value_;
   }
 
-  constexpr T ValueOr(const T& fallback) const {
+  constexpr T ValueOr(T const& fallback) const {
     return has_value_ ? value_ : fallback;
   }
 
   // The value, or `error`, as Rust's ok_or(): an error of the caller's own
   // group where value() would give OptionalError::kEmpty.
-  Result<T> OkOr(const Error& error) const {
+  Result<T> OkOr(Error const& error) const {
     if (!has_value_) {
       return error;
     }
@@ -102,7 +102,7 @@ class optional {
   // is no value to give it. AndThen(): `f(value)` if there is a
   // value, `f` returning an optional, or else an empty optional of that type.
   template <typename F>
-  auto AndThen(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
+  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T const&>())) {
     if (!has_value_) {
       return nullopt;
     }
@@ -112,7 +112,7 @@ class optional {
   // Map(): an optional of `f(value)` if there is a value, or else an empty
   // one.
   template <typename F, typename U = decltype(internal::DeclVal<F&>()(
-                            internal::DeclVal<const T&>()))>
+                            internal::DeclVal<T const&>()))>
   optional<U> Map(F f) const {
     if (!has_value_) {
       return nullopt;
@@ -145,11 +145,11 @@ class optional {
   // Hidden friends. Two empty optionals are equal, and a value or nullopt
   // converts on either side, so `index == 2` and `index == utl::nullopt`
   // need no overloads of their own.
-  friend bool operator==(const optional& a, const optional& b) {
+  friend bool operator==(optional const& a, optional const& b) {
     return a.has_value_ == b.has_value_ &&
            (!a.has_value_ || a.value_ == b.value_);
   }
-  friend bool operator!=(const optional& a, const optional& b) {
+  friend bool operator!=(optional const& a, optional const& b) {
     return !(a == b);
   }
 

@@ -14,7 +14,7 @@ using utl::IndexError;
 using utl::string_view;
 
 TEST(StringViewTest, OfAString) {
-  const string_view line = "text=Hi";
+  string_view const line = "text=Hi";
   EXPECT_EQ(line.size(), 7U);
   EXPECT_EQ(line.length(), 7U);
   EXPECT_FALSE(line.empty());
@@ -30,7 +30,7 @@ TEST(StringViewTest, OfAString) {
 }
 
 TEST(StringViewTest, StartsAndEndsWith) {
-  const string_view line = "text=Hi";
+  string_view const line = "text=Hi";
   EXPECT_TRUE(line.starts_with("text="));
   EXPECT_FALSE(line.starts_with("texts"));
   EXPECT_FALSE(line.starts_with("text=Hi!"));
@@ -40,7 +40,7 @@ TEST(StringViewTest, StartsAndEndsWith) {
 }
 
 TEST(StringViewTest, Find) {
-  const string_view line = "text=Hi";
+  string_view const line = "text=Hi";
   EXPECT_EQ(line.find('='), 4U);
   EXPECT_EQ(line.find('t', 1), 3U);
   EXPECT_EQ(line.find('x', 4), string_view::npos);
@@ -51,7 +51,7 @@ TEST(StringViewTest, Find) {
 }
 
 TEST(StringViewTest, SubstrAndAt) {
-  const string_view line = "text=Hi";
+  string_view const line = "text=Hi";
   EXPECT_EQ(line.substr(5).ValueOr(""), "Hi");
   EXPECT_EQ(line.substr(1, 3).ValueOr(""), "ext");
   EXPECT_TRUE(line.substr(7).value().empty());
@@ -61,7 +61,7 @@ TEST(StringViewTest, SubstrAndAt) {
 }
 
 TEST(StringViewTest, RemovePrefixAndSuffix) {
-  const string_view line = "text=Hi";
+  string_view const line = "text=Hi";
   string_view trimmed = line;
   trimmed.remove_prefix(5);
   EXPECT_EQ(trimmed, "Hi");

@@ -21,14 +21,14 @@ class FontErrorGroup : public utl::ErrorGroup {
  public:
   constexpr FontErrorGroup() = default;
 
-  const __FlashStringHelper* Name() const override;
-  const __FlashStringHelper* Message(uint8_t code) const override;
+  __FlashStringHelper const* Name() const override;
+  __FlashStringHelper const* Message(uint8_t code) const override;
 };
 
 // Defined in font_error.cpp, and nowhere else: its address is the group.
-extern const FontErrorGroup kFontErrorGroup;
+extern FontErrorGroup const kFontErrorGroup;
 
-inline const utl::ErrorGroup& GetErrorGroup(FontError) {
+inline utl::ErrorGroup const& GetErrorGroup(FontError) {
   return kFontErrorGroup;
 }
 

@@ -50,11 +50,11 @@ class [[nodiscard]] Result {
  public:
   // A value. Implicit, like the conversions below, so that a function returns
   // its value or its error as it is: a Result is either, and nothing else.
-  constexpr Result(const T& value)  // NOLINT(runtime/explicit)
+  constexpr Result(T const& value)  // NOLINT(runtime/explicit)
       : value_(value) {}
 
   // An error, and T() as the value.
-  constexpr Result(const Error& error)  // NOLINT(runtime/explicit)
+  constexpr Result(Error const& error)  // NOLINT(runtime/explicit)
       : value_(), status_(error) {}
 
   // A code of a group, as in the implicit constructor of Error.
@@ -65,24 +65,24 @@ class [[nodiscard]] Result {
   bool IsOk() const { return status_.IsOk(); }
 
   // The error, or null if IsOk(), as Status::error().
-  const Error* error() const { return status_.error(); }
+  Error const* error() const { return status_.error(); }
 
   // Ok, or the error: to compare with a code or to print.
-  const Status& status() const { return status_; }
+  Status const& status() const { return status_; }
 
   // The value, or T() if !IsOk(): ask first, or use ValueOr().
-  const T& value() const {
+  T const& value() const {
     return static_cast<void>(internal::Check(IsOk(), Misuse::kResultValue)),
            value_;
   }
 
   // Returns the value, or `fallback` if there is an error.
-  T ValueOr(const T& fallback) const { return IsOk() ? value_ : fallback; }
+  T ValueOr(T const& fallback) const { return IsOk() ? value_ : fallback; }
 
   // Returns `f(value())` if there is no error, or else the error. `f` returns
   // a Result of any type, or a Status.
   template <typename F>
-  auto AndThen(F f) const -> decltype(f(internal::DeclVal<const T&>())) {
+  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T const&>())) {
     if (!IsOk()) {
       return *error();
     }
@@ -92,7 +92,7 @@ class [[nodiscard]] Result {
   // Returns a Result of `f(value())` if there is no error, or else the error.
   // A Result<void> if `f` returns nothing: it is called for what it does.
   template <typename F, typename U = decltype(internal::DeclVal<F&>()(
-                            internal::DeclVal<const T&>()))>
+                            internal::DeclVal<T const&>()))>
   Result<U> Map(F f) const {
     if (!IsOk()) {
       return *error();
@@ -130,10 +130,10 @@ class [[nodiscard]] Result<void> : public Status {
   static constexpr Result Ok() { return Result(); }
 
   // A Status, which is the same thing. Implicit, as the conversions of Status.
-  constexpr Result(const Status& status)  // NOLINT(runtime/explicit)
+  constexpr Result(Status const& status)  // NOLINT(runtime/explicit)
       : Status(status) {}
 
-  const Status& status() const { return *this; }
+  Status const& status() const { return *this; }
 
   // Returns a Result of `f()` if there is no error, or else the error: makes
   // a value from "ok", as Rust's map() on a Result<(), E>.
@@ -151,7 +151,7 @@ namespace internal {
 template <typename U>
 struct MapCall {
   template <typename F, typename... Args>
-  static Result<U> Call(F& f, const Args&... args) {
+  static Result<U> Call(F& f, Args const&... args) {
     return f(args...);
   }
 };
@@ -159,7 +159,7 @@ struct MapCall {
 template <>
 struct MapCall<void> {
   template <typename F, typename... Args>
-  static Result<void> Call(F& f, const Args&... args) {
+  static Result<void> Call(F& f, Args const&... args) {
     f(args...);
     return Result<void>::Ok();
   }

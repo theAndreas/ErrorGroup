@@ -37,11 +37,11 @@ struct array {
   using value_type = T;
   using size_type = size_t;
   using reference = T&;
-  using const_reference = const T&;
+  using const_reference = T const&;
   using pointer = T*;
-  using const_pointer = const T*;
+  using const_pointer = T const*;
   using iterator = T*;
-  using const_iterator = const T*;
+  using const_iterator = T const*;
 
   // The one place the C array is meant.
   T elements[N];  // NOLINT(modernize-avoid-c-arrays)
@@ -86,7 +86,7 @@ struct array {
   constexpr const_iterator end() const { return elements + N; }
   constexpr const_iterator cend() const { return elements + N; }
 
-  void fill(const T& value) {
+  void fill(T const& value) {
     for (T& element : elements) {
       element = value;
     }
@@ -114,7 +114,7 @@ constexpr array<T, 1 + sizeof...(Ts)> make_array(T first, Ts... rest) {
 }
 
 template <typename T, size_t N>
-bool operator==(const array<T, N>& a, const array<T, N>& b) {
+bool operator==(array<T, N> const& a, array<T, N> const& b) {
   for (size_t index = 0; index < N; ++index) {
     if (!(a[index] == b[index])) {
       return false;
@@ -124,7 +124,7 @@ bool operator==(const array<T, N>& a, const array<T, N>& b) {
 }
 
 template <typename T, size_t N>
-bool operator!=(const array<T, N>& a, const array<T, N>& b) {
+bool operator!=(array<T, N> const& a, array<T, N> const& b) {
   return !(a == b);
 }
 

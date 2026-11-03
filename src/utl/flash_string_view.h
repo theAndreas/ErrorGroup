@@ -45,7 +45,7 @@ class basic_flash_string_view {
   // Walks the chars, reading each from flash.
   class const_iterator {
    public:
-    explicit const_iterator(const CharT* position) : position_(position) {}
+    explicit const_iterator(CharT const* position) : position_(position) {}
     CharT operator*() const {
       return static_cast<CharT>(pgm_read_byte(position_));
     }
@@ -61,7 +61,7 @@ class basic_flash_string_view {
     }
 
    private:
-    const CharT* position_;
+    CharT const* position_;
   };
   using iterator = const_iterator;
 
@@ -71,18 +71,18 @@ class basic_flash_string_view {
   // The chars of a text in flash up to its '\0'. Implicit, so that F("...")
   // passes where a flash_string_view is taken.
   basic_flash_string_view(
-      const __FlashStringHelper* text)  // NOLINT(runtime/explicit)
-      : data_(reinterpret_cast<const CharT*>(text)),
+      __FlashStringHelper const* text)  // NOLINT(runtime/explicit)
+      : data_(reinterpret_cast<CharT const*>(text)),
         size_(strlen_P(reinterpret_cast<PGM_P>(text))) {}
 
   // `size` chars of a text in flash, as from a PROGMEM array:
   // flash_string_view(reinterpret_cast<const __FlashStringHelper*>(kText), 4).
-  basic_flash_string_view(const __FlashStringHelper* data, size_type size)
-      : data_(reinterpret_cast<const CharT*>(data)), size_(size) {}
+  basic_flash_string_view(__FlashStringHelper const* data, size_type size)
+      : data_(reinterpret_cast<CharT const*>(data)), size_(size) {}
 
   // For Serial.print(), which prints up to the '\0', not size() chars.
-  const __FlashStringHelper* data() const {
-    return reinterpret_cast<const __FlashStringHelper*>(data_);
+  __FlashStringHelper const* data() const {
+    return reinterpret_cast<__FlashStringHelper const*>(data_);
   }
   constexpr size_type size() const { return size_; }
   constexpr size_type length() const { return size_; }
@@ -121,7 +121,7 @@ class basic_flash_string_view {
     if (position > size_) {
       return IndexError::kOutOfRange;
     }
-    const size_type rest = size_ - position;
+    size_type const rest = size_ - position;
     return basic_flash_string_view(data_ + position,
                                    count < rest ? count : rest);
   }
@@ -186,7 +186,7 @@ class basic_flash_string_view {
   // include this header, as this one includes it.
   friend class basic_string_view<CharT>;
 
-  basic_flash_string_view(const CharT* data, size_type size)
+  basic_flash_string_view(CharT const* data, size_type size)
       : data_(data), size_(size) {}
 
   bool Equals(basic_string_view<CharT> text) const {
@@ -203,7 +203,7 @@ class basic_flash_string_view {
   }
 
   // In flash.
-  const CharT* data_;
+  CharT const* data_;
   size_type size_;
 };
 
