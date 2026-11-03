@@ -4,9 +4,6 @@
 // Status: ok or an Error, and its fluent functions.
 
 #include <gtest/gtest.h>
-// For UTL_ERROR_TEXTS, which only #if reads: include-cleaner takes that for
-// no use.
-#include <utl/config.h>  // IWYU pragma: keep
 #include <utl/error.h>
 #include <utl/result.h>
 #include <utl/status.h>
@@ -45,29 +42,28 @@ TEST(StatusTest, HoldsItsError) {
   EXPECT_NE(status, Status::Ok());
 }
 
+// The text of a group whose texts are on, and none of one whose are not.
 TEST(StatusTest, MessageOfAnError) {
-#if UTL_ERROR_TEXTS
+  UseAlphaMessages();
   EXPECT_STREQ(
-      reinterpret_cast<char const*>(Status(BetaError::kFirst).Message()),
-      "beta first");
-#else
+      reinterpret_cast<char const*>(Status(AlphaError::kFirst).Message()),
+      "alpha first");
   EXPECT_STREQ(
       reinterpret_cast<char const*>(Status(BetaError::kFirst).Message()), "");
-#endif
 }
 
 TEST(StatusTest, PrintsOkOrTheError) {
   StringPrint ok;
   EXPECT_EQ(Status::Ok().PrintTo(ok), 2U);
   EXPECT_EQ(ok.text, "ok");
-  StringPrint error;
-  size_t const count = Status(BetaError::kFirst).PrintTo(error);
-  EXPECT_EQ(count, error.text.size());
-#if UTL_ERROR_TEXTS
-  EXPECT_EQ(error.text, "beta: beta first");
-#else
-  EXPECT_EQ(error.text, "beta: 0");
-#endif
+  UseAlphaMessages();
+  StringPrint alpha;
+  size_t const count = Status(AlphaError::kFirst).PrintTo(alpha);
+  EXPECT_EQ(count, alpha.text.size());
+  EXPECT_EQ(alpha.text, "alpha: alpha first");
+  StringPrint beta;
+  static_cast<void>(Status(BetaError::kFirst).PrintTo(beta));
+  EXPECT_EQ(beta.text, "beta: 0");
 }
 
 TEST(StatusTest, AndThenGoesOnWhenOk) {

@@ -4,22 +4,16 @@
 #include "utl/error.h"
 
 #include <stddef.h>
-
-// For UTL_ERROR_TEXTS, which only #if reads: include-cleaner took that for
-// no use when the texts are left out.
-#include "utl/config.h"  // IWYU pragma: keep
-
-#if !UTL_ERROR_TEXTS
 #include <stdint.h>
-#endif
+
+#include "utl/messages.h"
 
 namespace utl {
 namespace {
 
-#if !UTL_ERROR_TEXTS
 // Prints `code` in decimal, at most three digits. Not Print::print(code),
 // which brings in the core's printing of an unsigned long, with a 32-bit
-// division: in Basics it cost more than leaving the texts out saved. Nor a
+// division: in Basics it cost more than the texts it stands in for. Nor a
 // division of its own: `code / 100` pulled in two of libgcc's division
 // routines, 80 bytes. Counting the hundreds and tens off takes at most two
 // and nine rounds.
@@ -46,22 +40,23 @@ size_t PrintCode(Print& out, uint8_t code) {
   printed += out.write(static_cast<char>('0' + code));
   return printed;
 }
-#endif
 
 }  // namespace
 
 __FlashStringHelper const* Error::Message() const {
-  return group_->Message(code_);
+  __FlashStringHelper const* const text = Messages::Find(*group_, code_);
+  return text != nullptr ? text : F("");
 }
 
 size_t Error::PrintTo(Print& out) const {
   size_t count = out.print(group_->Name());
   count += out.print(F(": "));
-#if UTL_ERROR_TEXTS
-  count += out.print(Message());
-#else
-  count += PrintCode(out, code_);
-#endif
+  __FlashStringHelper const* const text = Messages::Find(*group_, code_);
+  if (text != nullptr) {
+    count += out.print(text);
+  } else {
+    count += PrintCode(out, code_);
+  }
   return count;
 }
 

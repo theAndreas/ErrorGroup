@@ -71,9 +71,9 @@ in order, and only once it has found it does `<utl/...>` work.
 
 ### Defining a group
 
-A group is an enum class of its codes, a class derived from `utl::ErrorGroup` with the name and
-the texts, one object of that class, and a `GetErrorGroup()` beside the enum. From
-`examples/Basics`:
+A group is an enum class of its codes, one `utl::ErrorGroup` object with its name, a
+`GetErrorGroup()` beside the enum, and, for a group with texts, a table of them and a function
+that turns them on. From `examples/Basics`:
 
 ```cpp
 // font_error.h
@@ -82,22 +82,18 @@ enum class FontError : uint8_t {
   kNullText,
 };
 
-class FontErrorGroup : public utl::ErrorGroup {
- public:
-  constexpr FontErrorGroup() = default;
-  __FlashStringHelper const* Name() const override;
-  __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
-extern FontErrorGroup const kFontErrorGroup;  // its address is the group
+extern utl::ErrorGroup const kFontErrorGroup;  // its address is the group
 
 inline utl::ErrorGroup const& GetErrorGroup(FontError) {
   return kFontErrorGroup;
 }
+
+void UseFontMessages();  // turns the texts on
 ```
 
 ```cpp
 // font_error.cpp
+char const kName[] PROGMEM = "font";
 char const kUnknownCharText[] PROGMEM = "unknown char";
 char const kNullTextText[] PROGMEM = "null text";
 
@@ -105,12 +101,11 @@ char const kNullTextText[] PROGMEM = "null text";
 constexpr auto kMessages PROGMEM =
     utl::make_array(kUnknownCharText, kNullTextText);
 
-constexpr FontErrorGroup kFontErrorGroup{};
+constexpr utl::ErrorGroup kFontErrorGroup{kName};
 
-__FlashStringHelper const* FontErrorGroup::Name() const { return F("font"); }
-
-__FlashStringHelper const* FontErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, code);  // "unknown code" beyond the table
+void UseFontMessages() {
+  static utl::Messages messages{kFontErrorGroup, kMessages};
+  utl::UseMessages(messages);
 }
 ```
 
@@ -121,8 +116,8 @@ __FlashStringHelper const* FontErrorGroup::Message(uint8_t code) const {
   finds it. It is what lets a code convert to an `Error`; an enum without one does not.
 - **The texts lie in a `constexpr` table in `PROGMEM`.** `constexpr`, so that the table is
   complete when compiled: one initialized at start-up would be written to flash, which fails
-  without a word. A group has at most 255 texts, as a code is a `uint8_t`; `LookUpMessage()`
-  checks that when compiled.
+  without a word. A group has at most 255 texts, as a code is a `uint8_t`; `Messages` checks that
+  when compiled.
 - **Codes of different groups may overlap**: two errors are equal only if group and code are.
 
 ### The types
@@ -142,7 +137,8 @@ One class per file in `src/utl/`:
 - `Result<void>` (`result.h`): a `Status`, for code that is generic in `T`. It is one, by
   inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
   its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
-- `ErrorGroup` (`error_group.h`): the base of a group, with `Name()` and `Message()`.
+- `ErrorGroup` (`error_group.h`): a group, the 2 bytes of its name's address; no virtual function.
+- `Messages` (`messages.h`): the texts of a group, and `UseMessages()`, which turns them on.
 
 The fluent functions follow Rust's `Result`, on `Status` and `Result`: `AndThen()` goes on while
 there is no error, `Map()` changes the value, `OrElse()` recovers from an error and gets an
@@ -163,21 +159,29 @@ Every `Error`, `Status` and `Result` is `[[nodiscard]]`: a call whose result is 
 
 ### Texts
 
-The texts of the groups cost flash, and as `Message()` is virtual, they are linked whenever a
-group is, called or not. `UTL_ERROR_TEXTS` at 0 leaves them out, and an error prints its code
-instead, `bus: 0`; the code of a group stays as it is. It saves 46 bytes of flash in `Basics`,
-with two groups and four texts, and 62 in `SelfCheck`, after the code that prints the number in
-their place. The switch holds for the whole build, the library and the groups alike, which the
-Arduino IDE sets only in `platform.local.txt` beside the `platform.txt` of the core:
+A sketch that wants an error in words turns its group's texts on, once, usually in `setup()`:
 
-```text
-compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0
+```cpp
+bus::UseBusMessages();  // "bus: nack" from now on; before, "bus: 0"
 ```
 
-With arduino-cli, `--build-property "compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0"`. The plugin of
-[vtables in flash](#vtables-in-flash) sets the same property, so both go into one line, as a
-second one would replace the first:
-`compiler.cpp.extra_flags=-fplugin=/full/path/to/avr-flash-vtbl.so -DUTL_ERROR_TEXTS=0`.
+Until then an error prints its code, `font: 0`, and `Message()` is empty. Only a sketch that calls
+a group's function links its texts, as nothing else names them: a sketch that never prints an
+error, or prints only codes, pays for no text, and one that prints some groups in words pays for
+those. A switch for the whole build, `UTL_ERROR_TEXTS` before, could not tell them apart, and the
+Arduino IDE sets no switch of a library without `platform.local.txt`.
+
+Before, `Name()` and `Message()` were virtual. GCC cannot drop a virtual function no one calls, so
+every text of every group was linked into any sketch that made an error, printed or not; and each
+group had a vtable in RAM, which only the plugin of [vtables in flash](#vtables-in-flash) moved.
+Now a group is its name's address, and the texts of the groups that are on are a list through
+their `Messages` objects, 7 bytes of RAM each, in the sketch that turns them on.
+
+On the Uno, with `Basics` printing both of its groups in words: 2476 bytes of flash and 208 of RAM,
+against 2376 and 208 with virtual groups, or 2378 and 174 with those and the plugin. The 100 bytes
+are the search through the list and the printing of a code, which a sketch that prints an error
+links whether it needs it or not. A sketch that makes errors and prints none links neither, nor
+any text.
 
 ## Containers
 
@@ -199,7 +203,8 @@ constexpr auto kPins = utl::make_array(uint8_t{2}, uint8_t{3});  // utl::array<u
   standard leaves undefined or throws on beyond the end returns a `Result` with
   `IndexError::kOutOfRange` instead: `at()`, and `first()`, `last()`, `subspan()` of a span.
   `operator[]` stays unchecked, unless [checked](#checked-access). The group `IndexError` costs
-  its vtable and 2 bytes only in a sketch that calls one of these.
+  its 2 bytes only in a sketch that calls one of these, and its text only in one that calls
+  `utl::UseIndexMessages()`.
 - `make_array(...)` (`array.h`): an array whose type and size come from its arguments, what
   `std::array a = {...}` deduces from C++17 on. It refuses arguments that would narrow, although
   Arduino compiles with `-fpermissive -Wno-error=narrowing`.
@@ -262,7 +267,7 @@ happens, for finding a mistake while a sketch is written, as the DET of AUTOSAR 
 `value()` of a `Result` with an error, `*` and `->` of an empty `optional`, `[]` beyond the end,
 `front()` or `back()` of an empty `span` or `string_view`, and `remove_prefix()` or
 `remove_suffix()` of more than there is, which then leaves an empty view. With
-`UTL_CHECK_ACCESS` at 1, set as `UTL_ERROR_TEXTS` is, each goes to `utl::ReportMisuse()` first,
+`UTL_CHECK_ACCESS` at 1, set for the whole build as `config.h` says, each goes to `utl::ReportMisuse()` first,
 which prints `utl: [] beyond the end` on `Serial`:
 
 ```cpp
@@ -282,39 +287,36 @@ sketch, not the `.ino`, for which arduino-cli writes prototypes outside the name
 
 ## Examples
 
-- `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`.
+- `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`: the
+  bus in words, the font as a code, as only the bus's texts are turned on.
 - `SelfCheck`: checks the library and prints a line per check, then the number that failed.
   `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`.
 
 ## vtables in flash
 
-`Name()` and `Message()` are virtual. On the Uno, avr-gcc keeps every vtable in RAM: it reads data
-with `LD` from the data space, and the linker copies all of `.rodata` into RAM at start-up. The
-texts themselves lie in `PROGMEM`.
+utl has no virtual function and no vtable of its own. The Arduino core has: `HardwareSerial`,
+whose vtable avr-gcc keeps in RAM, as it reads data with `LD` from the data space and the linker
+copies all of `.rodata` into RAM at start-up.
 
 The GCC plugin [avr-flash-vtbl](https://github.com/jcmvbkbc/avr-flash-vtbl) puts the vtables into
 flash instead: it marks the vtable types `__flash`, and a virtual call then reads its function
 pointer with `LPM`. A copy of it, at upstream commit `fbc6ed9`, lies in `tools/avr-flash-vtbl/`
 under its own licence, the GPL v2; it is a tool of the build and links nothing into a sketch.
+utl needed it while its groups were virtual; it now saves only the core's 18 bytes, and the
+examples are built with it to show that utl does not depend on it.
 
-| Example | Flash, ram | Flash, flash | Flash, notexts | Flash, checked | RAM, ram | RAM, flash | RAM, notexts | RAM, checked |
-|---|---|---|---|---|---|---|---|---|
-| Basics | 2376 | 2378 | 2330 | 2376 | 208 | 174 | 208 | 208 |
-| SelfCheck | 12344 | 12346 | 12256 | 13704 | 303 | 253 | 303 | 305 |
+| Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
+|---|---|---|---|---|---|---|
+| Basics | 2430 | 2430 | 2430 | 200 | 182 | 200 |
+| SelfCheck | 12464 | 12464 | 13824 | 293 | 275 | 295 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
-plugin; `notexts` is `ram` with `UTL_ERROR_TEXTS` at 0, `checked` with `UTL_CHECK_ACCESS` at 1.
-`SelfCheck` checks more in `checked`, which is most of what it adds there.
-
-`arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0). In `Basics` the 34 bytes are the
-vtables of its two groups, 8 bytes each, and of `HardwareSerial`, 18; `SelfCheck` saves 50, as
-`at()` and `value()` bring in two more groups, `IndexError` and `OptionalError`. The group
-objects keep their 2 bytes of vptr in RAM, as their address is the group.
+plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
+which is most of what it adds there. `arduino:avr:uno`, Arduino AVR Boards 1.8.8 (avr-gcc 7.3.0).
 
 **Every C++ file of a sketch has to be compiled with the plugin**, the Arduino core included. A
 file compiled without it reads a vtable in flash from RAM and jumps anywhere; the linker does not
 notice. `tools/compile_examples.sh` therefore fails when a vtable of the flash build lies in RAM.
-The library works without the plugin too, it only costs the RAM.
 
 The Arduino IDE passes no flags per sketch. To use the plugin there, add to the
 `platform.local.txt` beside the `platform.txt` of the AVR core:
@@ -348,11 +350,11 @@ The dev container in `.devcontainer/` carries all of it, with clangd for Intelli
 [its README](.devcontainer/README.md).
 
 The tests on the host (`test/`) run the library against a mock of the Arduino core
-(`test/mock/`), built as gnu++11 as avr-gcc builds it, in the three variants `SelfCheck` knows:
-as built by default, without texts, and with misuse checked. They reach every line and every
-branch of `src/`; gcov counts a template per instance, so the report merges them per line. What
-they cannot see is the AVR itself: the host has no separate flash, so a text in flash read as one
-in RAM passes there. That, and the vtables in flash, is what `SelfCheck` in simavr is for.
+(`test/mock/`), built as gnu++11 as avr-gcc builds it, as built by default and with misuse
+checked, as `SelfCheck` is. They reach every line and every branch of `src/`; gcov counts a
+template per instance, so the report merges them per line. What they cannot see is the AVR itself:
+the host has no separate flash, so a text in flash read as one in RAM passes there. That, and the
+core's vtables in flash, is what `SelfCheck` in simavr is for.
 
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
 on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".

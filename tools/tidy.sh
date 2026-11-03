@@ -5,9 +5,9 @@
 #
 # Runs clang-tidy on the library and the examples, with the flags arduino-cli
 # compiles them with for the Uno, and the checks in .clang-tidy. With
-# --database-only it writes the compilation databases and stops: clangd reads
-# the one with the texts for the examples, see .clangd. clang-tidy
-# comes from PyPI through uvx, at a fixed version, like the tools of lint.sh.
+# --database-only it writes the compilation database as built by default and
+# stops: clangd reads it for the examples, see .clangd. clang-tidy comes from
+# PyPI through uvx, at a fixed version, like the tools of lint.sh.
 #
 # arduino-cli compiles copies of a sketch's files in its build folder, and a
 # finding there would point to the copy. So the flags are taken from its
@@ -87,21 +87,16 @@ main() {
   local flags
   flags="$(arduino_flags)"
 
-  # As built by default, with the texts of the groups left out, and with
-  # misuse checked: each takes other branches of #if.
+  # As built by default, and with misuse checked: each takes other branches of
+  # #if.
   local failed=0
-  write_database "${TIDY_DIR}/texts" "${flags}" '[]' "${sources[@]}"
+  write_database "${TIDY_DIR}/default" "${flags}" '[]' "${sources[@]}"
   if ((database_only)); then
-    echo "Wrote ${TIDY_DIR}/texts/compile_commands.json"
+    echo "Wrote ${TIDY_DIR}/default/compile_commands.json"
     exit 0
   fi
-  echo "clang-tidy, with texts:"
-  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/texts" --quiet \
-    "${sources[@]}" || failed=1
-  write_database "${TIDY_DIR}/notexts" "${flags}" \
-    '["-DUTL_ERROR_TEXTS=0"]' "${sources[@]}"
-  echo "clang-tidy, without texts:"
-  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/notexts" --quiet \
+  echo "clang-tidy, as built by default:"
+  uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/default" --quiet \
     "${sources[@]}" || failed=1
   write_database "${TIDY_DIR}/checked" "${flags}" \
     '["-DUTL_CHECK_ACCESS=1"]' "${sources[@]}"

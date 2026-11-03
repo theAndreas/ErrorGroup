@@ -1,3 +1,4 @@
+alpha: 0
 ok
 alpha: alpha first
 alpha: alpha second
@@ -65,7 +66,7 @@ pass span::subspan does not overflow
 pass span with the fluent API
 pass optional is empty
 pass optional holds a value
-optional: empty
+optional: 0
 pass optional::value returns a Result
 pass optional::ValueOr
 pass optional::OkOr

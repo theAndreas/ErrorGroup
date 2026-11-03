@@ -4,13 +4,15 @@
 #include "alpha_error.h"
 
 #include <avr/pgmspace.h>
-#include <stdint.h>
 #include <utl/array.h>
 #include <utl/error.h>
+#include <utl/error_group.h>
+#include <utl/messages.h>
 
 namespace self_check {
 namespace {
 
+char const kName[] PROGMEM = "alpha";
 char const kFirstText[] PROGMEM = "alpha first";
 char const kSecondText[] PROGMEM = "alpha second";
 
@@ -19,12 +21,11 @@ constexpr auto kMessages PROGMEM = utl::make_array(kFirstText, kSecondText);
 
 }  // namespace
 
-constexpr AlphaErrorGroup kAlphaErrorGroup{};
+constexpr utl::ErrorGroup kAlphaErrorGroup{kName};
 
-__FlashStringHelper const* AlphaErrorGroup::Name() const { return F("alpha"); }
-
-__FlashStringHelper const* AlphaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, code);
+void UseAlphaMessages() {
+  static utl::Messages messages{kAlphaErrorGroup, kMessages};
+  utl::UseMessages(messages);
 }
 
 utl::Error MakeAlphaSecondElsewhere() { return AlphaError::kSecond; }

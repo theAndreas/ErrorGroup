@@ -3,25 +3,16 @@
 
 #include "test/beta_error.h"
 
-#include <Arduino.h>
 #include <avr/pgmspace.h>
-#include <stdint.h>
-#include <utl/array.h>
+#include <utl/error_group.h>
+
 namespace utl_test {
 namespace {
 
-char const kFirstText[] PROGMEM = "beta first";
-
-constexpr auto kMessages PROGMEM = utl::make_array(kFirstText);
+char const kName[] PROGMEM = "beta";
 
 }  // namespace
 
-constexpr BetaErrorGroup kBetaErrorGroup{};
-
-__FlashStringHelper const* BetaErrorGroup::Name() const { return F("beta"); }
-
-__FlashStringHelper const* BetaErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, code);
-}
+constexpr utl::ErrorGroup kBetaErrorGroup{kName};
 
 }  // namespace utl_test

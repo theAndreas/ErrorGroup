@@ -4,12 +4,14 @@
 #include "font_error.h"
 
 #include <avr/pgmspace.h>
-#include <stdint.h>
 #include <utl/array.h>
+#include <utl/error_group.h>
+#include <utl/messages.h>
 
 namespace font {
 namespace {
 
+char const kName[] PROGMEM = "font";
 char const kUnknownCharText[] PROGMEM = "unknown char";
 char const kNullTextText[] PROGMEM = "null text";
 
@@ -19,12 +21,11 @@ constexpr auto kMessages PROGMEM =
 
 }  // namespace
 
-constexpr FontErrorGroup kFontErrorGroup{};
+constexpr utl::ErrorGroup kFontErrorGroup{kName};
 
-__FlashStringHelper const* FontErrorGroup::Name() const { return F("font"); }
-
-__FlashStringHelper const* FontErrorGroup::Message(uint8_t code) const {
-  return LookUpMessage(kMessages, code);
+void UseFontMessages() {
+  static utl::Messages messages{kFontErrorGroup, kMessages};
+  utl::UseMessages(messages);
 }
 
 }  // namespace font

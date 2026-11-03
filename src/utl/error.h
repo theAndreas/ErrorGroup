@@ -23,7 +23,7 @@ class Status;
 //
 //   const Error error = FontError::kUnknownChar;
 //   error.group().Name();  // "font", never null
-//   error.Message();       // "unknown char"
+//   error.Message();       // "unknown char", once UseFontMessages() was called
 //
 // Two errors are equal if both the group and the code are, so codes of
 // different groups may overlap.
@@ -46,13 +46,13 @@ class [[nodiscard]] Error {
   ErrorGroup const& group() const { return *group_; }
   uint8_t code() const { return code_; }
 
-  // Returns the text of the error, from flash; an empty text if
-  // UTL_ERROR_TEXTS is 0.
+  // Returns the text of the error, from flash, if the texts of its group are
+  // on (see messages.h); an empty text if not.
   __FlashStringHelper const* Message() const;
 
   // Prints the group and the text, "bus: nack", or the group and the code,
-  // "bus: 0", if UTL_ERROR_TEXTS is 0. Returns the number of chars, as
-  // Print::print() does. Not Printable, whose vptr would make an Error 5
+  // "bus: 0", if the texts of the group are off. Returns the number of chars,
+  // as Print::print() does. Not Printable, whose vptr would make an Error 5
   // bytes rather than 3.
   size_t PrintTo(Print& out) const;
 

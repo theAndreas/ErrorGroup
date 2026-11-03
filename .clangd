@@ -9,4 +9,4 @@ CompileFlags:
 If:
   PathMatch: examples/.*
 CompileFlags:
-  CompilationDatabase: build/tidy/texts
+  CompilationDatabase: build/tidy/default

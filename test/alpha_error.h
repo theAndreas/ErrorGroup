@@ -1,12 +1,12 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// A group of errors for the tests, whose codes overlap with the other's.
+// A group of errors for the tests, whose codes overlap with the other's. Its
+// texts are turned on by the tests that print it.
 
 #ifndef UTL_TEST_ALPHA_ERROR_H_
 #define UTL_TEST_ALPHA_ERROR_H_
 
-#include <Arduino.h>
 #include <stdint.h>
 #include <utl/error.h>
 #include <utl/error_group.h>
@@ -18,19 +18,14 @@ enum class AlphaError : uint8_t {
   kSecond,
 };
 
-class AlphaErrorGroup : public utl::ErrorGroup {
- public:
-  constexpr AlphaErrorGroup() = default;
-
-  [[nodiscard]] __FlashStringHelper const* Name() const override;
-  [[nodiscard]] __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
-extern AlphaErrorGroup const kAlphaErrorGroup;
+extern utl::ErrorGroup const kAlphaErrorGroup;
 
 inline utl::ErrorGroup const& GetErrorGroup(AlphaError) {
   return kAlphaErrorGroup;
 }
+
+// Turns on the texts of the group.
+void UseAlphaMessages();
 
 // Made in alpha_error.cc, so that a test compares an error from another
 // translation unit: equal only if both see the group at the same address.

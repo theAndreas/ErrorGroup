@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # The tests on the host: the library against a mock of the Arduino core, on
-# GoogleTest, in three variants as SelfCheck runs in simavr. The library is
-# built as gnu++11, as avr-gcc builds it; only the tests are C++17, which
-# GoogleTest needs.
+# GoogleTest, as built by default and with UTL_CHECK_ACCESS, as SelfCheck runs
+# in simavr as well. The library is built as gnu++11, as avr-gcc builds it;
+# only the tests are C++17, which GoogleTest needs.
 #
 #   cmake --workflow --preset default    # the tests
 #   cmake --workflow --preset sanitize   # under ASan and UBSan
@@ -69,5 +69,4 @@ function(add_variant name)
 endfunction()
 
 add_variant(default)
-add_variant(notexts UTL_ERROR_TEXTS=0)
 add_variant(checked UTL_CHECK_ACCESS=1)

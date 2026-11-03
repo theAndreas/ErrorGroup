@@ -5,9 +5,10 @@
 #
 # Shared by the scripts in tools/: where things lie, and how an example is
 # compiled in each variant: "ram" (vtables in RAM, the default of avr-gcc),
-# "flash" (vtables in flash, with the plugin avr-flash-vtbl), "notexts"
-# (vtables in RAM, the texts of the groups left out with UTL_ERROR_TEXTS=0) and
-# "checked" (vtables in RAM, misuse reported with UTL_CHECK_ACCESS=1).
+# "flash" (vtables in flash, with the plugin avr-flash-vtbl) and "checked"
+# (vtables in RAM, misuse reported with UTL_CHECK_ACCESS=1). utl itself has no
+# vtable since its groups lost their virtual functions; "flash" still moves
+# the core's.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ROOT_DIR
@@ -15,7 +16,7 @@ readonly BUILD_DIR="${ROOT_DIR}/build"
 readonly PLUGIN="${BUILD_DIR}/avr-flash-vtbl.so"
 readonly FQBN="arduino:avr:uno"
 # shellcheck disable=SC2034  # used by the scripts that source this file
-readonly VARIANTS=(ram flash notexts checked)
+readonly VARIANTS=(ram flash checked)
 
 err() {
   echo "$*" >&2
@@ -39,7 +40,7 @@ avr_gcc_bin_dir() {
 # Compiles an example in a variant into BUILD_DIR/<variant>/<example> and
 # prints what arduino-cli prints.
 # Arguments:
-#   variant: ram, flash, notexts or checked
+#   variant: ram, flash or checked
 #   example: the name of a folder in examples/
 compile_example() {
   local variant="$1"
@@ -58,8 +59,6 @@ compile_example() {
     # extra_flags reach every C++ file of the build, the core included. A file
     # compiled without the plugin would read a vtable in flash from RAM.
     args+=(--build-property "compiler.cpp.extra_flags=-fplugin=${PLUGIN}")
-  elif [[ "${variant}" == "notexts" ]]; then
-    args+=(--build-property "compiler.cpp.extra_flags=-DUTL_ERROR_TEXTS=0")
   elif [[ "${variant}" == "checked" ]]; then
     args+=(--build-property "compiler.cpp.extra_flags=-DUTL_CHECK_ACCESS=1")
   fi

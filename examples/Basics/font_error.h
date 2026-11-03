@@ -17,20 +17,15 @@ enum class FontError : uint8_t {
   kNullText,
 };
 
-class FontErrorGroup : public utl::ErrorGroup {
- public:
-  constexpr FontErrorGroup() = default;
-
-  __FlashStringHelper const* Name() const override;
-  __FlashStringHelper const* Message(uint8_t code) const override;
-};
-
 // Defined in font_error.cpp, and nowhere else: its address is the group.
-extern FontErrorGroup const kFontErrorGroup;
+extern utl::ErrorGroup const kFontErrorGroup;
 
 inline utl::ErrorGroup const& GetErrorGroup(FontError) {
   return kFontErrorGroup;
 }
+
+// Turns on the texts of the group: until then its errors print their codes.
+void UseFontMessages();
 
 }  // namespace font
 

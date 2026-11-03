@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Two groups that the library does not know, errors from both, and how a
-// sketch checks, chains and prints them.
+// sketch checks, chains and prints them. The bus says what went wrong in
+// words; the font gives its code, as its texts are not turned on and not
+// linked.
 
 #include <Utl.h>
 
@@ -38,6 +40,7 @@ Result<char> Receive(bool acknowledged) {
 
 void setup() {
   Serial.begin(115200);
+  bus::UseBusMessages();
   pinMode(2, INPUT_PULLUP);
   pinMode(3, INPUT_PULLUP);
 }
@@ -49,7 +52,7 @@ void loop() {
       Receive(digitalRead(3) == HIGH).AndThen([](char received) {
         return SetChar(digitalRead(2) == LOW ? '\n' : received);
       });
-  status.PrintTo(Serial);  // "bus: nack", or "ok"
+  status.PrintTo(Serial);  // "bus: nack", "font: 0" or "ok"
   Serial.println();
 
   // Both codes are 0, in different groups: only the group tells them apart.
