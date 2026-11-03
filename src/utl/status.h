@@ -31,7 +31,13 @@ namespace utl {
 //
 // The fluent functions follow Rust: AndThen() goes on while there is no
 // error, OrElse() recovers from one.
-class [[nodiscard]] Status {
+//
+// Not [[nodiscard]], unlike Result and Error: a sketch drops the Status of a
+// call that draws or sets, SetText("Hi!"), as a matter of course, and with
+// the attribute on the type each such call warned and needed a
+// static_cast<void>. A library marks the function whose Status must not be
+// dropped itself, [[nodiscard]] Status Begin().
+class Status {
  public:
   // Ok. Status::Ok() says the same where it is returned.
   constexpr Status() : error_(nullptr) {}

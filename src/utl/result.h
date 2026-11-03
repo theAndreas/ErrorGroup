@@ -121,8 +121,9 @@ class [[nodiscard]] Result {
 // IsOk(), error(), AndThen(), OrElse() and the comparisons, and converts to
 // one and back. It exists for code that is generic in T, above all Map() with
 // a function that returns nothing; a function of a sketch returns a Status.
+// Not [[nodiscard]], as a Status is not: it has no value to lose.
 template <>
-class [[nodiscard]] Result<void> : public Status {
+class Result<void> : public Status {
  public:
   // Ok, from an Error or from a code, as a Status.
   using Status::Status;
