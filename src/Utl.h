@@ -39,6 +39,7 @@
 #include "utl/misuse.h"             // IWYU pragma: export
 #include "utl/optional.h"           // IWYU pragma: export
 #include "utl/optional_error.h"     // IWYU pragma: export
+#include "utl/reference_wrapper.h"  // IWYU pragma: export
 #include "utl/result.h"             // IWYU pragma: export
 #include "utl/span.h"               // IWYU pragma: export
 #include "utl/status.h"             // IWYU pragma: export

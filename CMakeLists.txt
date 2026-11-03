@@ -39,6 +39,7 @@ set(test_sources
     test/flash_string_view_test.cpp
     test/misuse_test.cpp
     test/optional_test.cpp
+    test/reference_wrapper_test.cpp
     test/result_test.cpp
     test/span_test.cpp
     test/status_test.cpp

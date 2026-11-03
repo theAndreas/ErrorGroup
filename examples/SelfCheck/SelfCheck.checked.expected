@@ -77,6 +77,12 @@ pass optional = {} is empty
 pass optional::AndThen
 pass optional::Map
 pass optional::OrElse
+pass reference_wrapper refers to its object
+pass reference_wrapper writes through get()
+pass reference_wrapper rebinds when assigned
+pass reference_wrapper as a member copies and assigns
+pass ref, cref, and to one of const
+pass reference_wrapper in an array
 pass string_view of a string
 pass string_view::starts_with, ends_with
 pass string_view::find
