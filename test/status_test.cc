@@ -4,11 +4,14 @@
 // Status: ok or an Error, and its fluent functions.
 
 #include <gtest/gtest.h>
-#include <utl/config.h>
+// For UTL_ERROR_TEXTS, which only #if reads: include-cleaner takes that for
+// no use.
+#include <utl/config.h>  // IWYU pragma: keep
 #include <utl/error.h>
 #include <utl/result.h>
 #include <utl/status.h>
 
+#include <cstddef>
 #include <string>
 
 #include "test/alpha_error.h"
@@ -55,7 +58,7 @@ TEST(StatusTest, MessageOfAnError) {
 
 TEST(StatusTest, PrintsOkOrTheError) {
   StringPrint ok;
-  EXPECT_EQ(Status::Ok().PrintTo(ok), 2u);
+  EXPECT_EQ(Status::Ok().PrintTo(ok), 2U);
   EXPECT_EQ(ok.text, "ok");
   StringPrint error;
   const size_t count = Status(BetaError::kFirst).PrintTo(error);

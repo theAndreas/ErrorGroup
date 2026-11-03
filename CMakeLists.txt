@@ -13,6 +13,8 @@
 cmake_minimum_required(VERSION 3.25)
 project(Utl LANGUAGES CXX)
 enable_testing()
+# For clangd, which reads it through .clangd.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(UTL_COVERAGE "Build with --coverage, for gcovr" OFF)
 option(UTL_SANITIZE "Build with AddressSanitizer and UBSan" OFF)

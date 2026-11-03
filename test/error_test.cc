@@ -4,11 +4,14 @@
 // Error: a group and a code, and how it prints.
 
 #include <gtest/gtest.h>
-#include <utl/config.h>
+// For UTL_ERROR_TEXTS, which only #if reads: include-cleaner takes that for
+// no use.
+#include <utl/config.h>  // IWYU pragma: keep
 #include <utl/error.h>
 #include <utl/index_error.h>
 #include <utl/optional_error.h>
 
+#include <cstddef>
 #include <string>
 
 #include "test/alpha_error.h"

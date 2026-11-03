@@ -7,8 +7,6 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 #include <utl/array.h>
-#include <utl/error.h>
-
 namespace utl_test {
 namespace {
 

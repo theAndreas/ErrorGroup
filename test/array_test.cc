@@ -7,6 +7,8 @@
 #include <utl/array.h>
 #include <utl/index_error.h>
 
+#include <cstdint>
+
 namespace utl_test {
 namespace {
 
@@ -14,8 +16,8 @@ using utl::array;
 
 TEST(ArrayTest, SizeAndElements) {
   array<int, 3> rows = {{1, 2, 3}};
-  EXPECT_EQ(rows.size(), 3u);
-  EXPECT_EQ(rows.max_size(), 3u);
+  EXPECT_EQ(rows.size(), 3U);
+  EXPECT_EQ(rows.max_size(), 3U);
   EXPECT_FALSE(rows.empty());
   EXPECT_EQ(rows[1], 2);
   EXPECT_EQ(rows.front(), 1);
@@ -60,7 +62,7 @@ TEST(ArrayTest, CopiesComparesAndFills) {
 TEST(ArrayTest, MakeArrayTakesTypeAndSize) {
   constexpr auto made = utl::make_array(uint8_t{1}, uint8_t{2});
   static_assert(sizeof(made) == 2, "two uint8_t");
-  EXPECT_EQ(made.size(), 2u);
+  EXPECT_EQ(made.size(), 2U);
   EXPECT_EQ(made[1], 2);
 }
 

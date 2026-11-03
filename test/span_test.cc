@@ -27,11 +27,12 @@ int Sum(span<const int> values) {
 TEST(SpanTest, MadeFromAnything) {
   utl::array<int, 4> rows = {{0, 1, 7, 3}};
   const utl::array<int, 4>& const_rows = rows;
-  int c_array[] = {7, 7};
+  // A C array, as a span is to take one.
+  int c_array[] = {7, 7};  // NOLINT(modernize-avoid-c-arrays)
   const span<int> all = rows;
   EXPECT_TRUE(span<int>().empty());
   EXPECT_EQ(span<int>().data(), nullptr);
-  EXPECT_EQ(all.size(), 4u);
+  EXPECT_EQ(all.size(), 4U);
   EXPECT_EQ(all.size_bytes(), 4 * sizeof(int));
   EXPECT_EQ(Sum(rows), 11);
   EXPECT_EQ(Sum(const_rows), 11);

@@ -1,0 +1,12 @@
+# Which compilation database clangd reads, by path. src/ and test/ come from
+# CMake, against the mock of the core (cmake --preset default writes it);
+# examples/ from tools/tidy.sh --database-only, with the flags the Uno is
+# compiled with, as only that one has the sketches, an .ino as C++ with
+# Arduino.h included first.
+CompileFlags:
+  CompilationDatabase: build/host
+---
+If:
+  PathMatch: examples/.*
+CompileFlags:
+  CompilationDatabase: build/tidy/texts

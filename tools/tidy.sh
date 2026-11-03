@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Runs clang-tidy on the library and the examples, with the flags arduino-cli
-# compiles them with for the Uno, and the checks in .clang-tidy. clang-tidy
+# compiles them with for the Uno, and the checks in .clang-tidy. With
+# --database-only it writes the compilation databases and stops: clangd reads
+# the one with the texts for the examples, see .clangd. clang-tidy
 # comes from PyPI through uvx, at a fixed version, like the tools of lint.sh.
 #
 # arduino-cli compiles copies of a sketch's files in its build folder, and a
@@ -69,6 +71,14 @@ write_database() {
 }
 
 main() {
+  local database_only=0
+  if [[ "${1:-}" == "--database-only" ]]; then
+    database_only=1
+  elif [[ $# -gt 0 ]]; then
+    err "Usage: $0 [--database-only]"
+    exit 2
+  fi
+
   cd "${ROOT_DIR}"
   mkdir -p "${TIDY_DIR}"
   local sources
@@ -81,6 +91,10 @@ main() {
   # misuse checked: each takes other branches of #if.
   local failed=0
   write_database "${TIDY_DIR}/texts" "${flags}" '[]' "${sources[@]}"
+  if ((database_only)); then
+    echo "Wrote ${TIDY_DIR}/texts/compile_commands.json"
+    exit 0
+  fi
   echo "clang-tidy, with texts:"
   uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/texts" --quiet \
     "${sources[@]}" || failed=1
@@ -94,6 +108,18 @@ main() {
   echo "clang-tidy, with misuse checked:"
   uvx --from "${CLANG_TIDY}" clang-tidy -p "${TIDY_DIR}/checked" --quiet \
     "${sources[@]}" || failed=1
+
+  # The tests on the host, against the mock, with the database CMake writes.
+  # Only what lies in test/: the tests are C++17, and the headers of the
+  # library, checked above as the gnu++11 they are, would be held to C++17.
+  local tests
+  mapfile -t tests < <(git ls-files --cached --others --exclude-standard \
+    'test/*' | grep -E '\.cc$')
+  cmake --preset default >/dev/null
+  echo "clang-tidy, the tests on the host:"
+  uvx --from "${CLANG_TIDY}" clang-tidy -p "${BUILD_DIR}/host" --quiet \
+    --header-filter='(^|/)test/' \
+    "${tests[@]}" || failed=1
   exit "${failed}"
 }
 
