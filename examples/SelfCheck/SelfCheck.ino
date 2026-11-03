@@ -34,6 +34,8 @@ static_assert(sizeof(utl::array<uint8_t, 3>) == 3, "an array is its elements");
 static_assert(sizeof(span<uint8_t>) == 4, "a span is a pointer and a size");
 static_assert(sizeof(utl::optional<uint8_t>) == 2,
               "an optional is a value and a flag");
+static_assert(sizeof(utl::reference_wrapper<uint8_t>) == 2,
+              "a reference_wrapper is a pointer");
 static_assert(sizeof(utl::string_view) == 4 &&
                   sizeof(utl::flash_string_view) == 4,
               "a string_view is a pointer and a size");
@@ -330,6 +332,50 @@ void CheckOptional() {
         F("optional::OrElse"));
 }
 
+// Counts into a counter another owns: a reference_wrapper as a member, what it
+// is made for.
+class Counter {
+ public:
+  explicit Counter(uint8_t& count) : count_(count) {}
+  void Increment() { ++count_.get(); }
+
+ private:
+  utl::reference_wrapper<uint8_t> count_;
+};
+
+void CheckReferenceWrapper() {
+  uint8_t first = codes[1];
+  uint8_t second = codes[2];
+  utl::reference_wrapper<uint8_t> wrapper = first;
+
+  Check(&wrapper.get() == &first, F("reference_wrapper refers to its object"));
+  wrapper.get() = 2;
+  uint8_t& converted = wrapper;
+  Check(first == 2 && &converted == &first,
+        F("reference_wrapper writes through get()"));
+  wrapper = second;
+  Check(&wrapper.get() == &second && first == 2,
+        F("reference_wrapper rebinds when assigned"));
+
+  Counter const counter(first);
+  Counter copy = counter;
+  copy.Increment();
+  copy = Counter(second);
+  copy.Increment();
+  Check(first == 3 && second == 8,
+        F("reference_wrapper as a member copies and assigns"));
+
+  utl::reference_wrapper<uint8_t const> const read_only = utl::ref(first);
+  Check(&read_only.get() == &first && &utl::cref(second).get() == &second,
+        F("ref, cref, and to one of const"));
+
+  utl::array<utl::reference_wrapper<uint8_t>, 2> const both = {{first, second}};
+  for (uint8_t& value : both) {
+    value = 0;
+  }
+  Check(first == 0 && second == 0, F("reference_wrapper in an array"));
+}
+
 void CheckStringView() {
   char buffer[] = "text=Hi";
   utl::string_view const line = buffer;
@@ -536,6 +582,7 @@ void setup() {
   CheckArray();
   CheckSpan();
   CheckOptional();
+  CheckReferenceWrapper();
   CheckStringView();
   CheckMisuse();
 

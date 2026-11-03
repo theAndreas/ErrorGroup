@@ -11,6 +11,8 @@ standard where it has an answer, and checked where the standard leaves a call un
   out of range returns a `Result` rather than being undefined.
 - **`optional`**, a value or none, as in the standard, except that `value()` of an empty one
   returns a `Result` rather than throwing.
+- **`reference_wrapper`**, a reference that copies, as in the standard, for a member that refers to
+  an object another owns.
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
   flash, `PROGMEM` or `F("...")`, which the standard does not know; the two compare with each
   other.
@@ -238,6 +240,31 @@ side, as in a `Result`, so `T` needs a default constructor; an `optional<uint8_t
 error instead. `AndThen()`, `Map()` and `OrElse()` are what C++23's `std::optional` calls
 `and_then()`, `transform()` and `or_else()`.
 
+## reference_wrapper
+
+```cpp
+class Panel {
+ public:
+  explicit Panel(Display& display) : display_(display) {}
+  void Clear() { display_.get().Clear(); }
+
+ private:
+  utl::reference_wrapper<Display> display_;  // not Display&, not Display*
+};
+
+utl::array<utl::reference_wrapper<Led>, 2> leds = {{red, green}};
+auto const read_only = utl::cref(red);  // a utl::reference_wrapper<Led const>
+```
+
+`reference_wrapper<T>` (`reference_wrapper.h`) is `std::reference_wrapper`, with `get()`, the
+conversion to `T&`, `ref()` and `cref()`. It is a pointer, 2 bytes, that is never null and owns
+nothing: a member that is one leaves its class copyable and assignable, as a `T&` would not, and
+says what a `T*` leaves open, that it is never null and no one deletes it. It binds an lvalue only,
+never a temporary, and there is no `reference_wrapper()`; assigning one rebinds it, as in the
+standard. It converts as a pointer does, to one of `T const` or of a base class. Left out is
+`operator()`, which calls a function it refers to as `std::invoke`: the one costly part, and
+nothing a member needs.
+
 ## Text: string_view and flash_string_view
 
 ```cpp
@@ -316,7 +343,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 12434 | 12434 | 13792 | 285 | 267 | 287 |
+| SelfCheck | 12736 | 12736 | 14094 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
