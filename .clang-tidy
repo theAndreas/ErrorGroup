@@ -49,3 +49,44 @@ CheckOptions:
   # Google's "include what you use", with Arduino.h as what provides the
   # core: F(), __FlashStringHelper and the rest come through it.
   misc-include-cleaner.IgnoreHeaders: '.*/cores/arduino/.*'
+  # Google's names, which readability-identifier-naming checks only once it is
+  # told them; the same block lies in MaxMatrix and Wordclock, so that every
+  # project names alike. Three exceptions Google makes itself: an entity that
+  # mimics one of the standard library takes its names (array, span,
+  # optional, string_view: utl::array, size(), value_type, npos); an accessor
+  # is named like the variable it gives (group(), code(), error()); and an
+  # include guard ends in an underscore.
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.ClassIgnoredRegexp: '^(array|span|optional|basic_string_view|string_view|basic_flash_string_view|flash_string_view|const_iterator|iterator)$'
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.StructIgnoredRegexp: '^(array|nullopt_t|is_[a-z_]+|remove_[a-z_]+|enable_if|integral_constant|true_type|false_type)$'
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  readability-identifier-naming.TypeAliasCase: CamelCase
+  readability-identifier-naming.TypeAliasIgnoredRegexp: '^[a-z][a-z0-9_]*$'
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.TypedefIgnoredRegexp: '^[a-z][a-z0-9_]*$'
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.FunctionCase: CamelCase
+  readability-identifier-naming.FunctionIgnoredRegexp: '^(make_array|swap|begin|end)$'
+  readability-identifier-naming.MethodCase: CamelCase
+  readability-identifier-naming.MethodIgnoredRegexp: '^[a-z][a-z0-9_]*$'
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.MemberCase: lower_case
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberSuffix: _
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberSuffix: _
+  readability-identifier-naming.ConstexprVariableCase: CamelCase
+  readability-identifier-naming.ConstexprVariablePrefix: k
+  readability-identifier-naming.ConstexprVariableIgnoredRegexp: '^(npos|nullopt|value)$'
+  readability-identifier-naming.GlobalConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantPrefix: k
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.StaticConstantPrefix: k
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.EnumConstantPrefix: k
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionIgnoredRegexp: '^[A-Z][A-Z0-9_]*_$'

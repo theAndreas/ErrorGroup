@@ -47,6 +47,7 @@ class MockSerial : public Print {
   std::string output;
 };
 
-extern MockSerial Serial;
+// The core's name for it.
+extern MockSerial Serial;  // NOLINT(readability-identifier-naming)
 
 #endif  // UTL_TEST_MOCK_ARDUINO_H_
