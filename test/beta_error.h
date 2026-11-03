@@ -17,7 +17,7 @@ enum class BetaError : uint8_t {
   kFirst,
 };
 
-// "beta", defined in beta_error.cc; its address is the group.
+// "beta", defined in beta_error.cpp; its address is the group.
 // A name in flash is a char array, declared here without its text, as only
 // one file may define it.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)

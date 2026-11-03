@@ -370,7 +370,8 @@ on top; the table of flash and RAM lands in the summary of the job "Examples on 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
 Three exceptions are forced by Arduino: sources end in `.cpp`, as `arduino-cli` compiles no
-`.cc`; the header `Utl.h` is named after the library, as Arduino expects; and a sketch
+`.cc`, and so do the tests on the host, which it never sees, so that one ending holds throughout;
+the header `Utl.h` is named after the library, as Arduino expects; and a sketch
 includes its own headers without a directory (see `examples/CPPLINT.cfg`). One is chosen:
 `const` stands right of what it qualifies, `char const*` and `Status const&`, as in MaxMatrix.
 The guide prefers it on the left but does not require it; `.clang-format` moves it, and

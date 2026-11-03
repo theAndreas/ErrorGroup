@@ -34,7 +34,7 @@ main() {
   local files=(git ls-files --cached --others --exclude-standard)
   local sources
   mapfile -t sources < <("${files[@]}" 'src/*' 'examples/*' 'test/*' \
-    | grep -E '\.(h|cpp|cc|ino)$')
+    | grep -E '\.(h|cpp|ino)$')
   local scripts
   mapfile -t scripts < <("${files[@]}" 'tools/*.sh')
 

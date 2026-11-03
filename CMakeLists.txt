@@ -34,17 +34,17 @@ endif()
 
 file(GLOB library_sources CONFIGURE_DEPENDS src/utl/*.cpp)
 set(test_sources
-    test/array_test.cc
-    test/error_test.cc
-    test/flash_string_view_test.cc
-    test/misuse_test.cc
-    test/optional_test.cc
-    test/result_test.cc
-    test/span_test.cc
-    test/status_test.cc
-    test/string_view_test.cc
-    test/alpha_error.cc
-    test/beta_error.cc)
+    test/array_test.cpp
+    test/error_test.cpp
+    test/flash_string_view_test.cpp
+    test/misuse_test.cpp
+    test/optional_test.cpp
+    test/result_test.cpp
+    test/span_test.cpp
+    test/status_test.cpp
+    test/string_view_test.cpp
+    test/alpha_error.cpp
+    test/beta_error.cpp)
 
 # One library and one test program per variant: the switches change what is
 # compiled, so each variant is a build of its own.
