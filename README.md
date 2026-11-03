@@ -293,7 +293,8 @@ RAM gives whatever lies at that address in RAM; so it reads every char with `pgm
 takes the type `F()` gives rather than a `char const*`, and its `operator[]` returns a char, not a
 reference. Both are 4 bytes, a pointer and a size, and own nothing. `string_view` also has
 `remove_prefix()`, `remove_suffix()`, `compare()` and `<`, which orders as `unsigned char`, as the
-standard does; `compare()` gives an `int8_t`, -1, 0 or 1, not an `int`; `starts_with()`, `ends_with()`, `find()` and `==` work between RAM and flash.
+standard does; `compare()` gives an `int8_t`, -1, 0 or 1, not an `int`. `starts_with()`,
+`ends_with()`, `find()` and `==` work between RAM and flash.
 
 ## Checked access
 
