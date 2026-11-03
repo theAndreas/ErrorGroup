@@ -344,7 +344,8 @@ RAM gives whatever lies at that address in RAM; so it reads every char with `pgm
 takes the type `F()` gives rather than a `char const*`, and its `operator[]` returns a char, not a
 reference. Both are 4 bytes, a pointer and a size, and own nothing. `string_view` also has
 `remove_prefix()`, `remove_suffix()`, `compare()` and `<`, which orders as `unsigned char`, as the
-standard does; `starts_with()`, `ends_with()`, `find()` and `==` work between RAM and flash.
+standard does; `compare()` gives an `int8_t`, -1, 0 or 1, not an `int`. `starts_with()`,
+`ends_with()`, `find()` and `==` work between RAM and flash.
 
 ## Checked access
 
@@ -394,7 +395,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 14068 | 14068 | 15726 | 285 | 267 | 287 |
+| SelfCheck | 14052 | 14052 | 15710 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,

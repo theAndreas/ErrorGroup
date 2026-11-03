@@ -6,6 +6,8 @@
 #ifndef UTL_SRC_UTL_OPTIONAL_H_
 #define UTL_SRC_UTL_OPTIONAL_H_
 
+#include <stdint.h>
+
 #include "utl/error.h"
 #include "utl/internal/type_traits.h"
 #include "utl/misuse.h"
@@ -37,9 +39,10 @@ struct IsOptional {
 }  // namespace internal
 
 // The type of nullopt, as std::nullopt_t: not default-constructible, so that
-// `optional = {}` stays an empty optional rather than a nullopt_t.
+// `optional = {}` stays an empty optional rather than a nullopt_t. The
+// parameter only keeps it so; its type does not matter.
 struct nullopt_t {
-  constexpr explicit nullopt_t(int) {}
+  constexpr explicit nullopt_t(uint8_t) {}
 };
 
 // No value, as std::nullopt.

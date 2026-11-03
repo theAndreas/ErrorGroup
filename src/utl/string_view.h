@@ -8,6 +8,7 @@
 #define UTL_SRC_UTL_STRING_VIEW_H_
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "utl/index_error.h"
@@ -138,13 +139,14 @@ class basic_string_view {
     size_ -= count < size_ ? count : size_;
   }
 
-  // Less than 0, 0 or more than 0 as this lies before, at or after `other`:
-  // char by char, as unsigned char as in std::string_view, a prefix first.
-  int compare(basic_string_view other) const {
+  // -1, 0 or 1 as this lies before, at or after `other`: char by char, as
+  // unsigned char as in std::string_view, a prefix first. An int8_t, where
+  // the standard returns an int: only the sign means anything.
+  int8_t compare(basic_string_view other) const {
     size_type const common = size_ < other.size_ ? size_ : other.size_;
     for (size_type index = 0; index < common; ++index) {
-      auto const a = static_cast<unsigned char>(data_[index]);
-      auto const b = static_cast<unsigned char>(other.data_[index]);
+      auto const a = static_cast<uint8_t>(data_[index]);
+      auto const b = static_cast<uint8_t>(other.data_[index]);
       if (a != b) {
         return a < b ? -1 : 1;
       }
