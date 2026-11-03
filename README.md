@@ -10,7 +10,7 @@ standard where it has an answer, and checked where the standard leaves a call un
 - **Containers**: `array`, `span` and `make_array`, as in the standard, except that what can go
   out of range returns a `Result` rather than being undefined.
 - **`optional`**, a value or none, as in the standard, except that `value()` of an empty one
-  returns a `Result` rather than throwing.
+  returns a `Result` rather than throwing; also of a reference, `optional<T&>`, as in C++26.
 - **`reference_wrapper`**, a reference that copies, as in the standard, for a member that refers to
   an object another owns.
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
@@ -142,6 +142,12 @@ One class per file in `src/utl/`:
 - `Result<void>` (`result.h`): a `Status`, for code that is generic in `T`. It is one, by
   inheritance, and converts back; `Map()` with a function that returns nothing gives one, and
   its own `Map()` makes a value from "ok". A sketch's function returns a `Status`.
+- `Result<T&>` (`result.h`): a reference to an object that lies elsewhere, or an `Error`, for a
+  function that finds an object or fails, `Result<Led&> GetLed(uint8_t pin)`. A pointer and a
+  `Status`, 5 bytes; `T` needs no default constructor. It binds an lvalue only, assigning one
+  rebinds it, and `Map()` and the others give their function the `T&` itself. `value()` of one
+  with an error is undefined, as there is no `T` to give; `ValueOr()` gives a `T&`, of the object
+  or of the fallback.
 - `ErrorGroup` (`error_group.h`): a group, the address of its name in flash, a value of 2 bytes that
   takes no memory of its own; no virtual function.
 - `Messages` (`messages.h`): the texts of a group, and `UseMessages()`, which turns them on.
@@ -151,6 +157,31 @@ there is no error, `Map()` changes the value, `OrElse()` recovers from an error 
 `Error` that is one, `ValueOr()` gives a fallback. None calls its function when it has nothing
 to give it. A chain of three steps costs 14 bytes of flash more than the same `if`s written out,
 and no RAM: the lambdas are inlined.
+
+More of Rust's, under its names where Utl has a word of its own for them:
+
+- `ValueOrElse(f)`, Rust's `unwrap_or_else()`: the value, or a fallback that `f` makes from the
+  error, only when it is needed.
+- `Inspect(f)` and `InspectError(f)`, Rust's `inspect()` and `inspect_err()`: look at the value or
+  the error on its way, to print it, and pass the `Result` on as it is. `f` gets a `T const&`, as
+  it looks and does not change.
+- `MapError(f)`, Rust's `map_err()`: an error of a lower layer said in a group of one's own. `f`
+  returns an `Error` or a code, never ok; that is what `OrElse()` is for.
+- `ConsumeError(f)`, only on a `Status` and so on a `Result<void>`: calls `f` with the error, if
+  there is one, and returns nothing, the end of a chain. Rust ends one with `if let` or `match`;
+  a `Result<T>` has none, as it would drop the value unseen.
+
+What the function may return is checked when compiled, with a message that says what to use
+instead. A function that only looks, for `Inspect()`, `InspectError()` and `ConsumeError()`,
+returns nothing, as in Rust: one that returns a `Status`, or anything else, would have it dropped
+unseen. `AndThen()` wants a `Result`, a `Status` or an `optional` back, and points to `Map()` for
+a plain value; `MapError()` wants an `Error` or a code, and points to `OrElse()` to recover.
+
+```cpp
+Receive(true)
+    .Map([](char c) { Serial.println(c); })                         // ok: a Result<void>
+    .ConsumeError([](utl::Error const& e) { e.PrintTo(Serial); });  // or the error, and done
+```
 
 `Map()` with a function that returns nothing gives a `Result<void>`, which is a `Status`:
 
@@ -238,7 +269,27 @@ side, as in a `Result`, so `T` needs a default constructor; an `optional<uint8_t
 `value()` cannot throw `bad_optional_access`, so it returns a `Result` with
 `OptionalError::kEmpty`, the group `optional`; `OkOr()`, as `ok_or()` in Rust, gives your own
 error instead. `AndThen()`, `Map()` and `OrElse()` are what C++23's `std::optional` calls
-`and_then()`, `transform()` and `or_else()`.
+`and_then()`, `transform()` and `or_else()`. From Rust's `Option` it has `ValueOrElse(f)`, a
+fallback made only when it is needed, `Inspect(f)`, and `Filter(predicate)`, which empties it
+unless the predicate holds.
+
+```cpp
+utl::optional<Led&> FindLed(uint8_t pin);  // a reference, or utl::nullopt
+
+if (utl::optional<Led&> const led = FindLed(13)) { led->On(); }
+FindLed(13).ValueOr(spare).On();  // the LED, or the spare itself, not a copy
+```
+
+`optional<T&>` is C++26's `std::optional<T&>`: a reference to an object that lies elsewhere, or
+none. It is a pointer, 2 bytes, null if empty, and `T` needs no default constructor. It binds an
+lvalue only, never a temporary; assigning one rebinds it, as in C++26, and never writes through
+it. `*` and `->` of an empty one are undefined, as there is no `T` to give, and
+[checked](#checked-access) like those of an `optional<T>`. `value()` gives a `Result<T&>`. One
+change: `ValueOr()` gives a `T&`, of the object or of the fallback, which has to be an lvalue for
+that reason, where C++26's `value_or()` gives a copy, which would switch on a copy of the LED
+above. `ValueOrElse(f)` gives a `T&` as well, and `f` has to return one, of an object that
+outlives the call; a `Result<T&>` does the same. A reference that is never absent, a member above
+all, is a [`reference_wrapper`](#reference_wrapper).
 
 ## reference_wrapper
 
@@ -344,7 +395,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 12720 | 12720 | 14078 | 285 | 267 | 287 |
+| SelfCheck | 14052 | 14052 | 15710 | 285 | 267 | 287 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
@@ -391,6 +442,12 @@ checked, as `SelfCheck` is. They reach every line and every branch of `src/`; gc
 template per instance, so the report merges them per line. What they cannot see is the AVR itself:
 the host has no separate flash, so a text in flash read as one in RAM passes there. That, and the
 core's vtables in flash, is what `SelfCheck` in simavr is for.
+
+What must not compile has tests too. Each file in `test/compile_fail/` uses utl wrongly, an
+`Inspect()` whose function returns a value, say, and names in a line `// Expected: ...` the
+message of the `static_assert` that has to stop it. CMake makes a test of each, which calls the
+compiler on the file and passes only if that message comes; a `static_assert` that went missing
+fails it. A new case is a new file there, nothing else.
 
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
 on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".

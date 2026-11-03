@@ -87,6 +87,14 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
             }),
             "utl: * or -> of an empty optional\r\n"
             "utl: * or -> of an empty optional\r\n");
+  // Of an optional<T&> only ->, which gives the null pointer and reads
+  // nothing: * would bind a reference to it, which UBSan stops, and so would
+  // value() of a Result<T&> with an error. SelfCheck checks both on the AVR.
+  EXPECT_EQ(Reported([] {
+              utl::optional<int&> const empty;
+              static_cast<void>(empty.operator->());
+            }),
+            "utl: * or -> of an empty optional\r\n");
   EXPECT_EQ(Reported([&] {
               static_cast<void>(two[2]);
               static_cast<void>(one[1]);
@@ -128,6 +136,11 @@ TEST(MisuseTest, RightAccessIsNotReported) {
               static_cast<void>(ok.value());
               utl::optional<int> const found = 2;
               static_cast<void>(*found);
+              int target = 3;
+              utl::optional<int&> const some = target;
+              static_cast<void>(*some);
+              utl::Result<int&> const ok_reference = target;
+              static_cast<void>(ok_reference.value());
             }),
             "");
 }
