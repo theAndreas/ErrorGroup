@@ -141,5 +141,12 @@ TEST(OptionalTest, FilterKeepsWhatHolds) {
   EXPECT_EQ(Find(42).Filter(even), nullopt);
 }
 
+TEST(OptionalTest, AndThenMayChangeTheType) {
+  auto const letter = [](int index) {
+    return optional<char>(static_cast<char>('a' + index));
+  };
+  EXPECT_EQ(Find(7).AndThen(letter), 'c');
+}
+
 }  // namespace
 }  // namespace utl_test
