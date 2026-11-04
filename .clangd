@@ -2,11 +2,16 @@
 # CMake, against the mock of the core (cmake --preset default writes it);
 # examples/ from tools/tidy.sh --database-only, with the flags the Uno is
 # compiled with, as only that one has the sketches, an .ino as C++ with
-# Arduino.h included first.
+# Arduino.h included first. Both add the checks of the Doxygen blocks that
+# .clang-tidy passes, see docs/Documentation.md.
 CompileFlags:
   CompilationDatabase: build/host
+  Add: [-Wdocumentation, -Wdocumentation-unknown-command,
+        -fcomment-block-commands=stddiff]
 ---
 If:
   PathMatch: examples/.*
 CompileFlags:
   CompilationDatabase: build/tidy/default
+  Add: [-Wdocumentation, -Wdocumentation-unknown-command,
+        -fcomment-block-commands=stddiff]
