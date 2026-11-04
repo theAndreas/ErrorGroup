@@ -1,9 +1,14 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
-//
-// The steps of to_chars() and from_chars() in charconv.h, each a function of
-// its own: the integer and its sign, the digits written or read, and the
-// limit that a number read must not pass.
+
+/*!
+ * \file
+ * \brief The steps of to_chars() and from_chars(), each a function of its own;
+ * not part of the API.
+ *
+ * The integer and its sign, the digits written or read, and the limit that a
+ * number read must not pass.
+ */
 
 #ifndef UTL_SRC_UTL_INTERNAL_CHARCONV_H_
 #define UTL_SRC_UTL_INTERNAL_CHARCONV_H_
@@ -29,9 +34,11 @@ struct IsCharconvInteger<bool> {
   static constexpr bool kValue = false;
 };
 
-// The unsigned integer of T's width, which a number is counted in: a uint8_t
-// is converted with 8-bit arithmetic, not with the 32-bit division that
-// Print::print() of an integer pulls in.
+/*
+ * The unsigned integer of T's width, which a number is counted in: a uint8_t
+ * is converted with 8-bit arithmetic, not with the 32-bit division that
+ * Print::print() of an integer pulls in.
+ */
 template <size_t Size>
 struct UnsignedOfSizeImpl;
 template <>
@@ -157,10 +164,12 @@ inline void Reverse(char* first, char* last) {
   }
 }
 
-// Writes the digits of `magnitude` in `base` from `first` on, and returns
-// their end, or CharconvError::kValueTooLarge at `last`. Each digit takes a
-// division in the width of U; written lowest first and then turned around,
-// they need no buffer of their own.
+/*
+ * Writes the digits of `magnitude` in `base` from `first` on, and returns
+ * their end, or CharconvError::kValueTooLarge at `last`. Each digit takes a
+ * division in the width of U; written lowest first and then turned around,
+ * they need no buffer of their own.
+ */
 template <typename U>
 Result<char*> WriteDigits(char* first, char const* last, U magnitude,
                           uint8_t base) {
@@ -178,10 +187,12 @@ Result<char*> WriteDigits(char* first, char const* last, U magnitude,
   return out;
 }
 
-// Appends digits to a magnitude in a base, up to a limit. The limit is
-// divided once, here, as strtol() does: a magnitude beyond `cutoff_`, or at
-// it with a digit beyond `cutlim_`, would pass it, and no digit needs a
-// division of its own.
+/*
+ * Appends digits to a magnitude in a base, up to a limit. The limit is
+ * divided once, here, as strtol() does: a magnitude beyond `cutoff_`, or at
+ * it with a digit beyond `cutlim_`, would pass it, and no digit needs a
+ * division of its own.
+ */
 template <typename U>
 class DigitAppender {
  public:
@@ -205,9 +216,11 @@ class DigitAppender {
   U cutlim_;
 };
 
-// Reads the digits in `base` from `first` on into `magnitude`, up to `limit`,
-// and returns where they end: CharconvError::kInvalidArgument if there is
-// none, kOutOfRange if they pass the limit.
+/*
+ * Reads the digits in `base` from `first` on into `magnitude`, up to `limit`,
+ * and returns where they end: CharconvError::kInvalidArgument if there is
+ * none, kOutOfRange if they pass the limit.
+ */
 template <typename U>
 Result<char const*> ReadDigits(char const* first, char const* last,
                                uint8_t base, U limit, U& magnitude) {

@@ -11,12 +11,14 @@
 namespace utl {
 namespace {
 
-// Prints `code` in decimal, at most three digits. Not Print::print(code),
-// which brings in the core's printing of an unsigned long, with a 32-bit
-// division: in Basics it cost more than the texts it stands in for. Nor a
-// division of its own: `code / 100` pulled in two of libgcc's division
-// routines, 80 bytes. Counting the hundreds and tens off takes at most two
-// and nine rounds.
+/*
+ * Prints `code` in decimal, at most three digits. Not Print::print(code),
+ * which brings in the core's printing of an unsigned long, with a 32-bit
+ * division: in Basics it cost more than the texts it stands in for. Nor a
+ * division of its own: `code / 100` pulled in two of libgcc's division
+ * routines, 80 bytes. Counting the hundreds and tens off takes at most two
+ * and nine rounds.
+ */
 size_t PrintCode(Print& out, uint8_t code) {
   constexpr uint8_t kHundred = 100;
   constexpr uint8_t kTen = 10;

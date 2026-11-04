@@ -126,8 +126,8 @@ block for the file:
 
 - **`tools/docs.sh`** builds the reference with Doxygen and fails on every warning: a block
   Doxygen cannot read, a parameter without `\param` or a `\param` without parameter, an entity
-  of the API without a block. Until every header is converted, gaps in the headers not yet in
-  its list `CONVERTED` are counted, not failed.
+  of the API without a block. It lets two pass: a gap in `utl::internal`, except
+  `internal/fluent.h`, and a missing `\return`, which a one-line block needs not have.
 - **clang's `-Wdocumentation`**, through clang-tidy and clangd, checks each block against the
   declaration it stands at: a `\param` whose name the function does not have, a `\return` on a
   function that returns nothing, an unknown command. clangd shows these in the editor as you
