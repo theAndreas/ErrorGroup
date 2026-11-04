@@ -409,7 +409,8 @@ sketch, not the `.ino`, for which arduino-cli writes prototypes outside the name
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`: the
   bus in words, the font as a code, as only the bus's texts are turned on.
 - `SelfCheck`: checks the library and prints a line per check, then the number that failed.
-  `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`.
+  `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`. Its checks lie
+  in one file per area, `check_*.cpp`; a new area is a file there and a line in `setup()`.
 
 ## vtables in flash
 
@@ -427,7 +428,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 16168 | 16168 | 18010 | 313 | 295 | 315 |
+| SelfCheck | 16110 | 16110 | 18022 | 313 | 295 | 315 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
