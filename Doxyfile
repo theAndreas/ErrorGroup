@@ -22,11 +22,11 @@ MARKDOWN_ID_STYLE      = GITHUB
 ALIASES                = "stddiff=\par Differs from the standard:^^"
 
 # PROGMEM and the attributes mean nothing to Doxygen; read as they are, a name in flash would
-# be a symbol "not declared". UTL_CHECK_ACCESS on, so that the report of a misuse is in the
-# reference.
+# be a symbol "not declared". UTL_CHECK_ACCESS is left to config.h, so that the switch is in
+# the reference with its default; ReportMisuse() is declared whatever its value.
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             = PROGMEM= "__attribute__(x)=" UTL_CHECK_ACCESS=1
+PREDEFINED             = PROGMEM= "__attribute__(x)="
 
 # A Result shows AndThen() and the rest, which it takes from its base in utl::internal, on its
 # own page.

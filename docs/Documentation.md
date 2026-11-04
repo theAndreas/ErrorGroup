@@ -33,7 +33,9 @@ Result<value_type> at(size_type index) const;
 - `/*!` on a line of its own, each further line starting with ` * `, and ` */` on a line of its
   own. A block that holds only a brief is one line: `/*! \brief The width, in columns. */`.
 - An enum value, a member or a struct field is documented behind it, with `/*!< ... */`, when the
-  brief is all it needs.
+  brief is all it needs and fits on the line. If it does not, a one-line block
+  `/*! \brief ... */` stands above it, as a comment wrapped behind code is what cpplint calls a
+  "complex multi-line comment".
 - Commands start with a backslash, `\brief`, never with `@`.
 
 ### The parts, in this order
@@ -78,6 +80,9 @@ A function that returns nothing has no `\return`. Every parameter has its `\para
 - **`utl::internal`** is not part of the API. A block is welcome but not required. The exception
   is `internal/fluent.h`, whose functions `Status` and `Result` give a sketch: it is documented
   as the API.
+- **Helpers a sketch never sees**, in a file that is otherwise documented as the API, are put
+  between `/*! \cond */` and `/*! \endcond */`: Doxygen leaves them out, and they keep their
+  `//` comments.
 - **Source files, tests and examples** keep `//` comments.
 
 ### A file

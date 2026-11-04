@@ -29,7 +29,17 @@ readonly LOG="${DOCS_DIR}/warnings.log"
 # every header has, the list goes, and every gap fails everywhere.
 readonly CONVERTED=(
   src/Utl.h
+  src/utl/charconv_error.h
+  src/utl/config.h
+  src/utl/error.h
+  src/utl/error_group.h
+  src/utl/index_error.h
+  src/utl/internal/fluent.h
+  src/utl/messages.h
+  src/utl/misuse.h
+  src/utl/optional_error.h
   src/utl/span.h
+  src/utl/status.h
 )
 
 # Prints the warnings that fail, one per line, with paths from the root.

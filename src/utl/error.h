@@ -1,7 +1,10 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
-//
-// An error: the group it comes from and a code within that group.
+
+/*!
+ * \file
+ * \brief An error: the group it comes from and a code within that group.
+ */
 
 #ifndef UTL_SRC_UTL_ERROR_H_
 #define UTL_SRC_UTL_ERROR_H_
@@ -16,51 +19,96 @@ namespace utl {
 
 class Status;
 
-// An error, always: 3 bytes on the Uno, a group and a code within it. What a
-// function returns that may succeed is a Status or a Result, which hold an
-// Error only when something went wrong; "no error" is neither an Error nor
-// a code a group would have to keep free.
-//
-//   const Error error = FontError::kUnknownChar;
-//   error.group().Name();  // "font", never null
-//   error.Message();       // "unknown char", once UseFontMessages() was called
-//
-// Two errors are equal if both the group and the code are, so codes of
-// different groups may overlap.
+/*!
+ * \brief An error, always: a group and a code within it.
+ *
+ * 3 bytes on the Uno. What a function returns that may succeed is a Status or
+ * a Result, which hold an Error only when something went wrong; "no error" is
+ * neither an Error nor a code that a group would have to keep free.
+ *
+ * \code{.cpp}
+ * utl::Error const error = FontError::kUnknownChar;
+ * error.group().Name();  // "font", never null
+ * error.Message();       // "unknown char", once UseFontMessages() was called
+ * \endcode
+ *
+ * Two errors are equal if both the group and the code are, so the codes of
+ * different groups may overlap. A dropped Error warns, as `[[nodiscard]]`:
+ * nothing returns one but to be looked at.
+ */
 class [[nodiscard]] Error {
  public:
-  // `code` of `group`.
+  /*!
+   * \brief Makes the error `code` of `group`.
+   *
+   * \param[in] group The group.
+   * \param[in] code The code within the group.
+   */
   constexpr Error(ErrorGroup group, uint8_t code)
       : group_(group), code_(code) {}
 
-  // A code of a group, found through GetErrorGroup(code). Implicit, unlike the
-  // Google default, because a code of a group is an error and nothing else:
-  // `return FontError::kUnknownChar;` and `error == FontError::kUnknownChar`
-  // say what they mean, with no function call around the code. Takes part in
-  // overload resolution only for an enum with a GetErrorGroup(), so no other
-  // type converts.
+  /*!
+   * \brief Makes the error of a code of a group, as `FontError::kUnknownChar`.
+   *
+   * Implicit, so that `return FontError::kUnknownChar;` and
+   * `error == FontError::kUnknownChar` need no function around the code. Only
+   * an enum with a `GetErrorGroup()` beside it converts; see ErrorGroup.
+   *
+   * \param[in] code The code; its group is `GetErrorGroup(code)`.
+   */
+  // Implicit, unlike the Google default, because a code of a group is an
+  // error and nothing else. The default template argument takes it out of
+  // overload resolution for any other type.
   template <typename Code, typename = decltype(GetErrorGroup(Code()))>
   constexpr Error(Code code)  // NOLINT(runtime/explicit)
       : group_(GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
 
+  /*! \brief Returns the group the error comes from. */
   ErrorGroup group() const { return group_; }
+
+  /*! \brief Returns the code within the group. */
   uint8_t code() const { return code_; }
 
-  // Returns the text of the error, from flash, if the texts of its group are
-  // on (see messages.h); an empty text if not.
+  /*!
+   * \brief Returns the text of the error, from flash.
+   *
+   * \return The text, or an empty text if the texts of its group are off or
+   * have none for the code; see UseMessages().
+   */
   __FlashStringHelper const* Message() const;
 
-  // Prints the group and the text, "bus: nack", or the group and the code,
-  // "bus: 0", if the texts of the group are off. Returns the number of chars,
-  // as Print::print() does. Not Printable, whose vptr would make an Error 5
-  // bytes rather than 3.
+  /*!
+   * \brief Prints the group and the text, as `bus: nack`.
+   *
+   * If the texts of the group are off, it prints the code instead,
+   * as `bus: 0`.
+   *
+   * \param[out] out Where to print, such as `Serial`.
+   * \return The number of chars printed, as Print::print() returns.
+   */
+  // Not Printable, whose vptr would make an Error 5 bytes rather than 3.
   size_t PrintTo(Print& out) const;
 
+  /*!
+   * \brief Returns whether `a` and `b` are the same error, group and code.
+   *
+   * A code converts on either side, as in `error == FontError::kNullText`.
+   *
+   * \param[in] a An error.
+   * \param[in] b Another error.
+   */
   // Hidden friends: found only through an Error, and with the implicit
   // conversion above on either side.
   friend bool operator==(Error const& a, Error const& b) {
     return a.group_ == b.group_ && a.code_ == b.code_;
   }
+
+  /*!
+   * \brief Returns whether `a` and `b` differ in group or code.
+   *
+   * \param[in] a An error.
+   * \param[in] b Another error.
+   */
   friend bool operator!=(Error const& a, Error const& b) { return !(a == b); }
 
  private:
