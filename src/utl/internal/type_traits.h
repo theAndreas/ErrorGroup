@@ -1,8 +1,11 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
-//
-// The few pieces of <utility> and <type_traits> that utl needs: avr-gcc comes
-// without a C++ standard library.
+
+/*!
+ * \file
+ * \brief The few pieces of `<utility>` and `<type_traits>` that Utl needs, as
+ * avr-gcc comes without a C++ standard library; not part of the API.
+ */
 
 #ifndef UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
 #define UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
@@ -104,10 +107,12 @@ template <typename T>
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 using ArrayPointer = T (*)[];
 
-// Names a type only if an array of From may be seen as an array of To, the
-// test std::span makes: it adds const or volatile, as int to const int, but
-// it never turns Derived into Base, whose elements would lie at other
-// distances, nor long into int.
+/*
+ * Names a type only if an array of From may be seen as an array of To, the
+ * test std::span makes: it adds const or volatile, as int to const int, but
+ * it never turns Derived into Base, whose elements would lie at other
+ * distances, nor long into int.
+ */
 template <typename From, typename To>
 using ArrayConvertible =
     decltype(ConvertTo<ArrayPointer<To>>(DeclVal<ArrayPointer<From>>()));
