@@ -7,26 +7,12 @@
 #define UTL_SRC_UTL_RESULT_H_
 
 #include "utl/error.h"
+#include "utl/internal/fluent.h"
 #include "utl/internal/type_traits.h"
 #include "utl/misuse.h"
 #include "utl/status.h"
 
 namespace utl {
-
-template <typename T>
-class Result;
-
-namespace internal {
-
-// Calls `f(args...)` and makes a Result<U> of what it returns, for Map(). The
-// specialization for void calls `f` and returns ok, as `return f(args...);`
-// cannot make a Result of nothing. The arguments are passed on as they are, so
-// that the T& of a Result<T&> reaches `f` as a T&, not a T const&. Defined
-// below Result<void>.
-template <typename U>
-struct MapCall;
-
-}  // namespace internal
 
 // A value of T, or an Error. The value and a Status lie side by side, not in a
 // union: T needs a default constructor, for the value of a Result with an
@@ -47,8 +33,12 @@ struct MapCall;
 // The fluent functions follow Rust's Result: AndThen() goes on with the value,
 // Map() changes it, OrElse() recovers from the error. A function passed to
 // them returns by value; none of them calls it when it has nothing to give.
+// What Result<T> and Result<T&> share lies in internal/fluent.h:
+// AndThen(), Map() and Inspect() in ValueFluent, OrElse(), InspectError() and
+// MapError() in ErrorFluent, which Status has as well. Here is what differs:
+// the storage, value(), ValueOr() and ValueOrElse().
 template <typename T>
-class [[nodiscard]] Result {
+class [[nodiscard]] Result : public internal::ValueFluent<Result<T>, T const&> {
  public:
   // A value. Implicit, like the conversions below, so that a function returns
   // its value or its error as it is: a Result is either, and nothing else.
@@ -81,42 +71,6 @@ class [[nodiscard]] Result {
   // Returns the value, or `fallback` if there is an error.
   T ValueOr(T const& fallback) const { return IsOk() ? value_ : fallback; }
 
-  // Returns `f(value())` if there is no error, or else the error. `f` returns
-  // a Result of any type, or a Status.
-  template <typename F>
-  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T const&>())) {
-    static_assert(internal::IsStatusOrResult<decltype(f(
-                      internal::DeclVal<T const&>()))>::kValue,
-                  "AndThen: f returns a Status or a Result; for a plain value, "
-                  "use Map()");
-    if (!IsOk()) {
-      return *error();
-    }
-    return f(value_);
-  }
-
-  // Returns a Result of `f(value())` if there is no error, or else the error.
-  // A Result<void> if `f` returns nothing: it is called for what it does.
-  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
-                            internal::DeclVal<T const&>()))>
-  Result<U> Map(F f) const {
-    if (!IsOk()) {
-      return *error();
-    }
-    return internal::MapCall<U>::Call(f, value_);
-  }
-
-  // Returns this if there is no error, or else `f(*error())`: `f` gets an Error
-  // that is one and returns a value in place of the missing one, another
-  // error, or a Result.
-  template <typename F>
-  Result OrElse(F f) const {
-    if (IsOk()) {
-      return *this;
-    }
-    return f(*error());
-  }
-
   // Returns the value, or else `f(*error())`, as Rust's unwrap_or_else(): a
   // fallback made only when it is needed, and from the error.
   template <typename F>
@@ -127,49 +81,12 @@ class [[nodiscard]] Result {
     return f(*error());
   }
 
-  // Calls `f(value())` if there is no error, and returns this as it is: to
-  // look at the value on its way, as Rust's inspect(). `f` gets a T const&,
-  // as it looks and does not change.
-  template <typename F>
-  Result Inspect(F f) const {
-    static_assert(
-        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
-        "Inspect: f returns nothing; it only looks, and what it returned "
-        "would be dropped unseen");
-    if (IsOk()) {
-      f(value_);
-    }
-    return *this;
-  }
-
-  // Calls `f(*error())` if there is one, and returns this as it is, as
-  // Status::InspectError().
-  template <typename F>
-  Result InspectError(F f) const {
-    static_assert(internal::IsVoid<decltype(f(*error()))>::kValue,
-                  "InspectError: f returns nothing; it only looks, and what "
-                  "it returned would be dropped unseen");
-    if (!IsOk()) {
-      f(*error());
-    }
-    return *this;
-  }
-
-  // Returns this if there is no error, or else the error `f(*error())`
-  // returns, as Status::MapError(): an Error or a code, never a value.
-  template <typename F>
-  Result MapError(F f) const {
-    static_assert(internal::IsErrorOrCode<decltype(f(*error()))>::kValue,
-                  "MapError: f returns an Error or a code; to recover from the "
-                  "error, use OrElse()");
-    if (IsOk()) {
-      return *this;
-    }
-    Error const mapped = f(*error());
-    return mapped;
-  }
-
  private:
+  friend class internal::ValueFluent<Result, T const&>;
+
+  // The value, unchecked, for ValueFluent, which asks IsOk() first.
+  T const& UncheckedValue() const { return value_; }
+
   T value_;
   Status status_;
 };
@@ -194,7 +111,7 @@ class [[nodiscard]] Result {
 // first. ValueOr() gives a T&, of the object or of the fallback, which is an
 // lvalue for that reason.
 template <typename T>
-class [[nodiscard]] Result<T&> {
+class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
  public:
   // A reference to `object`. Implicit, as the conversions of Result<T>.
   // __builtin_addressof, what std::addressof is built on, takes the address
@@ -241,36 +158,6 @@ class [[nodiscard]] Result<T&> {
   // No temporary as the fallback: the T& returned would outlive it.
   T& ValueOr(T&& fallback) const = delete;
 
-  // As in Result<T>, with a T& given to `f`.
-  template <typename F>
-  auto AndThen(F f) const -> decltype(f(internal::DeclVal<T&>())) {
-    static_assert(internal::IsStatusOrResult<decltype(f(
-                      internal::DeclVal<T&>()))>::kValue,
-                  "AndThen: f returns a Status or a Result; for a plain value, "
-                  "use Map()");
-    if (!IsOk()) {
-      return *error();
-    }
-    return f(*pointer_);
-  }
-
-  template <typename F, typename U = decltype(internal::DeclVal<F&>()(
-                            internal::DeclVal<T&>()))>
-  Result<U> Map(F f) const {
-    if (!IsOk()) {
-      return *error();
-    }
-    return internal::MapCall<U>::Call(f, *pointer_);
-  }
-
-  template <typename F>
-  Result OrElse(F f) const {
-    if (IsOk()) {
-      return *this;
-    }
-    return f(*error());
-  }
-
   // The object referred to, or else the one `f(*error())` refers to. `f`
   // returns a T&, of an object that outlives the call; a T made in `f` would
   // be gone before the caller got to it, so that does not compile.
@@ -285,43 +172,13 @@ class [[nodiscard]] Result<T&> {
     return f(*error());
   }
 
-  // As in Result<T>: `f` gets a T const&, as it looks and does not change.
-  template <typename F>
-  Result Inspect(F f) const {
-    static_assert(
-        internal::IsVoid<decltype(f(internal::DeclVal<T const&>()))>::kValue,
-        "Inspect: f returns nothing; it only looks, and what it returned "
-        "would be dropped unseen");
-    if (IsOk()) {
-      f(static_cast<T const&>(*pointer_));
-    }
-    return *this;
-  }
-
-  template <typename F>
-  Result InspectError(F f) const {
-    static_assert(internal::IsVoid<decltype(f(*error()))>::kValue,
-                  "InspectError: f returns nothing; it only looks, and what "
-                  "it returned would be dropped unseen");
-    if (!IsOk()) {
-      f(*error());
-    }
-    return *this;
-  }
-
-  template <typename F>
-  Result MapError(F f) const {
-    static_assert(internal::IsErrorOrCode<decltype(f(*error()))>::kValue,
-                  "MapError: f returns an Error or a code; to recover from the "
-                  "error, use OrElse()");
-    if (IsOk()) {
-      return *this;
-    }
-    Error const mapped = f(*error());
-    return mapped;
-  }
-
  private:
+  friend class internal::ValueFluent<Result, T&>;
+
+  // The object referred to, unchecked, for ValueFluent, which asks IsOk()
+  // first.
+  T& UncheckedValue() const { return *pointer_; }
+
   T* pointer_;
   Status status_;
 };
