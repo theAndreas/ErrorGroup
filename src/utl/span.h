@@ -42,9 +42,9 @@ namespace utl {
  * \tparam T The type of the elements, `const` for a view that cannot write.
  *
  * \stddiff Only a dynamic extent. at(), first(), last() and subspan() return a
- * Result with IndexError::kOutOfRange where std::span leaves the access
- * undefined or throws. operator[], front() and back() stay unchecked, unless
- * `UTL_CHECK_ACCESS` is 1.
+ *          Result with IndexError::kOutOfRange where std::span leaves the
+ *          access undefined or throws. operator[], front() and back() stay
+ *          unchecked, unless `UTL_CHECK_ACCESS` is 1.
  */
 template <typename T>
 class span {
@@ -106,7 +106,7 @@ class span {
 
   /*!
    * \brief Makes a span of another, as a `span<uint8_t>` into a
-   * `span<uint8_t const>`.
+   *        `span<uint8_t const>`.
    *
    * \param[in] other The span to view the elements of.
    */
@@ -132,7 +132,7 @@ class span {
    * \param[in] index The position, from 0.
    * \return The element.
    * \pre `index` < size(). Beyond the end the access is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
    */
   constexpr reference operator[](size_type index) const {
     return static_cast<void>(internal::Check(index < size_, Misuse::kIndex)),
@@ -162,7 +162,7 @@ class span {
    *
    * \return The first element.
    * \pre The span is not empty(). If it is, the access is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
    */
   constexpr reference front() const {
     return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
@@ -223,7 +223,7 @@ class span {
    *
    * \param[in] offset The position of the first element, from 0.
    * \return The span of them, or IndexError::kOutOfRange if `offset` lies
-   * beyond the end.
+   *         beyond the end.
    *
    * \stddiff Returns a Result where std::span::subspan() is undefined.
    */
@@ -239,8 +239,8 @@ class span {
    *
    * \param[in] offset The position of the first element, from 0.
    * \param[in] count The number of elements.
-   * \return The span of them, or IndexError::kOutOfRange if they do not all
-   * lie within this span.
+   * \return The span of them, or IndexError::kOutOfRange if they do not all lie
+   *         within this span.
    *
    * \stddiff Returns a Result where std::span::subspan() is undefined.
    */

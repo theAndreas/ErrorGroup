@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief A string_view of text in flash, `PROGMEM` or `F("...")`, which has no
- * counterpart in the standard.
+ *        counterpart in the standard.
  */
 
 #ifndef UTL_SRC_UTL_FLASH_STRING_VIEW_H_
@@ -41,10 +41,10 @@ namespace utl {
  * text in RAM.
  *
  * \tparam CharT The type of a char, one byte; flash_string_view is the one for
- * `char`.
+ *               `char`.
  *
  * \note operator[], front() and back() return a char rather than a reference,
- * as there is nothing in RAM to refer to.
+ *       as there is nothing in RAM to refer to.
  */
 template <typename CharT>
 class basic_flash_string_view {
@@ -161,7 +161,7 @@ class basic_flash_string_view {
    *
    * \param[in] index The position, from 0.
    * \pre `index` < size(). Beyond the end the read is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
    */
   CharT operator[](size_type index) const {
     static_cast<void>(internal::Check(index < size_, Misuse::kIndex));
@@ -172,7 +172,7 @@ class basic_flash_string_view {
    * \brief Returns the first char, unchecked.
    *
    * \pre The view is not empty(). If it is, the read is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
    */
   CharT front() const {
     static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty));
@@ -203,12 +203,12 @@ class basic_flash_string_view {
 
   /*!
    * \brief Returns at most `count` chars from `position` on, as
-   * string_view::substr().
+   *        string_view::substr().
    *
    * \param[in] position The position of the first char, from 0.
    * \param[in] count The most chars to take; all to the end by default.
    * \return The view of them, or IndexError::kOutOfRange if `position` lies
-   * beyond the end.
+   *         beyond the end.
    */
   Result<basic_flash_string_view> substr(size_type position,
                                          size_type count = npos) const {
@@ -243,7 +243,7 @@ class basic_flash_string_view {
 
   /*!
    * \brief Returns the position of the first `text`, a text in RAM, from
-   * `position` on.
+   *        `position` on.
    *
    * \param[in] text The text to look for.
    * \param[in] position Where to begin, from 0.

@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief What a function returns that has nothing else to return: ok, or an
- * error.
+ *        error.
  */
 
 #ifndef UTL_SRC_UTL_STATUS_H_
@@ -44,9 +44,9 @@ namespace utl {
  * Result has as well, come from its base.
  *
  * \note Not `[[nodiscard]]`, unlike Result and Error: a sketch drops the Status
- * of a call that draws or sets, `SetText("Hi!")`, as a matter of course. A
- * library marks a function whose Status must be looked at itself:
- * `[[nodiscard]] utl::Status Begin();`.
+ *       of a call that draws or sets, `SetText("Hi!")`, as a matter of course.
+ *       A library marks a function whose Status must be looked at itself:
+ *       `[[nodiscard]] utl::Status Begin();`.
  */
 class Status : public internal::ErrorFluent<Status> {
  public:
@@ -106,8 +106,8 @@ class Status : public internal::ErrorFluent<Status> {
    * `f` is not called if there is an error.
    *
    * \param[in] f A function that takes nothing and returns a Status or a
-   * Result; checked when compiled, with Map() of a Result<void> suggested for a
-   * plain value.
+   *              Result; checked when compiled, with Map() of a Result<void>
+   *              suggested for a plain value.
    * \return What `f` returns, or the error.
    */
   template <typename F>
@@ -136,7 +136,8 @@ class Status : public internal::ErrorFluent<Status> {
    * the value unseen, which `[[nodiscard]]` there keeps from happening.
    *
    * \param[in] f A function that takes an `Error const&` and returns nothing;
-   * checked when compiled, as a Status it returned would be dropped unseen.
+   *              checked when compiled, as a Status it returned would be
+   *              dropped unseen.
    */
   template <typename F>
   void ConsumeError(F f) const {

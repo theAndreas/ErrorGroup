@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief The steps of to_chars() and from_chars(), each a function of its own;
- * not part of the API.
+ *        not part of the API.
  *
  * The integer and its sign, the digits written or read, and the limit that a
  * number read must not pass.

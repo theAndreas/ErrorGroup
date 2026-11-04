@@ -45,8 +45,9 @@ class basic_flash_string_view;
  * \tparam CharT The type of a char; string_view is the one for `char`.
  *
  * \stddiff at() and substr() beyond the end return a Result with
- * IndexError::kOutOfRange where std::string_view throws; find() returns npos,
- * as "not found" is no error. compare() returns an `int8_t`, not an `int`.
+ *          IndexError::kOutOfRange where std::string_view throws; find()
+ *          returns npos, as "not found" is no error. compare() returns an
+ *          `int8_t`, not an `int`.
  */
 template <typename CharT>
 class basic_string_view {
@@ -112,7 +113,7 @@ class basic_string_view {
    *
    * \param[in] index The position, from 0.
    * \pre `index` < size(). Beyond the end the access is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
    */
   constexpr const_reference operator[](size_type index) const {
     return static_cast<void>(internal::Check(index < size_, Misuse::kIndex)),
@@ -123,7 +124,7 @@ class basic_string_view {
    * \brief Returns the first char, unchecked.
    *
    * \pre The view is not empty(). If it is, the access is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kEmpty.
    */
   constexpr const_reference front() const {
     return static_cast<void>(internal::Check(size_ != 0, Misuse::kEmpty)),
@@ -162,7 +163,7 @@ class basic_string_view {
    * \param[in] position The position of the first char, from 0.
    * \param[in] count The most chars to take; all to the end by default.
    * \return The view of them, or IndexError::kOutOfRange if `position` lies
-   * beyond the end.
+   *         beyond the end.
    *
    * \stddiff Returns a Result where std::string_view::substr() throws.
    */
@@ -219,10 +220,10 @@ class basic_string_view {
    *
    * \param[in] count The number of chars to drop.
    * \pre `count` <= size(). More is reported with `UTL_CHECK_ACCESS` at 1, as
-   * Misuse::kRemove, and leaves an empty view either way.
+   *      Misuse::kRemove, and leaves an empty view either way.
    *
    * \stddiff Leaves an empty view where the standard leaves more than size()
-   * undefined.
+   *          undefined.
    */
   void remove_prefix(size_type count) {
     static_cast<void>(internal::Check(count <= size_, Misuse::kRemove));
@@ -251,7 +252,7 @@ class basic_string_view {
    * \param[in] other The view to compare with.
    *
    * \stddiff Returns an `int8_t`, where the standard returns an `int`: only the
-   * sign means anything.
+   *          sign means anything.
    */
   int8_t compare(basic_string_view other) const {
     size_type const common = size_ < other.size_ ? size_ : other.size_;

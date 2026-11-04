@@ -23,7 +23,7 @@ enum class OptionalError : uint8_t {
 
 /*!
  * \brief The name of the group, `"optional"`, in flash; its address is the
- * group.
+ *        group.
  *
  * A sketch that never calls `value()` of an optional does not reference it, and
  * the linker leaves it out.

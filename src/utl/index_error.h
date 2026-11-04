@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief The errors of an index, the group of array, span and the views of
- * text.
+ *        text.
  */
 
 #ifndef UTL_SRC_UTL_INDEX_ERROR_H_

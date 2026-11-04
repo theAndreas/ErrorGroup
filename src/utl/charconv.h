@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief Integers to text and back: std::to_chars() and std::from_chars(), from
- * C++17, for gnu++11, with a Result in place of `std::errc`.
+ *        C++17, for gnu++11, with a Result in place of `std::errc`.
  *
  * A number is converted in the width of its type: to_chars() of a `uint8_t`
  * links an 8-bit division only, where `Serial.print()` of one links the 32-bit
@@ -42,15 +42,15 @@ namespace utl {
  * \param[in] value The number.
  * \param[in] base The base, 2 to 36.
  * \return The end of what was written, or CharconvError::kValueTooLarge if the
- * text does not fit, or CharconvError::kInvalidArgument for a base not 2 to
- * 36. On an error, what lies in [`first`, `last`) is unspecified, as in the
- * standard.
+ *         text does not fit, or CharconvError::kInvalidArgument for a base not
+ *         2 to 36. On an error, what lies in [`first`, `last`) is unspecified,
+ *         as in the standard.
  *
  * \stddiff The base is a `uint8_t`, not an `int`: it lies in 2 to 36, and on
- * the AVR an `int` takes two registers. A base not 2 to 36 gives an error
- * where the standard leaves it undefined. No floating point: a correct
- * to_chars() of a `double` would not fit on an Uno, and avr-libc has
- * `dtostrf()`.
+ *          the AVR an `int` takes two registers. A base not 2 to 36 gives an
+ *          error where the standard leaves it undefined. No floating point: a
+ *          correct to_chars() of a `double` would not fit on an Uno, and
+ *          avr-libc has `dtostrf()`.
  */
 template <typename T>
 Result<char*> to_chars(char* first, char const* last, T value,
@@ -102,7 +102,7 @@ Result<string_view> to_chars(span<char> buffer, T value,
 
 /*!
  * \brief Reads an integer in `base` from the front of [`first`, `last`) into
- * `value`, as std::from_chars().
+ *        `value`, as std::from_chars().
  *
  * It reads only what the standard reads: a minus for a signed T, no plus, no
  * space, no `0x`; digits beyond 9 in either case. It stops at the first char
@@ -114,13 +114,14 @@ Result<string_view> to_chars(span<char> buffer, T value,
  * \param[out] value The number read; left as it is on an error.
  * \param[in] base The base, 2 to 36.
  * \return Where the number ends, which may be `last`.
- * CharconvError::kInvalidArgument if no number begins at `first` or for a base
- * not 2 to 36; CharconvError::kOutOfRange if the number does not fit into T.
+ *         CharconvError::kInvalidArgument if no number begins at `first` or for
+ *         a base not 2 to 36; CharconvError::kOutOfRange if the number does not
+ *         fit into T.
  *
  * \stddiff On an error there is no pointer, where the standard gives one past
- * the digits of a number out of range: a Result holds a value or an error, not
- * both. To go on behind such a number, skip its digits. The base is a
- * `uint8_t`, as for to_chars().
+ *          the digits of a number out of range: a Result holds a value or an
+ *          error, not both. To go on behind such a number, skip its digits. The
+ *          base is a `uint8_t`, as for to_chars().
  */
 template <typename T>
 Result<char const*> from_chars(char const* first, char const* last, T& value,

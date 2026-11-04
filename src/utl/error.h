@@ -76,7 +76,7 @@ class [[nodiscard]] Error {
    * \brief Returns the text of the error, from flash.
    *
    * \return The text, or an empty text if the texts of its group are off or
-   * have none for the code; see UseMessages().
+   *         have none for the code; see UseMessages().
    */
   __FlashStringHelper const* Message() const;
 
