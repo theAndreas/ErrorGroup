@@ -67,11 +67,13 @@ class span {
    */
   constexpr span(T* data, size_type size) : data_(data), size_(size) {}
 
-  // The conversions below are implicit, as in std::span: a span is a view of
-  // what it is made from, and a function that takes one should take a C array
-  // or a utl::array as it is. Each takes part only if an array of the source
-  // may be seen as an array of T, so a span of Derived never becomes a span
-  // of Base.
+  /*
+   * The conversions below are implicit, as in std::span: a span is a view of
+   * what it is made from, and a function that takes one should take a C array
+   * or a utl::array as it is. Each takes part only if an array of the source
+   * may be seen as an array of T, so a span of Derived never becomes a span
+   * of Base.
+   */
 
   /*!
    * \brief Makes a span of a whole C array.

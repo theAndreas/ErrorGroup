@@ -7,11 +7,31 @@ holds for every header in `src/`.
 ## Two kinds of comment
 
 - **A Doxygen block `/*! ... */`** documents an entity for its user: what it is, how to use it,
-  what it costs. It stands at the declaration, in the header, and ends up in the reference.
-- **A plain `//` comment** explains the implementation to the next person who changes it: why it
-  is written this way, which alternative was rejected and why. It is not in the reference.
+  what it costs. It stands right above the declaration, in the header, and ends up in the
+  reference.
+- **A comment on the implementation** explains it to the next person who changes it: why it is
+  written this way, which alternative was rejected and why. It is not in the reference.
+  - One or two lines, it is a `//` comment.
+  - Three lines or more, or more than one paragraph, it is a block `/* ... */`, each line
+    starting with ` * `, without the `!` that would make it Doxygen's.
 
 A comment says what the code cannot say for itself. It does not repeat the code.
+
+### Where a comment on the implementation stands
+
+Where the code it explains is, never between a Doxygen block and its declaration, where it would
+read as a second comment of no one:
+
+- **In the body** of the function it explains, as why a constructor is implicit, or why
+  `__builtin_addressof` and not `&`.
+- **Above the private member** whose layout it explains, as why a value and a flag lie side by
+  side rather than in a union.
+- **At the definition in the `.cpp`**, when it explains that.
+- **In the Doxygen block** instead, when the user should know it after all: that
+  `reference_wrapper<int const> r = 5` does not compile is for the user, as a `\note`.
+
+Only a `NOLINTNEXTLINE` stands between a block and its declaration, as it has to stand right above
+the line it is for.
 
 ## The block
 
@@ -33,7 +53,9 @@ Result<value_type> at(size_type index) const;
 - `/*!` on a line of its own, each further line starting with ` * `, and ` */` on a line of its
   own. A block that holds only a brief is one line: `/*! \brief The width, in columns. */`.
 - An enum value, a member or a struct field is documented behind it, with `/*!< ... */`, when the
-  brief is all it needs.
+  brief is all it needs and fits on the line. If it does not, a one-line block
+  `/*! \brief ... */` stands above it, as a comment wrapped behind code is what cpplint calls a
+  "complex multi-line comment".
 - Commands start with a backslash, `\brief`, never with `@`.
 
 ### The parts, in this order
@@ -78,6 +100,9 @@ A function that returns nothing has no `\return`. Every parameter has its `\para
 - **`utl::internal`** is not part of the API. A block is welcome but not required. The exception
   is `internal/fluent.h`, whose functions `Status` and `Result` give a sketch: it is documented
   as the API.
+- **Helpers a sketch never sees**, in a file that is otherwise documented as the API, are put
+  between `/*! \cond */` and `/*! \endcond */`: Doxygen leaves them out, and they keep their
+  `//` comments.
 - **Source files, tests and examples** keep `//` comments.
 
 ### A file
