@@ -9,17 +9,31 @@
                 "llvm-vs-code-extensions.vscode-clangd",
                 "ms-vscode.cpptools",
                 "eamodio.gitlens",
+                "cschlosser.doxdocgen",
                 "openai.chatgpt"
             ],
             // clangd for IntelliSense, with the databases .clangd names; cpptools only
             // for debugging, its IntelliSense off so that the two do not answer twice.
+            // doxdocgen writes the skeleton of a Doxygen block, see the settings below.
             // No header insertion: a sketch includes <Utl.h> first, and an include
             // put in by the editor would not know that. An .ino is C++.
             "settings": {
                 "C_Cpp.intelliSenseEngine": "disabled",
                 "clangd.path": "/usr/local/bin/clangd",
                 "clangd.arguments": ["--header-insertion=never"],
-                "files.associations": { "*.ino": "cpp" }
+                "files.associations": { "*.ino": "cpp" },
+                // The skeleton of a Doxygen block in the style of docs/Documentation.md:
+                // /*! and Enter above a declaration.
+                "doxdocgen.c.triggerSequence": "/*!",
+                "doxdocgen.c.firstLine": "/*!",
+                "doxdocgen.c.commentPrefix": " * ",
+                "doxdocgen.c.lastLine": " */",
+                "doxdocgen.generic.briefTemplate": "\\brief {text}",
+                "doxdocgen.generic.paramTemplate": "\\param[in] {param} ",
+                "doxdocgen.cpp.tparamTemplate": "\\tparam {param} ",
+                "doxdocgen.generic.returnTemplate": "\\return ",
+                "doxdocgen.generic.includeTypeAtReturn": false,
+                "doxdocgen.generic.order": ["brief", "empty", "tparam", "param", "return"]
             }
         }
     },
@@ -28,7 +42,7 @@
     },
     // arduino:avr at 1.8.8, as CI pins it: the plugin loads only into the cc1plus it was
     // built for, and the sizes in the README were measured with it.
-    "postCreateCommand": "arduino-cli core update-index && arduino-cli core install arduino:avr@1.8.8 && tools/build_plugin.sh && cmake --preset default && tools/tidy.sh --database-only && arduino-cli version && arduino-lint --version && gh --version && uv --version && clangd --version && command -v simavr",
+    "postCreateCommand": "arduino-cli core update-index && arduino-cli core install arduino:avr@1.8.8 && tools/build_plugin.sh && cmake --preset default && tools/tidy.sh --database-only && arduino-cli version && arduino-lint --version && gh --version && uv --version && clangd --version && command -v simavr && doxygen --version",
     "mounts": [
         {
             "source": "utl-arduino15",

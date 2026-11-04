@@ -11,12 +11,12 @@ FROM ${BASE_IMAGE}
 
 # CMake, Ninja and GoogleTest build and run the tests on the host; simavr runs
 # examples/SelfCheck as an Uno would (tools/self_check.sh); jq writes the compilation
-# database of tools/tidy.sh. From apt rather than pinned like the tools below: the
-# distribution's versions are what CI installs as well, and none of them has a bug that
-# forces a newer release.
+# database of tools/tidy.sh; Doxygen builds the reference (tools/docs.sh), and is not on
+# PyPI. From apt rather than pinned like the tools below: the distribution's versions are
+# what CI installs as well, and none of them has a bug that forces a newer release.
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        cmake ninja-build libgtest-dev simavr jq && \
+        cmake ninja-build libgtest-dev simavr jq doxygen && \
     rm -rf /var/lib/apt/lists/*
 
 # arduino-cli compiles the library and its examples with the real Arduino AVR core, which

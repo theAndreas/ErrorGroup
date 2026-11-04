@@ -418,8 +418,8 @@ core.
 ## Build and check
 
 Needs `arduino-cli` with `arduino:avr`, a host `g++` for the plugin, `simavr`, `uv` and `jq`; for
-the tests on the host CMake, Ninja and GoogleTest (`libgtest-dev`). The dev container below has
-them all.
+the tests on the host CMake, Ninja and GoogleTest (`libgtest-dev`); for the reference Doxygen. The
+dev container below has them all.
 
 ```bash
 tools/build_plugin.sh             # build/avr-flash-vtbl.so
@@ -430,6 +430,7 @@ cmake --workflow --preset sanitize  # the same under AddressSanitizer and UBSan
 tools/coverage.sh                 # the same with --coverage: what of src/ they reach
 tools/lint.sh [--fix]             # clang-format, cpplint, shellcheck, actionlint; --fix formats C++
 tools/tidy.sh                     # clang-tidy: library and examples as for the Uno, and the tests
+tools/docs.sh                     # the reference from the Doxygen blocks, in build/docs/html
 ```
 
 The dev container in `.devcontainer/` carries all of it, with clangd for IntelliSense, which
@@ -451,6 +452,12 @@ fails it. A new case is a new file there, nothing else.
 
 CI (`.github/workflows/ci.yml`) runs the same scripts on every pull request, and `arduino-lint`
 on top; the table of flash and RAM lands in the summary of the job "Examples on arduino:avr:uno".
+
+The reference, built from the Doxygen blocks of `src/`, is published at
+<https://theandreas.github.io/Utl/>; how a block is written, and how it is checked, is in
+[docs/Documentation.md](docs/Documentation.md). `tools/docs.sh` builds it and fails on a block
+Doxygen cannot read or an entity of the API without one; CI runs it on every pull request
+(`.github/workflows/docs.yml`) and publishes it from `main`.
 
 The code follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html),
 the scripts the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html).

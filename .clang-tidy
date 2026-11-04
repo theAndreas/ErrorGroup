@@ -36,6 +36,14 @@ Checks: >
 #   is unused where the context explains it, as the enum that only picks the
 #   overload of GetErrorGroup().
 WarningsAsErrors: '*'
+# The Doxygen blocks, checked against the declaration they stand at: a \param
+# whose name the function does not have, a \return on a function that returns
+# nothing, an unknown command. \stddiff is the alias of the Doxyfile. See
+# docs/Documentation.md; .clangd adds the same, so the editor shows them.
+ExtraArgs:
+  - -Wdocumentation
+  - -Wdocumentation-unknown-command
+  - -fcomment-block-commands=stddiff
 # (^|/), as tools/tidy.sh names the files relative to the repository, and a
 # header beside an example is found as examples/.../font_error.h.
 HeaderFilterRegex: '(^|/)(src|examples)/'

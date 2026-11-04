@@ -1,11 +1,22 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
-//
-// What a sketch includes, and first: arduino-cli finds a library only by a
-// header that lies directly in its src/, not by <utl/error.h>, and it goes
-// through a sketch's includes in order. Once this header has found the
-// library, src/ is on the include path and <utl/...> works in every file. The
-// name is the library's, as Arduino expects, not lower case as Google's.
+
+/*!
+ * \file
+ * \brief The header a sketch includes, before any other that uses Utl.
+ *
+ * It includes all of Utl. arduino-cli finds a library only by a header that
+ * lies directly in its `src/`, not by `<utl/error.h>`, and it goes through a
+ * sketch's includes in order. Once this header has found the library, `src/`
+ * is on the include path, and `<utl/...>` works in every file after it.
+ *
+ * \code{.cpp}
+ * #include <Utl.h>
+ * #include "font_error.h"  // which includes <utl/error_group.h>
+ * \endcode
+ */
+
+// The name is the library's, as Arduino expects, not lower case as Google's.
 //
 // It includes all of utl, against Google's "include what you use", which this
 // library follows everywhere else. Weighed on 2026-11-02:
@@ -44,5 +55,17 @@
 #include "utl/span.h"               // IWYU pragma: export
 #include "utl/status.h"             // IWYU pragma: export
 #include "utl/string_view.h"        // IWYU pragma: export
+
+/*!
+ * \namespace utl
+ * \brief Everything Utl provides.
+ */
+
+/*!
+ * \namespace utl::internal
+ * \brief What Utl builds itself from; not part of its API.
+ *
+ * A sketch does not name anything in it. It may change in any release.
+ */
 
 #endif  // UTL_SRC_UTL_H_
