@@ -119,15 +119,19 @@ RUN UV_TOOL_DIR=/opt/uv/tools UV_PYTHON_INSTALL_DIR=/opt/uv/python \
 # toolchain, and the checkers from PyPI, are downloaded on first use, and the volumes are
 # what keep a rebuild from fetching them again. An empty named volume takes its ownership
 # from the path it covers, so the path has to exist and belong to the remote user first,
-# or nothing can write into it.
+# or nothing can write into it. `install -d` gives only the last component to the owner and
+# creates missing parents as root, so ~/.cache is named on its own: a base image without it
+# would otherwise leave it to root, and arduino-cli could not put its build cache there.
 RUN install -d -o vscode -g vscode -m 0755 /home/vscode/.arduino15 && \
-    install -d -o vscode -g vscode -m 0755 /home/vscode/.cache/uv
+    install -d -o vscode -g vscode -m 0755 /home/vscode/.cache /home/vscode/.cache/uv
 
 # The same arrangement for the two logins a rebuild would otherwise throw away: Codex, whose
 # extension the shared feature installs, and gh, which every push and every pull request
 # goes through. Mode 0700 rather than 0755, because what these hold is a credential and not
-# a cache - and gh refuses to read a config directory others can enter.
+# a cache - and gh refuses to read a config directory others can enter. ~/.config is
+# named on its own, as ~/.cache above, so that it does not fall to root.
 RUN install -d -o vscode -g vscode -m 0700 /home/vscode/.codex && \
+    install -d -o vscode -g vscode -m 0755 /home/vscode/.config && \
     install -d -o vscode -g vscode -m 0700 /home/vscode/.config/gh
 
 # GitHub's SSH host key, so that the first git operation in a fresh container verifies
