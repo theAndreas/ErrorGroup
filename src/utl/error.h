@@ -56,12 +56,15 @@ class [[nodiscard]] Error {
    *
    * \param[in] code The code; its group is `GetErrorGroup(code)`.
    */
-  // Implicit, unlike the Google default, because a code of a group is an
-  // error and nothing else. The default template argument takes it out of
-  // overload resolution for any other type.
   template <typename Code, typename = decltype(GetErrorGroup(Code()))>
   constexpr Error(Code code)  // NOLINT(runtime/explicit)
-      : group_(GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {}
+      : group_(GetErrorGroup(code)), code_(static_cast<uint8_t>(code)) {
+    /*
+     * Implicit, unlike the Google default, because a code of a group is an
+     * error and nothing else. The default template argument takes it out of
+     * overload resolution for any other type.
+     */
+  }
 
   /*! \brief Returns the group the error comes from. */
   ErrorGroup group() const { return group_; }
@@ -86,7 +89,6 @@ class [[nodiscard]] Error {
    * \param[out] out Where to print, such as `Serial`.
    * \return The number of chars printed, as Print::print() returns.
    */
-  // Not Printable, whose vptr would make an Error 5 bytes rather than 3.
   size_t PrintTo(Print& out) const;
 
   /*!
@@ -97,9 +99,9 @@ class [[nodiscard]] Error {
    * \param[in] a An error.
    * \param[in] b Another error.
    */
-  // Hidden friends: found only through an Error, and with the implicit
-  // conversion above on either side.
   friend bool operator==(Error const& a, Error const& b) {
+    // A hidden friend: found only through an Error, and with the implicit
+    // conversion above on either side.
     return a.group_ == b.group_ && a.code_ == b.code_;
   }
 
@@ -114,9 +116,11 @@ class [[nodiscard]] Error {
  private:
   friend class Status;
 
-  // Status keeps an Error with no group for "ok", so that it needs no flag
-  // beside it and stays 3 bytes. Private: only Status makes one, and it never
-  // hands it out.
+  /*
+   * Status keeps an Error with no group for "ok", so that it needs no flag
+   * beside it and stays 3 bytes. Private: only Status makes one, and it never
+   * hands it out.
+   */
   constexpr explicit Error(decltype(nullptr))
       : group_(ErrorGroup(nullptr)), code_(0) {}
 

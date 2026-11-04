@@ -23,10 +23,12 @@ namespace utl {
  *
  * Reported to ReportMisuse() when `UTL_CHECK_ACCESS` is 1.
  */
-// An enum rather than a text at the place of the check: the checks lie in
-// templates, where F() would put one text into flash for every instantiation,
-// and where avr-gcc can end in a "section type conflict".
 enum class Misuse : uint8_t {
+  /*
+   * An enum rather than a text at the place of the check: the checks lie in
+   * templates, where F() would put one text into flash for every
+   * instantiation, and where avr-gcc can end in a "section type conflict".
+   */
   kResultValue,   /*!< `value()` of a Result with an error. */
   kOptionalValue, /*!< `*` or `->` of an empty optional. */
   kIndex,         /*!< `[]` beyond the end. */
@@ -71,10 +73,12 @@ size_t PrintMisuse(Print& out, Misuse misuse);
 
 namespace internal {
 
-// Reports `misuse` unless `ok`, and returns `ok`. constexpr, so that the
-// accessors that call it stay constexpr: the report lies in the branch of
-// ?: that a right access never takes, so a constant expression never reaches
-// it, and with the switch off there is none.
+/*
+ * Reports `misuse` unless `ok`, and returns `ok`. constexpr, so that the
+ * accessors that call it stay constexpr: the report lies in the branch of
+ * ?: that a right access never takes, so a constant expression never reaches
+ * it, and with the switch off there is none.
+ */
 #if UTL_CHECK_ACCESS
 constexpr bool Check(bool ok, Misuse misuse) {
   return ok ? true : (ReportMisuse(misuse), false);

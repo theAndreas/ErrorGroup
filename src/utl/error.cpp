@@ -48,6 +48,7 @@ __FlashStringHelper const* Error::Message() const {
   return text != nullptr ? text : F("");
 }
 
+// Not Printable, whose vptr would make an Error 5 bytes rather than 3.
 size_t Error::PrintTo(Print& out) const {
   size_t count = out.print(group_.Name());
   count += out.print(F(": "));

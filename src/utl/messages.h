@@ -44,8 +44,6 @@ namespace utl {
  * \note Name the group by its array, as above, not through a function: the
  * static has to be initialized when compiled, or it costs a guard.
  */
-// A switch for the whole build, UTL_ERROR_TEXTS before, could not tell the
-// texts a sketch asks for from the others.
 class Messages {
  public:
   /*!
@@ -85,6 +83,11 @@ class Messages {
  private:
   friend void UseMessages(Messages& messages);
 
+  /*
+   * A Messages per group, linked only into a sketch that calls the group's
+   * function: a switch for the whole build, UTL_ERROR_TEXTS before, could not
+   * tell the texts a sketch asks for from the others.
+   */
   ErrorGroup group_;
   char const* const* texts_;
   uint8_t count_;

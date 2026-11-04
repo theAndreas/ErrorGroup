@@ -28,8 +28,6 @@ enum class IndexError : uint8_t {
  * A sketch that never calls `at()`, `first()`, `last()`, `subspan()` or
  * `substr()` does not reference it, and the linker leaves it out.
  */
-// Defined in index_error.cpp; a name in flash is a char array, declared here
-// without its text, as only one file may define it.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 extern char const kIndexErrorGroup[] PROGMEM;
 

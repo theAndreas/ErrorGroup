@@ -29,19 +29,23 @@ class Result;
 
 namespace internal {
 
-// Calls `f(args...)` and makes a Result<U> of what it returns, for Map(). The
-// specialization for void calls `f` and returns ok, as `return f(args...);`
-// cannot make a Result of nothing. The arguments are passed on as they are, so
-// that the T& of a Result<T&> reaches `f` as a T&, not a T const&. Defined in
-// result.h, below Result<void>.
+/*
+ * Calls `f(args...)` and makes a Result<U> of what it returns, for Map(). The
+ * specialization for void calls `f` and returns ok, as `return f(args...);`
+ * cannot make a Result of nothing. The arguments are passed on as they are, so
+ * that the T& of a Result<T&> reaches `f` as a T&, not a T const&. Defined in
+ * result.h, below Result<void>.
+ */
 template <typename U>
 struct MapCall;
 
-// What the functions passed to the fluent functions may return, checked with
-// a static_assert and a message that says what to use instead: the error
-// that a template deep in AndThen() or MapError() gives otherwise names
-// neither. Each takes the type as the function returns it, by value, by
-// reference or const.
+/*
+ * What the functions passed to the fluent functions may return, checked with
+ * a static_assert and a message that says what to use instead: the error
+ * that a template deep in AndThen() or MapError() gives otherwise names
+ * neither. Each takes the type as the function returns it, by value, by
+ * reference or const.
+ */
 
 // kValue: whether T is a Status or a Result, what AndThen() goes on with.
 template <typename T>
@@ -87,7 +91,6 @@ struct IsErrorOrCode {
  *
  * \tparam Self The class that derives from it, which each function returns.
  */
-// It asks Self only for IsOk() and error(), which each has.
 template <typename Self>
 class ErrorFluent {
  public:
@@ -160,6 +163,8 @@ class ErrorFluent {
   friend class ValueFluent;
   constexpr ErrorFluent() = default;
 
+  // Self as what it is. It is asked only for IsOk() and error(), which each
+  // Self has.
   Self const& AsSelf() const { return static_cast<Self const&>(*this); }
 };
 
@@ -173,11 +178,6 @@ class ErrorFluent {
  * \tparam Self The class that derives from it.
  * \tparam Value What value() gives and what `f` gets, a `T const&` or a `T&`.
  */
-// One base for a Result, not two.
-// It takes the value through UncheckedValue(), which Self keeps private and
-// opens to it as a friend, and only when there is one: value() would check
-// again what IsOk() has just said, which with UTL_CHECK_ACCESS at 1 cost
-// SelfCheck 360 bytes.
 template <typename Self, typename Value>
 class ValueFluent : public ErrorFluent<Self> {
  public:
@@ -238,12 +238,19 @@ class ValueFluent : public ErrorFluent<Self> {
   }
 
  private:
-  // Only Self makes one, as for ErrorFluent.
+  // Only Self makes one, as for ErrorFluent. It derives from ErrorFluent,
+  // rather than Self from both, so that a Result has one base, not two.
   friend Self;
   constexpr ValueFluent() = default;
 
   using Looked = RemoveReference<Value> const&;
 
+  /*
+   * Self as what it is. The value is taken through UncheckedValue(), which
+   * Self keeps private and opens to this as a friend, and only when there is
+   * one: value() would check again what IsOk() has just said, which with
+   * UTL_CHECK_ACCESS at 1 cost SelfCheck 360 bytes.
+   */
   Self const& AsSelf() const { return static_cast<Self const&>(*this); }
 };
 

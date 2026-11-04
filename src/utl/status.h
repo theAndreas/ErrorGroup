@@ -72,11 +72,12 @@ class Status : public internal::ErrorFluent<Status> {
    *
    * \param[in] code The code; see Error.
    */
-  // Without it, `return FontError::kUnknownChar;` would need two conversions in
-  // a row, which C++ does not make implicitly.
   template <typename Code, typename = decltype(GetErrorGroup(Code()))>
   constexpr Status(Code code)  // NOLINT(runtime/explicit)
-      : error_(code) {}
+      : error_(code) {
+    // Without it, `return FontError::kUnknownChar;` would need two conversions
+    // in a row, which C++ does not make implicitly.
+  }
 
   /*! \brief Returns whether there is no error. */
   bool IsOk() const { return error_.IsNone(); }
@@ -156,8 +157,8 @@ class Status : public internal::ErrorFluent<Status> {
    * \param[in] a A Status.
    * \param[in] b Another Status.
    */
-  // Two ok ones are equal, as both hold the same null group and code 0.
   friend bool operator==(Status const& a, Status const& b) {
+    // Two ok ones are equal, as both hold the same null group and code 0.
     return a.error_ == b.error_;
   }
 

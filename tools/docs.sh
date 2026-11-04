@@ -37,7 +37,10 @@ readonly CONVERTED=(
   src/utl/internal/fluent.h
   src/utl/messages.h
   src/utl/misuse.h
+  src/utl/optional.h
   src/utl/optional_error.h
+  src/utl/reference_wrapper.h
+  src/utl/result.h
   src/utl/span.h
   src/utl/status.h
 )

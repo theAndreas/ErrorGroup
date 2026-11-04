@@ -10,6 +10,8 @@
 
 namespace utl {
 
+// The name of the group, declared in optional_error.h without its text, as only
+// one file may define it: a name in flash is a char array.
 char const kOptionalErrorGroup[] PROGMEM = "optional";
 
 namespace {

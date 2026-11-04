@@ -6,12 +6,6 @@
  * \brief The group an error comes from.
  */
 
-// A group is one object per program, and its address is what makes it
-// unique: no one has to hand out group ids, and a component adds a group of
-// its own without changing this library. See docu/ErrorHandling.md of
-// MaxMatrix, "Domains: what makes one unique", for the alternatives that
-// were weighed.
-
 #ifndef UTL_SRC_UTL_ERROR_GROUP_H_
 #define UTL_SRC_UTL_ERROR_GROUP_H_
 
@@ -50,11 +44,6 @@ namespace utl {
  * The texts of the codes are not part of the group: a sketch that wants them
  * in words turns them on with UseMessages(), see messages.h.
  */
-// A virtual Message(), as before, linked every text of every group into any
-// sketch that made an error, printed or not, as GCC cannot drop a virtual
-// function no one calls; and it put a vtable into RAM, which only a compiler
-// plugin moved to flash. A group object, as after that, still took 2 bytes of
-// RAM, as avr-gcc keeps const data there; the name lies in flash already.
 class ErrorGroup {
  public:
   /*!
@@ -95,6 +84,18 @@ class ErrorGroup {
   // No group, which only an Error inside a Status holds, for "ok".
   constexpr explicit ErrorGroup(decltype(nullptr)) : name_(nullptr) {}
 
+  /*
+   * The address of the name is what makes a group unique: no one has to hand
+   * out group ids, and a component adds a group of its own without changing
+   * this library. See docu/ErrorHandling.md of MaxMatrix, "Domains: what
+   * makes one unique", for the alternatives that were weighed.
+   *
+   * A virtual Message(), as before, linked every text of every group into any
+   * sketch that made an error, printed or not, as GCC cannot drop a virtual
+   * function no one calls; and it put a vtable into RAM, which only a compiler
+   * plugin moved to flash. A group object, as after that, still took 2 bytes
+   * of RAM, as avr-gcc keeps const data there; the name lies in flash already.
+   */
   char const* name_;
 };
 

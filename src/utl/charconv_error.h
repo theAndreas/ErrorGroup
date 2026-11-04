@@ -36,8 +36,6 @@ enum class CharconvError : uint8_t {
  * A sketch that never converts does not reference it, and the linker leaves it
  * out.
  */
-// Defined in charconv_error.cpp; a name in flash is a char array, declared here
-// without its text, as only one file may define it.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 extern char const kCharconvErrorGroup[] PROGMEM;
 
