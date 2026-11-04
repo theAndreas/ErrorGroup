@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief The texts of a group's codes, for a sketch that wants its errors in
- * words.
+ *        words.
  */
 
 #ifndef UTL_SRC_UTL_MESSAGES_H_
@@ -42,7 +42,7 @@ namespace utl {
  * others. The object takes 7 bytes of RAM, in the sketch that calls it.
  *
  * \note Name the group by its array, as above, not through a function: the
- * static has to be initialized when compiled, or it costs a guard.
+ *       static has to be initialized when compiled, or it costs a guard.
  */
 class Messages {
  public:
@@ -50,10 +50,10 @@ class Messages {
    * \brief Makes the texts of `group` from its table.
    *
    * \tparam N The number of texts, at most 255, as a code is a `uint8_t`;
-   * checked when compiled.
+   *           checked when compiled.
    * \param[in] group The group the texts belong to.
    * \param[in] texts The table, in `PROGMEM`, a text per code in the order of
-   * the codes.
+   *                  the codes.
    */
   template <size_t N>
   constexpr Messages(ErrorGroup group, array<char const*, N> const& texts)
@@ -75,8 +75,8 @@ class Messages {
    * \param[in] group The group.
    * \param[in] code The code within the group.
    * \return The text, or null if the texts of the group are off or have none
-   * for the code. Error then prints the code, which says more than "unknown
-   * code" would, and costs no text.
+   *         for the code. Error then prints the code, which says more than
+   *         "unknown code" would, and costs no text.
    */
   static __FlashStringHelper const* Find(ErrorGroup group, uint8_t code);
 
@@ -102,8 +102,8 @@ class Messages {
  * From then on Error::Message() and Error::PrintTo() find them. Once is
  * enough; a second call with the same object does nothing.
  *
- * \param[in,out] messages The texts. They have to live as long as the
- * program, as a `static` does.
+ * \param[in,out] messages The texts. They have to live as long as the program,
+ *                         as a `static` does.
  */
 void UseMessages(Messages& messages);
 

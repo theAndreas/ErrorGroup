@@ -37,9 +37,9 @@ namespace utl {
  * \endcode
  *
  * \warning Define the name exactly once, in one `.cpp` file, and declare it
- * `extern` in the header. A `const` array defined in a header gets a copy in
- * every file that includes it, each at an address of its own, and errors made
- * in different files would not compare equal.
+ *          `extern` in the header. A `const` array defined in a header gets a
+ *          copy in every file that includes it, each at an address of its own,
+ *          and errors made in different files would not compare equal.
  *
  * The texts of the codes are not part of the group: a sketch that wants them
  * in words turns them on with UseMessages(), see messages.h.

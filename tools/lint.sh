@@ -3,11 +3,12 @@
 # Copyright 2026 Andreas Burnickl
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Checks the style of the C++ sources (clang-format, cpplint), of the scripts
-# (shellcheck) and of the CI workflow (actionlint). With --fix, formats the
-# C++ sources instead of only checking them. The tools come from PyPI through
-# uvx, at fixed versions, so that nothing has to be installed and every
-# machine checks the same.
+# Checks the style of the C++ sources (clang-format, cpplint, and the indent
+# of the lines that continue a Doxygen command, tools/doc_indent.pl), of the
+# scripts (shellcheck) and of the CI workflow (actionlint). With --fix, formats
+# the C++ sources instead of only checking them. The tools come from PyPI
+# through uvx, at fixed versions, so that nothing has to be installed and
+# every machine checks the same; doc_indent.pl needs only Perl.
 
 set -euo pipefail
 
@@ -39,11 +40,16 @@ main() {
   mapfile -t scripts < <("${files[@]}" 'tools/*.sh')
 
   local failed=0
+  # The lines that continue a command of a Doxygen block start under its text,
+  # docs/Documentation.md. clang-format keeps them so, but a line it breaks
+  # starts at the margin again, so the indent comes after it.
   if ((fix)); then
     uvx --from "${CLANG_FORMAT}" clang-format -i "${sources[@]}"
+    tools/doc_indent.pl --fix "${sources[@]}"
   else
     uvx --from "${CLANG_FORMAT}" clang-format --dry-run --Werror \
       "${sources[@]}" || failed=1
+    tools/doc_indent.pl --check "${sources[@]}" || failed=1
   fi
   uvx "${CPPLINT}" --quiet "${sources[@]}" || failed=1
   uvx --from "${SHELLCHECK}" shellcheck -x "${scripts[@]}" || failed=1

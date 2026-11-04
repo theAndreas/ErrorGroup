@@ -38,8 +38,8 @@ namespace utl {
  * \tparam N The number of elements, at least 1; checked when compiled.
  *
  * \stddiff at() returns a Result with IndexError::kOutOfRange where
- * std::array::at() throws, as a sketch is built without exceptions. No
- * array of no elements.
+ *          std::array::at() throws, as a sketch is built without exceptions. No
+ *          array of no elements.
  */
 template <typename T, size_t N>
 struct array {
@@ -77,7 +77,7 @@ struct array {
    *
    * \param[in] index The position, from 0.
    * \pre `index` < N. Beyond the end the access is undefined; with
-   * `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
+   *      `UTL_CHECK_ACCESS` at 1 it is reported first, as Misuse::kIndex.
    */
   reference operator[](size_type index) {
     return static_cast<void>(internal::Check(index < N, Misuse::kIndex)),
@@ -158,7 +158,7 @@ struct array {
 
 /*!
  * \brief Returns an array of its arguments, with the type and the size taken
- * from them.
+ *        from them.
  *
  * What `std::array a = {...}` deduces from C++17 on, and gnu++11 cannot. As
  * `std::experimental::make_array`, the type is that of the first argument,
@@ -171,8 +171,8 @@ struct array {
  * \endcode
  *
  * \note A table in `PROGMEM` has to be `constexpr`, so that it is complete when
- * compiled: initialized at start-up, it would be written to flash, which fails
- * without a word.
+ *       compiled: initialized at start-up, it would be written to flash, which
+ *       fails without a word.
  *
  * \param[in] first The first element, which gives the type.
  * \param[in] rest The other elements.

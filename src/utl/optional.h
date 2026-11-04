@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief A value or none: std::optional, from C++17, for gnu++11, and an
- * optional of a reference, from C++26.
+ *        optional of a reference, from C++26.
  */
 
 #ifndef UTL_SRC_UTL_OPTIONAL_H_
@@ -88,13 +88,13 @@ constexpr nullopt_t nullopt{0};
  * `optional<uint8_t>` is 2 bytes.
  *
  * \tparam T The type of the value. It needs a default constructor, for the
- * value of an empty optional. For a reference, use optional<T&>.
+ *           value of an empty optional. For a reference, use optional<T&>.
  *
  * \stddiff value() returns a Result with OptionalError::kEmpty where
- * std::optional throws `bad_optional_access`, as a sketch is built without
- * exceptions. reset() sets the value to `T()` rather than destroying it.
- * AndThen(), Map() and OrElse() are what C++23 calls `and_then()`,
- * `transform()` and `or_else()`.
+ *          std::optional throws `bad_optional_access`, as a sketch is built
+ *          without exceptions. reset() sets the value to `T()` rather than
+ *          destroying it. AndThen(), Map() and OrElse() are what C++23 calls
+ *          `and_then()`, `transform()` and `or_else()`.
  */
 template <typename T>
 class optional {
@@ -130,7 +130,7 @@ class optional {
    *
    * \return The value, or `T()` if empty.
    * \pre HasValue(). With `UTL_CHECK_ACCESS` at 1 an empty one is reported
-   * first, as Misuse::kOptionalValue.
+   *      first, as Misuse::kOptionalValue.
    */
   T& operator*() { return static_cast<void>(Checked()), value_; }
 
@@ -193,7 +193,7 @@ class optional {
    * \brief Returns `f(value)` if there is a value, or else an empty optional.
    *
    * \param[in] f A function that takes a `T const&` and returns an optional of
-   * any type; checked when compiled. For a plain value, use Map().
+   *              any type; checked when compiled. For a plain value, use Map().
    * \return What `f` returns, or an empty optional of that type.
    */
   template <typename F>
@@ -210,10 +210,10 @@ class optional {
 
   /*!
    * \brief Returns an optional of `f(value)` if there is a value, or else an
-   * empty one.
+   *        empty one.
    *
    * \param[in] f A function that takes a `T const&`. If it returns a `U&`, the
-   * optional is an optional<U&>.
+   *              optional is an optional<U&>.
    */
   template <typename F, typename U = decltype(internal::DeclVal<F&>()(
                             internal::DeclVal<T const&>()))>
@@ -253,13 +253,12 @@ class optional {
   }
 
   /*!
-   * \brief Calls `f` with the value if there is one, and returns this as it
-   * is.
+   * \brief Calls `f` with the value if there is one, and returns this as it is.
    *
    * To look at the value on its way, as Rust's `inspect()`.
    *
    * \param[in] f A function that takes a `T const&`, as it looks and does not
-   * change, and returns nothing; checked when compiled.
+   *              change, and returns nothing; checked when compiled.
    */
   template <typename F>
   optional Inspect(F f) const {
@@ -275,12 +274,12 @@ class optional {
 
   /*!
    * \brief Returns this if there is a value and `predicate` holds for it, or
-   * else an empty optional.
+   *        else an empty optional.
    *
    * As Rust's `filter()`.
    *
    * \param[in] predicate A function that takes a `T const&` and returns a
-   * `bool`.
+   *                      `bool`.
    */
   template <typename P>
   optional Filter(P predicate) const {
@@ -370,9 +369,9 @@ class optional {
  * \tparam T The type referred to, `const` for a reference that cannot write.
  *
  * \stddiff ValueOr() gives a `T&`, of the object referred to or of the
- * fallback, which has to be an lvalue for that reason, where C++26's
- * `value_or()` gives a copy: a copy would let
- * `FindLed(13).ValueOr(spare).On()` switch on a copy of the LED.
+ *          fallback, which has to be an lvalue for that reason, where C++26's
+ *          `value_or()` gives a copy: a copy would let
+ *          `FindLed(13).ValueOr(spare).On()` switch on a copy of the LED.
  */
 template <typename T>
 class optional<T&> {
@@ -393,7 +392,7 @@ class optional<T&> {
    * is.
    *
    * \param[in] object The object, an lvalue, of a T that may overload unary
-   * `&`.
+   *                   `&`.
    */
   constexpr optional(T& object)  // NOLINT(runtime/explicit)
       : pointer_(__builtin_addressof(object)) {
@@ -405,15 +404,15 @@ class optional<T&> {
    * \brief Deleted: a temporary would be gone before the first use.
    *
    * \note Not `explicit`, so that `optional<int const&> o = 5` does not compile
-   * either: an explicit one would be passed by there, and the 5 would bind
-   * through the `T const&` of the constructor above.
+   *       either: an explicit one would be passed by there, and the 5 would
+   *       bind through the `T const&` of the constructor above.
    */
   optional(T&&) = delete;  // NOLINT(runtime/explicit)
 
   /*!
    * \brief Makes an optional that refers to what `other` refers to, as an
-   * `optional<int&>` into an `optional<int const&>`, or an
-   * `optional<Derived&>` into an `optional<Base&>`.
+   *        `optional<int&>` into an `optional<int const&>`, or an
+   *        `optional<Derived&>` into an `optional<Base&>`.
    *
    * Only where a `U*` converts to a `T*`, so never from an `optional<long&>`
    * to an `optional<int&>`.
@@ -435,8 +434,8 @@ class optional<T&> {
    * \brief Returns the object referred to, unchecked.
    *
    * \pre HasValue(). If empty, the access is undefined, as in the standard, as
-   * there is no T to give; with `UTL_CHECK_ACCESS` at 1 it is reported first,
-   * as Misuse::kOptionalValue.
+   *      there is no T to give; with `UTL_CHECK_ACCESS` at 1 it is reported
+   *      first, as Misuse::kOptionalValue.
    */
   constexpr T& operator*() const {
     // The analyzer sees the null reference that follows; it is what the
@@ -446,8 +445,7 @@ class optional<T&> {
   }
 
   /*!
-   * \brief Returns the address of the object referred to, to reach its
-   * members.
+   * \brief Returns the address of the object referred to, to reach its members.
    *
    * \pre HasValue(), as for operator*().
    */
@@ -469,7 +467,7 @@ class optional<T&> {
    * A reference either way.
    *
    * \param[in] fallback The object to return in place of a missing one, an
-   * lvalue.
+   *                     lvalue.
    */
   T& ValueOr(T& fallback) const {
     return pointer_ != nullptr ? *pointer_ : fallback;
@@ -494,7 +492,7 @@ class optional<T&> {
    * \brief Returns `f(object)` if it refers to one, or else an empty optional.
    *
    * \param[in] f A function that takes a `T&` and returns an optional of any
-   * type; checked when compiled. For a plain value, use Map().
+   *              type; checked when compiled. For a plain value, use Map().
    * \return What `f` returns, or an empty optional of that type.
    */
   template <typename F>
@@ -511,10 +509,10 @@ class optional<T&> {
 
   /*!
    * \brief Returns an optional of `f(object)` if it refers to one, or else an
-   * empty one.
+   *        empty one.
    *
    * \param[in] f A function that takes a `T&`. If it returns a `U&`, the
-   * optional is an optional<U&>.
+   *              optional is an optional<U&>.
    */
   template <typename F, typename U = decltype(internal::DeclVal<F&>()(
                             internal::DeclVal<T&>()))>
@@ -542,7 +540,8 @@ class optional<T&> {
    * \brief Returns the object referred to, or else the one `f()` refers to.
    *
    * \param[in] f A function that takes nothing and returns a `T&` to an object
-   * that outlives the call, as for ValueOr(); checked when compiled.
+   *              that outlives the call, as for ValueOr(); checked when
+   *              compiled.
    */
   template <typename F>
   T& ValueOrElse(F f) const {
@@ -557,10 +556,10 @@ class optional<T&> {
 
   /*!
    * \brief Calls `f` with the object if it refers to one, and returns this as
-   * it is.
+   *        it is.
    *
    * \param[in] f A function that takes a `T const&`, as it looks and does not
-   * change, and returns nothing; checked when compiled.
+   *              change, and returns nothing; checked when compiled.
    */
   template <typename F>
   optional Inspect(F f) const {
@@ -575,11 +574,11 @@ class optional<T&> {
   }
 
   /*!
-   * \brief Returns this if it refers to an object and `predicate` holds for
-   * it, or else an empty optional.
+   * \brief Returns this if it refers to an object and `predicate` holds for it,
+   *        or else an empty optional.
    *
    * \param[in] predicate A function that takes a `T const&` and returns a
-   * `bool`.
+   *                      `bool`.
    */
   template <typename P>
   optional Filter(P predicate) const {
@@ -608,7 +607,7 @@ class optional<T&> {
 
   /*!
    * \brief Returns whether `a` and `b` are both empty or refer to equal
-   * objects.
+   *        objects.
    *
    * They compare by the objects, as in C++26, not by where these lie. nullopt
    * converts on either side, as in `led == utl::nullopt`.

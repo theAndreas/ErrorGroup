@@ -43,8 +43,8 @@ namespace utl {
  * and drops it is a mistake almost every time.
  *
  * \tparam T The type of the value. It needs a default constructor, for the
- * value of a Result with an error. For a reference, use Result<T&>; for no
- * value, Result<void>.
+ *           value of a Result with an error. For a reference, use Result<T&>;
+ *           for no value, Result<void>.
  */
 template <typename T>
 class [[nodiscard]] Result : public internal::ValueFluent<Result<T>, T const&> {
@@ -91,7 +91,7 @@ class [[nodiscard]] Result : public internal::ValueFluent<Result<T>, T const&> {
    *
    * \return The value, or `T()` if there is an error.
    * \pre IsOk(); ask first, or use ValueOr(). With `UTL_CHECK_ACCESS` at 1, a
-   * call on an error is reported first, as Misuse::kResultValue.
+   *      call on an error is reported first, as Misuse::kResultValue.
    */
   T const& value() const {
     return static_cast<void>(internal::Check(IsOk(), Misuse::kResultValue)),
@@ -169,7 +169,7 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
    * \brief Makes a Result that refers to `object`.
    *
    * \param[in] object The object, an lvalue, of a T that may overload unary
-   * `&`.
+   *                   `&`.
    */
   constexpr Result(T& object)  // NOLINT(runtime/explicit)
       : pointer_(__builtin_addressof(object)) {
@@ -181,8 +181,8 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
    * \brief Deleted: a temporary would be gone before the first use.
    *
    * \note Not `explicit`, so that a `Result<int const&>` made from a 5 does not
-   * compile either: an explicit one would be passed by there, and the 5 would
-   * bind through the `T const&` of the constructor above.
+   *       compile either: an explicit one would be passed by there, and the 5
+   *       would bind through the `T const&` of the constructor above.
    */
   Result(T&&) = delete;  // NOLINT(runtime/explicit)
 
@@ -205,7 +205,8 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
 
   /*!
    * \brief Makes a Result of what `other` holds, as a `Result<int&>` into a
-   * `Result<int const&>`, or a `Result<Derived&>` into a `Result<Base&>`.
+   *        `Result<int const&>`, or a `Result<Derived&>` into a
+   *        `Result<Base&>`.
    *
    * Only where a `U*` converts to a `T*`, so never from a `Result<long&>` to a
    * `Result<int&>`.
@@ -231,8 +232,8 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
    * \brief Returns the object referred to.
    *
    * \pre IsOk(); ask first, or use ValueOr(). On an error the access is
-   * undefined, as there is no T to give; with `UTL_CHECK_ACCESS` at 1 it is
-   * reported first, as Misuse::kResultValue.
+   *      undefined, as there is no T to give; with `UTL_CHECK_ACCESS` at 1 it
+   *      is reported first, as Misuse::kResultValue.
    *
    * \stddiff Result<T> gives `T()` on an error; Result<T&> has nothing to give.
    */
@@ -250,7 +251,7 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
    * A reference either way.
    *
    * \param[in] fallback The object to return in place of a missing one, an
-   * lvalue.
+   *                     lvalue.
    */
   T& ValueOr(T& fallback) const { return IsOk() ? *pointer_ : fallback; }
 
@@ -258,12 +259,12 @@ class [[nodiscard]] Result<T&> : public internal::ValueFluent<Result<T&>, T&> {
   T& ValueOr(T&& fallback) const = delete;
 
   /*!
-   * \brief Returns the object referred to, or else the one `f(*error())`
-   * refers to.
+   * \brief Returns the object referred to, or else the one `f(*error())` refers
+   *        to.
    *
    * \param[in] f A function that takes an `Error const&` and returns a `T&` to
-   * an object that outlives the call; checked when compiled, as a T made in
-   * `f` would be gone before the caller got to it.
+   *              an object that outlives the call; checked when compiled, as a
+   *              T made in `f` would be gone before the caller got to it.
    */
   template <typename F>
   T& ValueOrElse(F f) const {

@@ -57,6 +57,16 @@ Result<value_type> at(size_type index) const;
   `/*! \brief ... */` stands above it, as a comment wrapped behind code is what cpplint calls a
   "complex multi-line comment".
 - Commands start with a backslash, `\brief`, never with `@`.
+- A line that continues a command starts where the text after the command starts:
+
+  ```cpp
+   * \return The view of them, or IndexError::kOutOfRange if `position` lies
+   *         beyond the end.
+  ```
+
+  `tools/lint.sh --fix` indents it so, with `tools/doc_indent.pl` after clang-format, which keeps
+  such a line but starts one it breaks at the margin again; `tools/lint.sh` fails where a line is
+  not indented so.
 
 ### The parts, in this order
 

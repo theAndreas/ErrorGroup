@@ -118,7 +118,8 @@ class ErrorFluent {
    * `inspect_err()`.
    *
    * \param[in] f A function that takes an `Error const&` and returns nothing;
-   * checked when compiled, as what it returned would be dropped unseen.
+   *              checked when compiled, as what it returned would be dropped
+   *              unseen.
    * \return This, unchanged.
    */
   template <typename F>
@@ -134,13 +135,14 @@ class ErrorFluent {
 
   /*!
    * \brief Returns this if there is no error, or else the error `f` makes of
-   * it.
+   *        it.
    *
    * As Rust's `map_err()`: to say an error of a lower layer in a group of
    * one's own.
    *
    * \param[in] f A function that takes an `Error const&` and returns an Error
-   * or a code, never ok; checked when compiled. To recover, use OrElse().
+   *              or a code, never ok; checked when compiled. To recover, use
+   *              OrElse().
    * \return This, or the error `f` returns.
    */
   template <typename F>
@@ -169,8 +171,8 @@ class ErrorFluent {
 };
 
 /*!
- * \brief What Result<T> and Result<T&> do with a value, and through
- * ErrorFluent with an error.
+ * \brief What Result<T> and Result<T&> do with a value, and through ErrorFluent
+ *        with an error.
  *
  * A function passed to these returns by value; none of them calls it when it
  * has nothing to give.
@@ -185,7 +187,8 @@ class ValueFluent : public ErrorFluent<Self> {
    * \brief Returns `f(value())` if there is no error, or else the error.
    *
    * \param[in] f A function that takes the value and returns a Result of any
-   * type or a Status; checked when compiled. For a plain value, use Map().
+   *              type or a Status; checked when compiled. For a plain value,
+   *              use Map().
    * \return What `f` returns, or the error.
    */
   template <typename F>
@@ -201,11 +204,11 @@ class ValueFluent : public ErrorFluent<Self> {
 
   /*!
    * \brief Returns a Result of `f(value())` if there is no error, or else the
-   * error.
+   *        error.
    *
    * \param[in] f A function that takes the value. If it returns nothing, it is
-   * called for what it does, and the Result is a Result<void>; if it returns a
-   * `U&`, a Result<U&>.
+   *              called for what it does, and the Result is a Result<void>; if
+   *              it returns a `U&`, a Result<U&>.
    * \return A Result of what `f` returns, or the error.
    */
   template <typename F, typename U = decltype(DeclVal<F&>()(DeclVal<Value>()))>
@@ -218,12 +221,12 @@ class ValueFluent : public ErrorFluent<Self> {
 
   /*!
    * \brief Calls `f` with the value if there is no error, and returns this as
-   * it is.
+   *        it is.
    *
    * To look at the value on its way, as Rust's `inspect()`.
    *
    * \param[in] f A function that takes a `T const&`, as it looks and does not
-   * change, and returns nothing; checked when compiled.
+   *              change, and returns nothing; checked when compiled.
    * \return This, unchanged.
    */
   template <typename F>

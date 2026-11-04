@@ -3,8 +3,8 @@
 
 /*!
  * \file
- * \brief The report of an access that is a mistake, with `UTL_CHECK_ACCESS`
- * at 1.
+ * \brief The report of an access that is a mistake, with `UTL_CHECK_ACCESS` at
+ *        1.
  */
 
 #ifndef UTL_SRC_UTL_MISUSE_H_
@@ -61,7 +61,7 @@ void ReportMisuse(Misuse misuse);
 
 /*!
  * \brief Prints a misuse as a line of the default report, without the end of
- * the line.
+ *        the line.
  *
  * For a report of a sketch's own that prints as the default does.
  *
