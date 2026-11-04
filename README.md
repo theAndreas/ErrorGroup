@@ -16,6 +16,8 @@ standard where it has an answer, and checked where the standard leaves a call un
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
   flash, `PROGMEM` or `F("...")`, which the standard does not know; the two compare with each
   other.
+- **Numbers**: `to_chars` and `from_chars`, integers to text and back, as in the standard, with a
+  `Result` in place of `std::errc`, and each in the width of its type.
 
 ## Installing
 
@@ -347,6 +349,36 @@ reference. Both are 4 bytes, a pointer and a size, and own nothing. `string_view
 standard does; `compare()` gives an `int8_t`, -1, 0 or 1, not an `int`. `starts_with()`,
 `ends_with()`, `find()` and `==` work between RAM and flash.
 
+## Numbers: to_chars and from_chars
+
+```cpp
+// "speed=42" typed on Serial: the number after the "=".
+utl::string_view rest = line.substr(6).ValueOr("");
+utl::Result<uint8_t> const speed = utl::from_chars<uint8_t>(rest);  // rest is "" now
+
+// A number on a display, without Print.
+utl::array<char, 6> buffer;
+utl::to_chars(buffer, int16_t{-273}).Map(Show);  // "-273"
+```
+
+`to_chars()` and `from_chars()` (`charconv.h`) are `std::to_chars` and `std::from_chars` for
+integers: a minus for a signed type, digits beyond 9 in either case when read and lower case when
+written, bases 2 to 36. They read strictly, as the standard does: no plus, no space, no `0x`. Each
+returns a `Result`, the end of what it wrote or read, or a `CharconvError` of the group
+`charconv`: `kInvalidArgument`, no number where one should begin or a base not 2..36;
+`kOutOfRange`, a number too large for its type; `kValueTooLarge`, a text that does not fit the
+buffer. `utl::UseCharconvMessages()` turns their texts on. Beside the standard's pointer pairs,
+`to_chars()` writes into a `span<char>` and gives the text as a `string_view`, and
+`from_chars<T>()` reads from the front of a `string_view` and leaves it behind the number.
+
+A number is converted in the width of its type: `to_chars()` of a `uint8_t` links an 8-bit
+division only, where `Serial.print()` of one links the 32-bit division of an `unsigned long`. A
+sketch that prints a `uint8_t` with it takes 1574 bytes of flash, against 1616 with
+`Serial.print()`, and the same RAM. Three changes: the base is a `uint8_t`, not an `int`; an
+error gives no pointer, as a `Result` holds a value or an error, where the standard gives one past
+the digits of a number out of range; and there is no floating point, as a correct `to_chars()` of
+a `double` would not fit on an Uno, and avr-libc has `dtostrf()`.
+
 ## Checked access
 
 What the standard leaves undefined, or what gives a placeholder here, can be reported before it
@@ -377,7 +409,8 @@ sketch, not the `.ino`, for which arduino-cli writes prototypes outside the name
 - `Basics`: two groups, a `Status` and a `Result` chained, and the error printed on `Serial`: the
   bus in words, the font as a code, as only the bus's texts are turned on.
 - `SelfCheck`: checks the library and prints a line per check, then the number that failed.
-  `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`.
+  `tools/self_check.sh` runs it in simavr and compares with `SelfCheck.expected`. Its checks lie
+  in one file per area, `check_*.cpp`; a new area is a file there and a line in `setup()`.
 
 ## vtables in flash
 
@@ -395,7 +428,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 14052 | 14052 | 15710 | 285 | 267 | 287 |
+| SelfCheck | 16110 | 16110 | 18022 | 313 | 295 | 315 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,

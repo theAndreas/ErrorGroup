@@ -70,7 +70,7 @@ CheckOptions:
   readability-identifier-naming.TypedefIgnoredRegexp: '^[a-z][a-z0-9_]*$'
   readability-identifier-naming.TemplateParameterCase: CamelCase
   readability-identifier-naming.FunctionCase: CamelCase
-  readability-identifier-naming.FunctionIgnoredRegexp: '^(make_array|ref|cref|swap|begin|end)$'
+  readability-identifier-naming.FunctionIgnoredRegexp: '^(make_array|ref|cref|to_chars|from_chars|swap|begin|end)$'
   readability-identifier-naming.MethodCase: CamelCase
   readability-identifier-naming.MethodIgnoredRegexp: '^[a-z][a-z0-9_]*$'
   readability-identifier-naming.VariableCase: lower_case
