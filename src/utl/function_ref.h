@@ -10,36 +10,11 @@
 #ifndef UTL_SRC_UTL_FUNCTION_REF_H_
 #define UTL_SRC_UTL_FUNCTION_REF_H_
 
+#include "utl/internal/invoke.h"
 #include "utl/internal/type_traits.h"
 #include "utl/misuse.h"
 
 namespace utl {
-
-/*! \cond */
-// What a sketch does not see: how the result of a call is returned.
-namespace internal {
-
-// Calls `f` with `args` and returns its result as an R, converted
-// implicitly, as a static_cast<R> would also take an explicit constructor.
-template <typename R>
-struct CallReturning {
-  template <typename F, typename... Args>
-  static R Call(F& f, Args&&... args) {
-    return f(static_cast<Args&&>(args)...);
-  }
-};
-
-// For R void, the result is dropped, whatever it is.
-template <>
-struct CallReturning<void> {
-  template <typename F, typename... Args>
-  static void Call(F& f, Args&&... args) {
-    f(static_cast<Args&&>(args)...);
-  }
-};
-
-}  // namespace internal
-/*! \endcond */
 
 /*!
  * \brief Stops the build: `Signature` has to be a function type, such as
