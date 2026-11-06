@@ -3,8 +3,8 @@
 
 /*!
  * \file
- * \brief A reference that copies: std::reference_wrapper, ref() and cref(),
- * for gnu++11.
+ * \brief A reference that copies: std::reference_wrapper, ref() and cref(), for
+ *        gnu++11.
  */
 
 #ifndef UTL_SRC_UTL_REFERENCE_WRAPPER_H_
@@ -44,9 +44,9 @@ namespace utl {
  *
  * \tparam T The type referred to, `const` for a reference that cannot write.
  *
- * \stddiff No `operator()`, which calls a function referred to as
- * `std::invoke` does: it is the one costly part, and a member that refers to
- * an object needs none of it.
+ * \stddiff No `operator()`, which calls a function referred to as `std::invoke`
+ *          does: it is the one costly part, and a member that refers to an
+ *          object needs none of it.
  */
 template <typename T>
 class reference_wrapper {
@@ -72,15 +72,15 @@ class reference_wrapper {
    * \brief Deleted: a temporary would be gone before the first use.
    *
    * \note Deleted rather than left out, and not `explicit`, so that
-   * `reference_wrapper<int const> r = 5` does not compile either: without it,
-   * or with an explicit one passed by there, the 5 would bind through the
-   * `T const&` of the constructor above.
+   *       `reference_wrapper<int const> r = 5` does not compile either: without
+   *       it, or with an explicit one passed by there, the 5 would bind through
+   *       the `T const&` of the constructor above.
    */
   reference_wrapper(T&&) = delete;  // NOLINT(runtime/explicit)
 
   /*!
-   * \brief Makes a reference to the object `other` refers to, as one of
-   * `int` into one of `int const`, or one of `Derived` into one of `Base`.
+   * \brief Makes a reference to the object `other` refers to, as one of `int`
+   *        into one of `int const`, or one of `Derived` into one of `Base`.
    *
    * Implicit, as in the standard, and only where a `U*` converts to a `T*`, so
    * never from one of `long` to one of `int`.
@@ -109,7 +109,7 @@ class reference_wrapper {
 
 /*!
  * \brief Returns a reference_wrapper of `object`, its type taken from the
- * argument.
+ *        argument.
  *
  * What C++17 deduces from `reference_wrapper r = object`, which gnu++11
  * cannot.

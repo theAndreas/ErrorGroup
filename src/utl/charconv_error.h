@@ -18,7 +18,7 @@ namespace utl {
 
 /*!
  * \brief What went wrong converting a number: the three values of `std::errc`
- * that std::to_chars() and std::from_chars() report, under their names.
+ *        that std::to_chars() and std::from_chars() report, under their names.
  */
 enum class CharconvError : uint8_t {
   /*! \brief No number where one should begin, or a base not 2 to 36. */
@@ -31,7 +31,7 @@ enum class CharconvError : uint8_t {
 
 /*!
  * \brief The name of the group, `"charconv"`, in flash; its address is the
- * group.
+ *        group.
  *
  * A sketch that never converts does not reference it, and the linker leaves it
  * out.

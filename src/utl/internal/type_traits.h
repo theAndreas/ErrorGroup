@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief The few pieces of `<utility>` and `<type_traits>` that Utl needs, as
- * avr-gcc comes without a C++ standard library; not part of the API.
+ *        avr-gcc comes without a C++ standard library; not part of the API.
  */
 
 #ifndef UTL_SRC_UTL_INTERNAL_TYPE_TRAITS_H_
