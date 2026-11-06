@@ -101,6 +101,11 @@ pass reference_wrapper rebinds when assigned
 pass reference_wrapper as a member copies and assigns
 pass ref, cref, and to one of const
 pass reference_wrapper in an array
+pass function_ref calls a function
+pass function_ref calls a lambda
+pass function_ref refers to the lambda, not a copy
+pass function_ref rebinds, and to a function of other types
+pass function_ref of a lambda written as the argument
 pass string_view of a string
 pass string_view::starts_with, ends_with
 pass string_view::find

@@ -38,6 +38,7 @@ set(test_sources
     test/charconv_test.cpp
     test/error_test.cpp
     test/flash_string_view_test.cpp
+    test/function_ref_test.cpp
     test/misuse_test.cpp
     test/optional_reference_test.cpp
     test/optional_test.cpp

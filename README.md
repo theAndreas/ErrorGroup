@@ -13,6 +13,8 @@ standard where it has an answer, and checked where the standard leaves a call un
   returns a `Result` rather than throwing; also of a reference, `optional<T&>`, as in C++26.
 - **`reference_wrapper`**, a reference that copies, as in the standard, for a member that refers to
   an object another owns.
+- **`function_ref`**, a reference to something to call, as in C++26, for a parameter that takes a
+  function, a lambda or an object without being a template.
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
   flash, `PROGMEM` or `F("...")`, which the standard does not know; the two compare with each
   other.
@@ -318,6 +320,33 @@ standard. It converts as a pointer does, to one of `T const` or of a base class.
 `operator()`, which calls a function it refers to as `std::invoke`: the one costly part, and
 nothing a member needs.
 
+## function_ref
+
+```cpp
+void ForEachLed(utl::function_ref<void(Led&)> f) {  // no template, and no heap
+  for (Led& led : leds) {
+    f(led);
+  }
+}
+
+uint8_t on = 0;
+ForEachLed([&on](Led& led) { on += led.IsOn(); });  // a lambda with its captures
+ForEachLed(SwitchOff);                              // or a function
+```
+
+`function_ref<R(Args...)>` (`function_ref.h`) is C++26's `std::function_ref`: it refers to a
+function, a lambda or an object with `operator()`, and calls it with `Args`, its result converted
+to an `R`, or dropped for `void`. It is 4 bytes, a pointer to what it refers to and one to the code
+that calls it, and owns nothing: no heap, no virtual function, and a function that takes one is no
+template. It is meant for a parameter. It never copies a lambda, so the lambda has to outlive every
+call: written as the argument, it lives until the call returns, but kept in a member it is gone
+before the next call. One of a function, `= SwitchOff`, may be kept. There is no
+`function_ref()`, so it is never empty; assigning a lambda is deleted, assigning another
+`function_ref` or a function rebinds it. A null function pointer is [checked](#checked-access).
+Left out are the signatures with `const` and `noexcept`, and the constructors that take the
+function as a template argument, for a member function bound to its object, which need C++17's
+`template <auto>`.
+
 ## Text: string_view and flash_string_view
 
 ```cpp
@@ -385,7 +414,8 @@ What the standard leaves undefined, or what gives a placeholder here, can be rep
 happens, for finding a mistake while a sketch is written, as the DET of AUTOSAR Classic does:
 `value()` of a `Result` with an error, `*` and `->` of an empty `optional`, `[]` beyond the end,
 `front()` or `back()` of an empty `span` or `string_view`, and `remove_prefix()` or
-`remove_suffix()` of more than there is, which then leaves an empty view. With
+`remove_suffix()` of more than there is, which then leaves an empty view, and a `function_ref`
+made of a null function pointer. With
 `UTL_CHECK_ACCESS` at 1, set for the whole build as `config.h` says, each goes to `utl::ReportMisuse()` first,
 which prints `utl: [] beyond the end` on `Serial`:
 
@@ -428,7 +458,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 16110 | 16110 | 18022 | 313 | 295 | 315 |
+| SelfCheck | 16624 | 16624 | 18666 | 313 | 295 | 315 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
