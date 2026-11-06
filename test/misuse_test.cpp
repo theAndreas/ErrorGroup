@@ -20,6 +20,7 @@
 #if UTL_CHECK_ACCESS
 #include <Arduino.h>
 #include <utl/array.h>
+#include <utl/function_ref.h>
 #include <utl/optional.h>
 #include <utl/result.h>
 #include <utl/span.h>
@@ -49,6 +50,8 @@ TEST(MisuseTest, PrintsEachKind) {
   EXPECT_EQ(Printed(Misuse::kEmpty), "utl: front() or back() of an empty view");
   EXPECT_EQ(Printed(Misuse::kRemove),
             "utl: remove_prefix() or remove_suffix() beyond the end");
+  EXPECT_EQ(Printed(Misuse::kNullFunction),
+            "utl: function_ref of a null pointer");
   // A value beyond the enum, which PrintMisuse() has to leave without a text.
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
   auto const beyond = static_cast<Misuse>(200);
@@ -117,6 +120,13 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
             }),
             "utl: remove_prefix() or remove_suffix() beyond the end\r\n"
             "utl: remove_prefix() or remove_suffix() beyond the end\r\n");
+  // Made, never called: a call would jump to address 0.
+  EXPECT_EQ(Reported([] {
+              void (*const volatile none)() = nullptr;
+              utl::function_ref<void()> const f = none;
+              static_cast<void>(f);
+            }),
+            "utl: function_ref of a null pointer\r\n");
 }
 
 TEST(MisuseTest, ReportsAnArrayIndexBeyondTheEnd) {
@@ -141,6 +151,11 @@ TEST(MisuseTest, RightAccessIsNotReported) {
               static_cast<void>(*some);
               utl::Result<int&> const ok_reference = target;
               static_cast<void>(ok_reference.value());
+              auto const nothing = [] {};
+              utl::function_ref<void()> const f = nothing;
+              f();
+              utl::function_ref<void()> const g = +nothing;  // a pointer
+              g();
             }),
             "");
 }

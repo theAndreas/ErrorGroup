@@ -25,6 +25,7 @@ void setup() {
   self_check::CheckOptionals();
   self_check::CheckRustFluent();
   self_check::CheckReferenceWrapper();
+  self_check::CheckFunctionRef();
   self_check::CheckText();
   self_check::CheckMisuse();
 

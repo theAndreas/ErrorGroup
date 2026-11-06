@@ -66,6 +66,15 @@ void CheckMisuse() {
             shortened.empty(),
         F("remove_prefix() beyond the end is reported, and empties"));
 
+  // Made, never called: a call would jump to address 0 and restart.
+  void (*const volatile no_function)() = nullptr;
+  before = MisuseCount();
+  utl::function_ref<void()> const null_ref = no_function;
+  static_cast<void>(null_ref);
+  Check(
+      MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kNullFunction,
+      F("a function_ref of a null pointer is reported"));
+
   before = MisuseCount();
   static_cast<void>(pair[1]);
   static_cast<void>(GetCode(1).value());
@@ -75,6 +84,8 @@ void CheckMisuse() {
   utl::PrintMisuse(Serial, utl::Misuse::kIndex);
   Serial.println();
   utl::PrintMisuse(Serial, utl::Misuse::kRemove);
+  Serial.println();
+  utl::PrintMisuse(Serial, utl::Misuse::kNullFunction);
   Serial.println();
 #endif
 }

@@ -101,6 +101,70 @@ struct IsLvalueReference<T&> {
   static constexpr bool kValue = true;
 };
 
+// std::enable_if_t: void, if B is true; no type, and so no overload, if not.
+template <bool B>
+struct EnableIfImpl {};
+template <>
+struct EnableIfImpl<true> {
+  using Type = void;
+};
+template <bool B>
+using EnableIf = typename EnableIfImpl<B>::Type;
+
+// std::is_pointer: kValue is whether T is a pointer, const or not, to an
+// object or to a function.
+template <typename T>
+struct IsPointer {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsPointer<T*> {
+  static constexpr bool kValue = true;
+};
+template <typename T>
+struct IsPointer<T* const> {
+  static constexpr bool kValue = true;
+};
+
+// std::is_const: kValue is whether T is const at the top.
+template <typename T>
+struct IsConst {
+  static constexpr bool kValue = false;
+};
+template <typename T>
+struct IsConst<T const> {
+  static constexpr bool kValue = true;
+};
+
+// std::is_function: kValue is whether T is a function type, such as
+// void(int). A const on a function type or a reference is dropped, so those
+// two alone are not const with one added.
+template <typename T>
+struct IsFunction {
+  static constexpr bool kValue =
+      !IsConst<T const>::kValue && IsSame<RemoveReference<T>, T>::kValue;
+};
+
+/*
+ * The test of std::is_invocable_r for what is not a pointer to a member:
+ * void if an F& can be called with arguments of Args and its result converts
+ * to R implicitly, or R is void, which takes any result; no type if not.
+ */
+template <typename R>
+struct ResultConvertsTo {
+  template <typename Result>
+  using Type = decltype(ConvertTo<R>(DeclVal<Result>()));
+};
+template <>
+struct ResultConvertsTo<void> {
+  template <typename Result>
+  using Type = Void<Result>;
+};
+template <typename R, typename F, typename... Args>
+using CallableAs =
+    typename ResultConvertsTo<R>::template Type<decltype(DeclVal<F&>()(
+        DeclVal<Args>()...))>;
+
 // A pointer to an array of T of unknown size: the type the test below works
 // with, not an array that wants to be a utl::array.
 template <typename T>

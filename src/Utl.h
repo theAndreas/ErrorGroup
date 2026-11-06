@@ -49,6 +49,7 @@
 #include "utl/error.h"              // IWYU pragma: export
 #include "utl/error_group.h"        // IWYU pragma: export
 #include "utl/flash_string_view.h"  // IWYU pragma: export
+#include "utl/function_ref.h"       // IWYU pragma: export
 #include "utl/index_error.h"        // IWYU pragma: export
 #include "utl/messages.h"           // IWYU pragma: export
 #include "utl/misuse.h"             // IWYU pragma: export
