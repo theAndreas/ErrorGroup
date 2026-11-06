@@ -3,8 +3,8 @@
 
 /*!
  * \file
- * \brief std::invoke_r, for what is not a pointer to a member: how
- * function_ref and inplace_function call what they hold; not part of the API.
+ * \brief std::invoke_r, for what is not a pointer to a member: how function_ref
+ *        and inplace_function call what they hold; not part of the API.
  */
 
 #ifndef UTL_SRC_UTL_INTERNAL_INVOKE_H_

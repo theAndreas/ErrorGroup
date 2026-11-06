@@ -4,7 +4,7 @@
 /*!
  * \file
  * \brief Something to call, kept inside: std::function without the heap, for
- * gnu++11.
+ *        gnu++11.
  */
 
 #ifndef UTL_SRC_UTL_INPLACE_FUNCTION_H_
@@ -88,10 +88,10 @@ namespace utl {
 
 /*!
  * \brief Stops the build: `Signature` has to be a function type, such as
- * `void(uint8_t)`.
+ *        `void(uint8_t)`.
  *
  * \tparam Signature How it is called: what it returns, and the types of its
- * arguments.
+ *                   arguments.
  * \tparam Capacity The bytes a callable may take.
  */
 template <typename Signature, size_t Capacity = 2 * sizeof(void*)>
@@ -137,17 +137,18 @@ class inplace_function {
  * copied as its bytes, without code of its own for it.
  *
  * \tparam R What a call returns: `void`, which takes any result and drops it,
- * or a type with a default constructor, which a call of an empty one returns.
+ *           or a type with a default constructor, which a call of an empty one
+ *           returns.
  * \tparam Args The types of the arguments.
  * \tparam Capacity The bytes a callable may take, at least 1.
  *
- * \stddiff There is no inplace_function in the standard; this is
- * std::function, as SG14's inplace_function is, with the callable kept in
- * `Capacity` bytes rather than on the heap. A call of an empty one returns
- * `R()` and is reported with `UTL_CHECK_ACCESS`, where std::function throws
- * std::bad_function_call; R therefore cannot be a reference. Left out are
- * swap(), the comparisons with `nullptr`, which `operator bool` does, and
- * target(), which needs RTTI.
+ * \stddiff There is no inplace_function in the standard; this is std::function,
+ *          as SG14's inplace_function is, with the callable kept in `Capacity`
+ *          bytes rather than on the heap. A call of an empty one returns `R()`
+ *          and is reported with `UTL_CHECK_ACCESS`, where std::function throws
+ *          std::bad_function_call; R therefore cannot be a reference. Left out
+ *          are swap(), the comparisons with `nullptr`, which `operator bool`
+ *          does, and target(), which needs RTTI.
  */
 template <typename R, typename... Args, size_t Capacity>
 class inplace_function<R(Args...), Capacity> {
@@ -166,15 +167,15 @@ class inplace_function<R(Args...), Capacity> {
 
   /*!
    * \brief Keeps a copy of `f`: a function, a lambda or an object with
-   * `operator()`.
+   *        `operator()`.
    *
    * Implicit, as in the standard, so that a lambda passes where one is taken.
    * A function whose types differ is kept as well, if the arguments convert
    * to its parameters and its result to an `R`. A null function pointer
    * leaves it empty.
    *
-   * \param[in] f What to call, copied or moved inside. It stops the build if
-   * it is larger than `Capacity`.
+   * \param[in] f What to call, copied or moved inside. It stops the build if it
+   *              is larger than `Capacity`.
    */
   template <typename F, typename T = internal::Stored<F>,
             typename = internal::EnableIf<
@@ -224,8 +225,8 @@ class inplace_function<R(Args...), Capacity> {
   }
 
   /*!
-   * \brief Moves the callable out of `other`, in place of its own; `other`
-   * is left empty.
+   * \brief Moves the callable out of `other`, in place of its own; `other` is
+   *        left empty.
    *
    * \param[in,out] other The one to move from.
    * \return This one.
@@ -276,9 +277,9 @@ class inplace_function<R(Args...), Capacity> {
    * \param[in] args The arguments, passed on as taken.
    * \return What the call returns, converted to an `R`; `R()` if empty.
    *
-   * \pre It is not empty; ask with `operator bool`. A call of an empty one
-   * does nothing and returns `R()`; with `UTL_CHECK_ACCESS` at 1 it is
-   * reported first, as Misuse::kEmptyFunction.
+   * \pre It is not empty; ask with `operator bool`. A call of an empty one does
+   *      nothing and returns `R()`; with `UTL_CHECK_ACCESS` at 1 it is reported
+   *      first, as Misuse::kEmptyFunction.
    */
   R operator()(Args... args) const {
     return call_(storage_.data(), static_cast<Args&&>(args)...);
