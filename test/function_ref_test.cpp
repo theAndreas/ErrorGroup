@@ -4,6 +4,7 @@
 // function_ref: a reference to something to call.
 
 #include <gtest/gtest.h>
+#include <utl/constant_wrapper.h>
 #include <utl/function_ref.h>
 
 #include <cstddef>
@@ -186,6 +187,184 @@ TEST(FunctionRefTest, CopiesAndRebinds) {
   f = function_ref<void()>(twice);
   f();
   EXPECT_EQ(calls, 3);
+}
+
+// A class with member functions to bind: const and not, of other types, and
+// one overloaded on const.
+class Led {
+ public:
+  void Toggle() { on_ = !on_; }
+  [[nodiscard]] bool IsOn() const { return on_; }
+  [[nodiscard]] int Brightness(int scale) const { return on_ ? scale : 0; }
+  // Which one was called: the one not const switches the LED on.
+  int Which() {
+    on_ = true;
+    return 1;
+  }
+  [[nodiscard]] int Which() const { return on_ ? 2 : -2; }
+
+ private:
+  bool on_ = false;
+};
+
+class DimmedLed : public Led {};
+
+// A data member, which is never called.
+struct Reading {
+  int level = 0;
+};
+
+// A function that takes its object first, as a member function would.
+int Scaled(Led const& led, int scale) { return led.Brightness(scale) / 2; }
+int Count(Led const* led) { return led == nullptr ? -1 : 1; }
+
+using ToggleWrapper = decltype(UTL_CW(&Led::Toggle));
+using IsOnWrapper = decltype(UTL_CW(&Led::IsOn));
+
+// Bound to an lvalue or a pointer, never a temporary.
+static_assert(
+    std::is_constructible_v<function_ref<void()>, ToggleWrapper, Led&>);
+static_assert(
+    std::is_constructible_v<function_ref<void()>, ToggleWrapper, Led*>);
+static_assert(
+    !std::is_constructible_v<function_ref<void()>, ToggleWrapper, Led&&>);
+static_assert(
+    !std::is_constructible_v<function_ref<void()>, ToggleWrapper, Led const&>);
+static_assert(
+    std::is_constructible_v<function_ref<bool()>, IsOnWrapper, Led const&>);
+static_assert(
+    std::is_constructible_v<function_ref<bool()>, IsOnWrapper, Led const*>);
+static_assert(
+    std::is_constructible_v<function_ref<void()>, ToggleWrapper, DimmedLed&>);
+// Of the right types only, as any other callable.
+static_assert(
+    !std::is_constructible_v<function_ref<void(int)>, ToggleWrapper, Led&>);
+static_assert(
+    !std::is_constructible_v<function_ref<int()>, ToggleWrapper, Led&>);
+static_assert(
+    !std::is_constructible_v<function_ref<void()>, ToggleWrapper, int&>);
+static_assert(
+    !std::is_constructible_v<function_ref<void()>, decltype(UTL_CW(7)), Led&>);
+static_assert(
+    !std::is_constructible_v<function_ref<void()>, decltype(UTL_CW(7))>);
+// Without an object, the member function takes it as its first argument.
+static_assert(std::is_convertible_v<ToggleWrapper, function_ref<void(Led&)>>);
+static_assert(std::is_convertible_v<ToggleWrapper, function_ref<void(Led*)>>);
+static_assert(!std::is_convertible_v<ToggleWrapper, function_ref<void()>>);
+// A data member is not called.
+static_assert(!std::is_convertible_v<decltype(UTL_CW(&Reading::level)),
+                                     function_ref<int(Reading&)>>);
+
+TEST(FunctionRefTest, CallsAMemberFunctionOfItsObject) {
+  Led led;
+  function_ref<void()> const toggle{UTL_CW(&Led::Toggle), led};
+  function_ref<bool()> const is_on{UTL_CW(&Led::IsOn), led};
+  toggle();
+  EXPECT_TRUE(led.IsOn());  // the object itself, not a copy
+  toggle();
+  EXPECT_FALSE(is_on());
+}
+
+TEST(FunctionRefTest, CallsAMemberFunctionThroughAPointer) {
+  Led led;
+  Led* pointer = &led;
+  function_ref<void()> const toggle{UTL_CW(&Led::Toggle), pointer};
+  Led other;
+  pointer = &other;  // the pointer was copied, not referred to
+  toggle();
+  EXPECT_TRUE(led.IsOn());
+  EXPECT_FALSE(pointer->IsOn());  // other
+}
+
+TEST(FunctionRefTest, CallsTheConstMemberFunctionOfAConstObject) {
+  Led led;
+  Led const& const_led = led;
+  function_ref<int()> const mutable_which{
+      UTL_CW(static_cast<int (Led::*)()>(&Led::Which)), led};
+  function_ref<int()> const const_which{
+      UTL_CW(static_cast<int (Led::*)() const>(&Led::Which)), const_led};
+  EXPECT_EQ(mutable_which(), 1);
+  EXPECT_EQ(const_which(), 2);
+}
+
+TEST(FunctionRefTest, CallsAMemberFunctionOfOtherTypes) {
+  Led led;
+  led.Toggle();
+  function_ref<int64_t(int16_t)> const brightness{UTL_CW(&Led::Brightness),
+                                                  led};
+  EXPECT_EQ(brightness(int16_t{100}), int64_t{100});
+  function_ref<void()> const dropped{UTL_CW(&Led::IsOn), led};
+  dropped();
+  DimmedLed dimmed;
+  function_ref<void()> const of_base{UTL_CW(&Led::Toggle), dimmed};
+  of_base();
+  EXPECT_TRUE(dimmed.IsOn());
+}
+
+// A virtual member function, which a pointer to a member calls through the
+// vtable.
+class Shape {
+ public:
+  Shape() = default;
+  Shape(Shape const&) = default;
+  Shape& operator=(Shape const&) = default;
+  virtual ~Shape() = default;
+  [[nodiscard]] virtual int Corners() const { return 0; }
+};
+
+class Square : public Shape {
+ public:
+  [[nodiscard]] int Corners() const override { return 4; }
+};
+
+TEST(FunctionRefTest, CallsAVirtualMemberFunctionOfTheDerivedClass) {
+  Square const square;
+  Shape const& shape = square;
+  function_ref<int()> const of_reference{UTL_CW(&Shape::Corners), shape};
+  function_ref<int()> const of_pointer{UTL_CW(&Shape::Corners), &shape};
+  EXPECT_EQ(of_reference(), 4);
+  EXPECT_EQ(of_pointer(), 4);
+}
+
+TEST(FunctionRefTest, CallsAMemberFunctionOnTheFirstArgument) {
+  Led first;
+  Led second;
+  function_ref<void(Led&)> const toggle = UTL_CW(&Led::Toggle);
+  function_ref<void(Led*)> const toggle_pointed = UTL_CW(&Led::Toggle);
+  toggle(first);
+  toggle_pointed(&second);
+  EXPECT_TRUE(first.IsOn());
+  EXPECT_TRUE(second.IsOn());
+}
+
+TEST(FunctionRefTest, BindsAnObjectToAFunctionThatTakesItFirst) {
+  Led led;
+  led.Toggle();
+  function_ref<int(int)> const scaled{UTL_CW(Scaled), led};
+  EXPECT_EQ(scaled(100), 50);
+  EXPECT_EQ(Sum(scaled), 2);  // 0 + 1 + 1
+  // A pointer that a function, not a member function, takes may be null.
+  Led const* const none = nullptr;
+  function_ref<int()> const count{UTL_CW(Count), none};
+  EXPECT_EQ(count(), -1);
+}
+
+TEST(FunctionRefTest, CallsAFunctionGivenAsAConstant) {
+  function_ref<int(int)> const twice = UTL_CW(Twice);
+  EXPECT_EQ(twice(5), 10);
+  EXPECT_EQ(Sum(UTL_CW(Twice)), 12);
+  // An object, not the declaration of a function, as UTL_CW() gives braces.
+  function_ref<int(int)> const in_parentheses(UTL_CW(Twice));
+  EXPECT_EQ(in_parentheses(1), 2);
+}
+
+TEST(FunctionRefTest, IsAConstantOfAMemberFunctionAndAnObject) {
+  static Led led;
+  static constexpr function_ref<void()> kToggle{UTL_CW(&Led::Toggle), led};
+  static constexpr function_ref<int(int)> kTwice = UTL_CW(Twice);
+  kToggle();
+  EXPECT_TRUE(led.IsOn());
+  EXPECT_EQ(kTwice(2), 4);
 }
 
 TEST(FunctionRefTest, IsAConstantOfAnObjectWithStaticStorage) {

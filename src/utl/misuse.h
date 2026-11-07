@@ -34,7 +34,11 @@ enum class Misuse : uint8_t {
   kIndex,         /*!< `[]` beyond the end. */
   kEmpty,         /*!< `front()` or `back()` of an empty span or string_view. */
   kRemove, /*!< `remove_prefix()` or `remove_suffix()` of more than there is. */
-  kNullFunction,  /*!< A function_ref made of a null function pointer. */
+  /*!
+   * \brief A function_ref made of a null function pointer, or of a member
+   *        function and a null pointer to its object.
+   */
+  kNullFunction,
   kEmptyFunction, /*!< A call of an empty inplace_function. */
 };
 

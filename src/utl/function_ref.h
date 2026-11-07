@@ -10,6 +10,7 @@
 #ifndef UTL_SRC_UTL_FUNCTION_REF_H_
 #define UTL_SRC_UTL_FUNCTION_REF_H_
 
+#include "utl/constant_wrapper.h"
 #include "utl/internal/invoke.h"
 #include "utl/internal/type_traits.h"
 #include "utl/misuse.h"
@@ -56,6 +57,15 @@ class function_ref {
  * it is gone before the next call. A function lives for good: one of a
  * function, as `utl::function_ref<void()> f = Blink`, may be kept.
  *
+ * A member function is bound to its object with UTL_CW(), the function given
+ * as a constant: the function_ref refers to the object, not to a lambda, and
+ * may be kept as long as the object lives, as a callback in a member:
+ *
+ * \code{.cpp}
+ * utl::function_ref<void()> on_press{UTL_CW(&Led::Toggle), led};
+ * ForEachLed(UTL_CW(&Led::Toggle));  // a function_ref<void(Led&)>
+ * \endcode
+ *
  * There is no default constructor, so one is never empty, and so no
  * optional of one, which would need it: where nothing is to be called, it
  * refers to a function that does nothing. Assigning another rebinds it.
@@ -65,12 +75,12 @@ class function_ref {
  *
  * \stddiff Neither a signature with `const` nor one with `noexcept`, which
  *          gnu++11 cannot have: the one only narrows what binds, the other is
- *          no type before C++17. No constructor that takes the function as a
- *          template argument, for a member function bound to its object, as it
- *          needs C++17's `template <auto>`: a lambda that calls the member,
- *          kept beside the function_ref, does the same. A function pointer that
- *          is null is reported with `UTL_CHECK_ACCESS`, where the standard
- *          leaves it undefined.
+ *          no type before C++17. A function given as a constant is written
+ *          `UTL_CW(f)`, not `std::cw<f>`, as gnu++11 has no `template <auto>`,
+ *          and is a function or a member function, never a pointer to a data
+ *          member. A function pointer that is null, and so a null pointer to
+ *          the object of a member function, is reported with
+ *          `UTL_CHECK_ACCESS`, where the standard leaves it undefined.
  */
 template <typename R, typename... Args>
 class function_ref<R(Args...)> {
@@ -127,6 +137,78 @@ class function_ref<R(Args...)> {
   }
 
   /*!
+   * \brief Refers to `Function`, given as a constant: a function, or a member
+   *        function called on the first argument.
+   *
+   * Implicit, as in the standard. The function is part of the code that
+   * calls it, so a member function is called with its object as the first of
+   * `Args`, an object or a pointer to one:
+   *
+   * \code{.cpp}
+   * void ForEachLed(utl::function_ref<void(Led&)> f);
+   * ForEachLed(UTL_CW(&Led::Toggle));
+   * \endcode
+   */
+  template <typename F, F Function,
+            typename = internal::InvocableAs<R, F, Args...>>
+  constexpr function_ref(
+      constant_wrapper<F, Function> /*f*/)  // NOLINT(runtime/explicit)
+      : bound_(static_cast<void*>(nullptr)), call_(&CallConstant<F, Function>) {
+    static_assert(Function != nullptr, "function_ref: the function is null");
+  }
+
+  /*!
+   * \brief Refers to `Function`, given as a constant, bound to `object`: a
+   *        member function of it, or a function that takes it first.
+   *
+   * \code{.cpp}
+   * utl::function_ref<void()> const toggle{UTL_CW(&Led::Toggle), led};
+   * \endcode
+   *
+   * Calls go to `Function` with `object` in front of `args`, and to a
+   * `const` member function if `object` is `const`.
+   *
+   * \param[in] object What it is bound to: an lvalue that outlives the
+   *                   function_ref, never a temporary.
+   */
+  template <typename F, F Function, typename T,
+            typename = internal::InvocableAs<R, F, T&, Args...>>
+  constexpr function_ref(constant_wrapper<F, Function> /*f*/, T& object)
+      : bound_(const_cast<void*>(
+            static_cast<void const*>(__builtin_addressof(object)))),
+        call_(&CallConstantOn<F, Function, T>) {
+    static_assert(Function != nullptr, "function_ref: the function is null");
+  }
+
+  /*!
+   * \brief Refers to `Function`, given as a constant, bound to the pointer
+   *        `object`: a member function of what it points to, or a function that
+   *        takes the pointer first.
+   *
+   * \code{.cpp}
+   * utl::function_ref<void()> const toggle{UTL_CW(&Led::Toggle), &led};
+   * \endcode
+   *
+   * It keeps the pointer itself, not where it is stored.
+   *
+   * \param[in] object The pointer it is bound to.
+   *
+   * \pre `object` is not null if `Function` is a member function. With
+   *      `UTL_CHECK_ACCESS` at 1 a null one is reported as
+   *      Misuse::kNullFunction when the function_ref is made.
+   */
+  template <typename F, F Function, typename T,
+            typename = internal::InvocableAs<R, F, T*, Args...>>
+  function_ref(constant_wrapper<F, Function> /*f*/, T* object)
+      : bound_(const_cast<void*>(static_cast<void const*>(object))),
+        call_(&CallConstantWith<F, Function, T>) {
+    static_assert(Function != nullptr, "function_ref: the function is null");
+    static_cast<void>(internal::Check(
+        !internal::IsMemberPointer<F>::kValue || object != nullptr,
+        Misuse::kNullFunction));
+  }
+
+  /*!
    * \brief Deleted: a lambda or an object assigned would be gone before the
    *        next call.
    *
@@ -169,6 +251,26 @@ class function_ref<R(Args...)> {
   static R CallObject(Bound bound, Args... args) {
     return internal::CallReturning<R>::Call(*static_cast<T*>(bound.object),
                                             static_cast<Args&&>(args)...);
+  }
+
+  // The function, a template argument, is a constant here: the call is
+  // direct, and no pointer to it is kept.
+  template <typename F, F Function>
+  static R CallConstant(Bound /*bound*/, Args... args) {
+    return internal::CallReturning<R>::Invoke(Function,
+                                              static_cast<Args&&>(args)...);
+  }
+
+  template <typename F, F Function, typename T>
+  static R CallConstantOn(Bound bound, Args... args) {
+    return internal::CallReturning<R>::Invoke(
+        Function, *static_cast<T*>(bound.object), static_cast<Args&&>(args)...);
+  }
+
+  template <typename F, F Function, typename T>
+  static R CallConstantWith(Bound bound, Args... args) {
+    return internal::CallReturning<R>::Invoke(
+        Function, static_cast<T*>(bound.object), static_cast<Args&&>(args)...);
   }
 
   Bound bound_;

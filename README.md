@@ -14,7 +14,8 @@ standard where it has an answer, and checked where the standard leaves a call un
 - **`reference_wrapper`**, a reference that copies, as in the standard, for a member that refers to
   an object another owns.
 - **`function_ref`**, a reference to something to call, as in C++26, for a parameter that takes a
-  function, a lambda or an object without being a template.
+  function, a lambda or an object without being a template, or for a member function bound to
+  its object, given with `UTL_CW()`.
 - **`inplace_function`**, something to call kept inside, as `std::function` without the heap, for
   a callback that is kept, a lambda with its captures among them.
 - **Text**: `string_view` for text in RAM, as in the standard, and `flash_string_view` for text in
@@ -345,9 +346,35 @@ call: written as the argument, it lives until the call returns, but kept in a me
 before the next call. One of a function, `= SwitchOff`, may be kept. There is no
 `function_ref()`, so it is never empty; assigning a lambda is deleted, assigning another
 `function_ref` or a function rebinds it. A null function pointer is [checked](#checked-access).
-Left out are the signatures with `const` and `noexcept`, and the constructors that take the
-function as a template argument, for a member function bound to its object, which need C++17's
-`template <auto>`.
+Left out are the signatures with `const` and `noexcept`, which gnu++11 cannot have.
+
+```cpp
+class Button {
+ public:
+  explicit Button(utl::function_ref<void()> on_press) : on_press_(on_press) {}
+
+ private:
+  utl::function_ref<void()> on_press_;  // kept: it refers to the LED, not to a lambda
+};
+
+Button button{{UTL_CW(&Led::Toggle), led}};  // Toggle() of led
+ForEachLed(UTL_CW(&Led::Toggle));            // Toggle() of each LED, the argument of the call
+```
+
+A member function is bound to its object with `UTL_CW()`, where C++26 writes `std::cw<...>`:
+`{UTL_CW(&Led::Toggle), led}` refers to `led` and calls its `Toggle()`, `{UTL_CW(&Led::Toggle),
+&led}` keeps the pointer, and `UTL_CW(&Led::Toggle)` alone calls `Toggle()` of the first argument.
+The function is a template argument, part of the code that calls it, so the `function_ref` is
+still 4 bytes and refers to the object alone: unlike one of a lambda, it may be kept as long as the
+object lives. It binds an lvalue, never a temporary, and calls a `const` member function of a
+`const` object; a function that takes the object first binds as a member function does. A null
+pointer to the object of a member function is [checked](#checked-access), a null function stops
+the build.
+
+`UTL_CW(value)` gives a `constant_wrapper<T, value>` (`constant_wrapper.h`), C++26's
+`std::constant_wrapper`, a value carried in a type. C++26 deduces `T` from the value with
+`template <auto>`, which gnu++11 lacks: so the type comes first, and the macro names it with
+`decltype`. It holds `value`, `value_type` and `type`, and none of the standard's operators.
 
 ## inplace_function
 
@@ -450,7 +477,8 @@ happens, for finding a mistake while a sketch is written, as the DET of AUTOSAR 
 `value()` of a `Result` with an error, `*` and `->` of an empty `optional`, `[]` beyond the end,
 `front()` or `back()` of an empty `span` or `string_view`, and `remove_prefix()` or
 `remove_suffix()` of more than there is, which then leaves an empty view, a `function_ref`
-made of a null function pointer, and a call of an empty `inplace_function`, which returns `R()`.
+made of a null function pointer, or of a member function and a null pointer to its object, and a
+call of an empty `inplace_function`, which returns `R()`.
 With `UTL_CHECK_ACCESS` at 1, set for the whole build as `config.h` says, each goes to `utl::ReportMisuse()` first,
 which prints `utl: [] beyond the end` on `Serial`:
 
@@ -493,7 +521,7 @@ examples are built with it to show that utl does not depend on it.
 | Example | Flash, ram | Flash, flash | Flash, checked | RAM, ram | RAM, flash | RAM, checked |
 |---|---|---|---|---|---|---|
 | Basics | 2404 | 2404 | 2404 | 196 | 178 | 196 |
-| SelfCheck | 17626 | 17626 | 19784 | 313 | 295 | 315 |
+| SelfCheck | 17884 | 17884 | 20200 | 313 | 295 | 315 |
 
 `ram` keeps the vtables in RAM, the default of avr-gcc; `flash` puts them into flash with the
 plugin; `checked` is `ram` with `UTL_CHECK_ACCESS` at 1. `SelfCheck` checks more in `checked`,
