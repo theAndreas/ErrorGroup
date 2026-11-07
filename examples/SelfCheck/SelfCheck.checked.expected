@@ -106,6 +106,8 @@ pass function_ref calls a lambda
 pass function_ref refers to the lambda, not a copy
 pass function_ref rebinds, and to a function of other types
 pass function_ref of a lambda written as the argument
+pass function_ref calls a member function of its object
+pass function_ref calls a function given as a constant
 pass inplace_function keeps a lambda with this
 pass inplace_function keeps a copy of its captures
 pass inplace_function copies its callable
@@ -141,6 +143,7 @@ pass * of an empty optional<T&> is reported
 pass value() of a Result<T&> with an error is reported
 pass remove_prefix() beyond the end is reported, and empties
 pass a function_ref of a null pointer is reported
+pass a function_ref of a member and a null object is reported
 pass a call of an empty inplace_function is reported, and gives 0
 pass a right access is not reported
 utl: [] beyond the end

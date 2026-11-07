@@ -20,6 +20,7 @@
 #if UTL_CHECK_ACCESS
 #include <Arduino.h>
 #include <utl/array.h>
+#include <utl/constant_wrapper.h>
 #include <utl/function_ref.h>
 #include <utl/inplace_function.h>
 #include <utl/optional.h>
@@ -34,6 +35,19 @@ namespace utl_test {
 namespace {
 
 using utl::Misuse;
+
+#if UTL_CHECK_ACCESS
+// A member function to bind to a pointer, and a function that takes one.
+struct Switch {
+  void Flip() { on = !on; }
+  bool on = false;
+};
+void FlipIfAny(Switch* pointer) {
+  if (pointer != nullptr) {
+    pointer->Flip();
+  }
+}
+#endif
 
 std::string Printed(Misuse misuse) {
   StringPrint out;
@@ -131,6 +145,12 @@ TEST(MisuseTest, ReportsEachMisuseOnSerial) {
             }),
             "utl: function_ref of a null pointer\r\n");
   EXPECT_EQ(Reported([] {
+              Switch* const volatile none = nullptr;
+              utl::function_ref<void()> const f{UTL_CW(&Switch::Flip), none};
+              static_cast<void>(f);
+            }),
+            "utl: function_ref of a null pointer\r\n");
+  EXPECT_EQ(Reported([] {
               utl::inplace_function<int()> const empty;
               EXPECT_EQ(empty(), 0);  // the default, after the report
             }),
@@ -166,6 +186,14 @@ TEST(MisuseTest, RightAccessIsNotReported) {
               g();
               utl::inplace_function<void()> const kept = nothing;
               kept();
+              Switch light;
+              utl::function_ref<void()> const flip{UTL_CW(&Switch::Flip),
+                                                   &light};
+              flip();
+              // A function, not a member function, may take a null pointer.
+              Switch* const none = nullptr;
+              utl::function_ref<void()> const flip_any{UTL_CW(FlipIfAny), none};
+              flip_any();
             }),
             "");
 }

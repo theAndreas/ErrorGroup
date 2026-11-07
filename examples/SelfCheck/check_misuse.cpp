@@ -17,6 +17,18 @@
 
 namespace self_check {
 
+#if UTL_CHECK_ACCESS
+namespace {
+
+// A member function to bind to a null pointer, never called.
+struct Probe {
+  uint8_t Read() const { return value; }
+  uint8_t value = 0;
+};
+
+}  // namespace
+#endif
+
 // With UTL_CHECK_ACCESS at 1, checks that each misuse is reported once, and a
 // right access not at all. The reads beyond the end and of an empty span are
 // undefined, but harmless on the AVR, where they read a byte of RAM.
@@ -74,6 +86,14 @@ void CheckMisuse() {
   Check(
       MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kNullFunction,
       F("a function_ref of a null pointer is reported"));
+  Probe* const volatile no_probe = nullptr;
+  before = MisuseCount();
+  utl::function_ref<uint8_t()> const null_object{UTL_CW(&Probe::Read),
+                                                 no_probe};
+  static_cast<void>(null_object);
+  Check(
+      MisuseCount() == before + 1 && LastMisuse() == utl::Misuse::kNullFunction,
+      F("a function_ref of a member and a null object is reported"));
   utl::inplace_function<uint8_t()> const no_callback;
   before = MisuseCount();
   uint8_t const placeholder = no_callback();

@@ -145,6 +145,31 @@ struct IsFunction {
       !IsConst<T const>::kValue && IsSame<RemoveReference<T>, T>::kValue;
 };
 
+// std::is_member_pointer: kValue is whether T is a pointer to a member, of a
+// function or of data.
+template <typename T>
+struct IsMemberPointer {
+  static constexpr bool kValue = false;
+};
+template <typename M, typename C>
+struct IsMemberPointer<M C::*> {
+  static constexpr bool kValue = true;
+};
+
+// The type of a template parameter that takes a value of type T: a pointer
+// to the function for a function type, which a parameter cannot have, and T
+// without its const otherwise, as a parameter drops it.
+template <typename T, bool = IsFunction<T>::kValue>
+struct TemplateArgumentImpl {
+  using Type = RemoveCv<T>;
+};
+template <typename T>
+struct TemplateArgumentImpl<T, true> {
+  using Type = T*;
+};
+template <typename T>
+using TemplateArgument = typename TemplateArgumentImpl<T>::Type;
+
 /*
  * The test of std::is_invocable_r for what is not a pointer to a member:
  * void if an F& can be called with arguments of Args and its result converts

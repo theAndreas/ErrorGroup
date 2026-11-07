@@ -46,6 +46,7 @@
 #include "utl/charconv.h"           // IWYU pragma: export
 #include "utl/charconv_error.h"     // IWYU pragma: export
 #include "utl/config.h"             // IWYU pragma: export
+#include "utl/constant_wrapper.h"   // IWYU pragma: export
 #include "utl/error.h"              // IWYU pragma: export
 #include "utl/error_group.h"        // IWYU pragma: export
 #include "utl/flash_string_view.h"  // IWYU pragma: export
